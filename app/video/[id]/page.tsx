@@ -1,8 +1,7 @@
-// /app/video/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { getVideoById } from "@/lib/videos";
 
-export default function VideoPage({ params }: { params: { id: string } }) {
+export default function VideoPage({ params }: any) {
   const video = getVideoById(params.id);
   if (!video) return notFound();
 

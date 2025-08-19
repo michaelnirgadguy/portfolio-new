@@ -7,55 +7,25 @@ import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 
-function extractYouTubeId(url: string): string | null {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1) || null;
-    if (u.hostname.includes("youtube.com")) {
-      const v = u.searchParams.get("v");
-      if (v) return v;
-      const parts = u.pathname.split("/");
-      const i = parts.indexOf("embed");
-      if (i >= 0 && parts[i + 1]) return parts[i + 1];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export default function Home() {
   const initialThree = useMemo(() => getAllVideos().slice(0, 3), []);
   const [selected, setSelected] = useState<VideoItem | null>(null);
-  const videoId = selected ? extractYouTubeId(selected.url) : null;
 
   return (
     <main className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
       {/* Big inline player appears after a thumbnail is clicked */}
-      {selected && videoId && (
-        <section className="space-y-2">
+      {selected && (
+        <section className="space-y-3">
           <h2 className="text-xl font-medium">{selected.title}</h2>
           <div className="text-gray-500">{selected.client}</div>
 
+          <VideoPlayer url={selected.url} title={selected.title} />
 
-
-          {selected && (
-            <section className="space-y-2">
-              <h2 className="text-xl font-medium">{selected.title}</h2>
-              <div className="text-gray-500">{selected.client}</div>
-          
-              <VideoPlayer url={selected.url} title={selected.title} />
-          
-              <p className="text-gray-700 leading-relaxed">{selected.description}</p>
-            </section>
+          {selected.description && (
+            <p className="text-gray-700 leading-relaxed">{selected.description}</p>
           )}
-
-          
-         
-
-          <p className="text-gray-700 leading-relaxed">{selected.description}</p>
         </section>
       )}
 
@@ -67,6 +37,3 @@ export default function Home() {
           ))}
         </div>
       </section>
-    </main>
-  );
-}

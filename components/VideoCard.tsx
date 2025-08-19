@@ -1,12 +1,18 @@
-
-import Link from "next/link";
+// /components/VideoCard.tsx
 import type { VideoItem } from "@/types/video";
 
-export default function VideoCard({ video }: { video: VideoItem }) {
+export default function VideoCard({
+  video,
+  onSelect,
+}: {
+  video: VideoItem;
+  onSelect: (video: VideoItem) => void;
+}) {
   return (
-    <Link
-      href={`/video/${video.id}`}
-      className="group block rounded-xl overflow-hidden border hover:shadow-md transition"
+    <button
+      type="button"
+      onClick={() => onSelect(video)}
+      className="group block w-full text-left rounded-xl overflow-hidden border hover:shadow-md transition"
     >
       <img
         src={video.thumbnail}
@@ -17,6 +23,6 @@ export default function VideoCard({ video }: { video: VideoItem }) {
         <div className="font-medium group-hover:underline">{video.title}</div>
         <div className="text-sm text-gray-500">{video.client}</div>
       </div>
-    </Link>
+    </button>
   );
 }

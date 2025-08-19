@@ -82,13 +82,6 @@ export default function Home() {
     <main className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
-      {/* Router/system message */}
-      {systemMessage && (
-        <div className="rounded-lg border p-3 text-sm text-gray-700 bg-gray-50">
-          {systemMessage}
-        </div>
-      )}
-
       {/* Big inline player appears after a thumbnail is clicked */}
       {selected && (
         <section className="space-y-3">

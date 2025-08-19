@@ -1,0 +1,42 @@
+[
+  {
+    "id": "space-odyssey",
+    "title": "2001: A Space Odyssey Trailer",
+    "client": "MGM",
+    "url": "https://www.youtube.com/watch?v=oR_e9y-bka0",
+    "thumbnail": "https://img.youtube.com/vi/oR_e9y-bka0/hqdefault.jpg",
+    "description": "The original trailer for Stanley Kubrick’s groundbreaking science fiction film. Useful as a cinematic test clip with strong visuals and sound design."
+  },
+  {
+    "id": "bbc-earth",
+    "title": "BBC Earth: Planet Earth II Official Trailer",
+    "client": "BBC Earth",
+    "url": "https://www.youtube.com/watch?v=c8aFcHFu8QM",
+    "thumbnail": "https://img.youtube.com/vi/c8aFcHFu8QM/hqdefault.jpg",
+    "description": "A stunning trailer showcasing wildlife footage from Planet Earth II. Great test material for high-resolution visuals and nature storytelling."
+  },
+  {
+    "id": "apple-hello",
+    "title": "Apple 1984 Super Bowl Ad",
+    "client": "Apple",
+    "url": "https://www.youtube.com/watch?v=2zfqw8nhUwA",
+    "thumbnail": "https://img.youtube.com/vi/2zfqw8nhUwA/hqdefault.jpg",
+    "description": "The famous Ridley Scott–directed Super Bowl commercial that introduced the Macintosh. Ideal test for shorter runtime and cultural reference."
+  },
+  {
+    "id": "ted-ai",
+    "title": "What is Artificial Intelligence? | Andrew Ng | TED",
+    "client": "TED",
+    "url": "https://www.youtube.com/watch?v=NKpuX_yzdYs",
+    "thumbnail": "https://img.youtube.com/vi/NKpuX_yzdYs/hqdefault.jpg",
+    "description": "Andrew Ng explains the basics of AI in a TED talk format. Perfect for testing spoken-word, educational content embedding."
+  },
+  {
+    "id": "coldplay-scientist",
+    "title": "Coldplay - The Scientist (Official Video)",
+    "client": "Coldplay",
+    "url": "https://www.youtube.com/watch?v=RB-RcX5DS5A",
+    "thumbnail": "https://img.youtube.com/vi/RB-RcX5DS5A/hqdefault.jpg",
+    "description": "A music video with reverse-shot storytelling. Great test for music embedding and different pacing from trailers or talks."
+  }
+]

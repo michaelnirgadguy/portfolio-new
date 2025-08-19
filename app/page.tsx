@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
+import VideoPlayer from "@/components/VideoPlayer";
 
 function extractYouTubeId(url: string): string | null {
   try {
@@ -38,16 +39,21 @@ export default function Home() {
           <h2 className="text-xl font-medium">{selected.title}</h2>
           <div className="text-gray-500">{selected.client}</div>
 
-          <div className="w-full aspect-video overflow-hidden rounded-xl shadow">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title={selected.title}
-              className="w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
+
+
+          {selected && (
+            <section className="space-y-2">
+              <h2 className="text-xl font-medium">{selected.title}</h2>
+              <div className="text-gray-500">{selected.client}</div>
+          
+              <VideoPlayer url={selected.url} title={selected.title} />
+          
+              <p className="text-gray-700 leading-relaxed">{selected.description}</p>
+            </section>
+          )}
+
+          
+         
 
           <p className="text-gray-700 leading-relaxed">{selected.description}</p>
         </section>

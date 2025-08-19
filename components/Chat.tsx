@@ -56,9 +56,23 @@ export default function Chat() {
     pushUser(trimmed);
     setInput("");
 
-    // STUB ONLY — no external calls.
-    const reply = `Got it: “${trimmed}”. (Stub reply — next step will wire routing/curation.)`;
-    pushAssistant(reply);
+    // replace the stub reply with an API call
+    try {
+      const res = await fetch("/api/route", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: trimmed }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      const msg =
+        typeof data?.message === "string"
+          ? data.message
+          : "Router returned no message.";
+      pushAssistant(msg);
+    } catch {
+      pushAssistant("Hmm, something went wrong. Try again?");
+    }
+
   }
 
   return (

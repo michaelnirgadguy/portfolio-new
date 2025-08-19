@@ -8,7 +8,7 @@ import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
 
-// Match the stub router payload
+// Matches your stubbed /api/route payload
 type Intent = "show_videos" | "show_portfolio" | "information" | "contact";
 type RouterPayload = {
   intent: Intent;
@@ -18,44 +18,41 @@ type RouterPayload = {
 
 export default function Home() {
   const allVideos = useMemo(() => getAllVideos(), []);
-  const [visibleThree, setVisibleThree] = useState<VideoItem[]>(
-    () => allVideos.slice(0, 3)
+  const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
+    allVideos.slice(0, 3)
   );
   const [selected, setSelected] = useState<VideoItem | null>(null);
   const [systemMessage, setSystemMessage] = useState<string>("");
 
-  // --- helper: set grid to exactly these IDs, preserving order ---
+  // helper: set grid to exactly these IDs, preserving given order
   function showThreeByIds(ids: string[]) {
     if (!Array.isArray(ids) || ids.length === 0) return;
     const byId = new Map(allVideos.map((v) => [v.id, v]));
-    const ordered = ids
-      .map((id) => byId.get(id))
-      .filter(Boolean) as VideoItem[];
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (ordered.length === 0) return;
     setSelected(null);
     setVisibleThree(ordered.slice(0, 3));
   }
 
-  // --- main dispatcher the Router payload goes through ---
+  // main dispatcher for router intents
   function dispatchFromRouter(payload: RouterPayload) {
-    // always show router message in the UI (top notice)
-    if (payload.message) setSystemMessage(payload.message);
+    if (payload?.message) setSystemMessage(payload.message);
 
-    switch (payload.intent) {
+    switch (payload?.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
         if (ids.length) showThreeByIds(ids);
         return;
       }
       case "show_portfolio": {
-        // TODO: implement full grid view; for now show first 4 as a stub
+        // For testing: show 4 cards so you can see a visible change
         setSelected(null);
         setVisibleThree(allVideos.slice(0, 4));
         return;
       }
       case "information":
       case "contact": {
-        // Message already shown via systemMessage; no UI change yet
+        // message already shown; no layout change here (yet)
         return;
       }
       default:
@@ -63,15 +60,21 @@ export default function Home() {
     }
   }
 
-  // Expose a single entry point for other components to call:
-  // window.pageController.dispatch(payload)
+  // Expose a SINGLE global sink the router transport can call.
+  // Anywhere in your app (NOT Chat), when you get the LLM/route JSON:
+  //   globalThis.routerSink?.deliver(payload)
   useEffect(() => {
-    (window as any).pageController ??= {};
-    (window as any).pageController.dispatch = dispatchFromRouter;
+    (globalThis as any).routerSink = {
+      deliver: (payload: RouterPayload) => {
+        try {
+          dispatchFromRouter(payload);
+        } catch (e) {
+          console.error("routerSink.deliver error:", e);
+        }
+      },
+    };
     return () => {
-      if ((window as any).pageController) {
-        (window as any).pageController.dispatch = undefined;
-      }
+      if ((globalThis as any).routerSink) (globalThis as any).routerSink = undefined;
     };
   }, [allVideos]);
 
@@ -79,7 +82,7 @@ export default function Home() {
     <main className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
-      {/* Router/system message (optional) */}
+      {/* Router/system message */}
       {systemMessage && (
         <div className="rounded-lg border p-3 text-sm text-gray-700 bg-gray-50">
           {systemMessage}
@@ -98,7 +101,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Three clickable thumbnails; clicking one sets selected */}
+      {/* Thumbnails grid */}
       <section>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visibleThree.map((v) => (
@@ -107,8 +110,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Chat (still dumb UI). After Chat posts to /api/route and gets a payload,
-          it should call: window.pageController?.dispatch(payload); */}
+      {/* Chat is just UI; it doesn't own intents */}
       <Chat />
     </main>
   );

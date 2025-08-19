@@ -37,31 +37,35 @@ export async function POST(req: Request) {
   }
 
   if (text === "contact") {
-    return Response.json<Payload>({
+    const payload: Payload = {
       intent: "contact",
       message: "Contact: michael [at] yourdomain.com (stub).",
-    });
+    };
+    return Response.json(payload);
   }
 
   if (text === "catalog") {
-    return Response.json<Payload>({
+    const payload: Payload = {
       intent: "show_portfolio",
       message: "Showing full catalog (stub).",
-    });
+    };
+    return Response.json(payload);
   }
 
   if (text === "show videos") {
-    return Response.json<Payload>({
+    const payload: Payload = {
       intent: "show_videos",
       args: { videoIds: firstThree },
       message: "Some videos you might like:",
-    });
+    };
+    return Response.json(payload);
   }
 
   // default: echo + safe trio
-  return Response.json<Payload>({
+  const payload: Payload = {
     intent: "show_videos",
     args: { videoIds: firstThree },
-    message: `Some videos for: “${text || "…" }”`,
-  });
+    message: `Some videos for: “${text || "…"}”`,
+  };
+  return Response.json(payload);
 }

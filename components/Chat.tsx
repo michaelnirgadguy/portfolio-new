@@ -1,32 +1,14 @@
 // /components/Chat.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type Role = "user" | "assistant";
-
-type Message = {
-  id: string;
-  role: Role;
-  text: string;
-};
-
-function Bubble({ role, text }: { role: Role; text: string }) {
-  const isUser = role === "user";
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-6 shadow
-        ${isUser ? "bg-black text-white rounded-br-sm" : "bg-gray-100 text-gray-900 rounded-bl-sm"}`}
-      >
-        {text}
-      </div>
-    </div>
-  );
-}
+type Message = { id: string; role: Role; text: string };
 
 export default function Chat() {
+  // We still keep the full history internally
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "m0",
@@ -36,27 +18,42 @@ export default function Chat() {
     },
   ]);
   const [input, setInput] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
 
-  function pushAssistant(text: string) {
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "assistant", text },
-    ]);
-  }
+  // ---- Display: only LAST assistant message, with typewriter ----
+  const lastAssistantText =
+    [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
 
-  function pushUser(text: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", text }]);
+  const [typed, setTyped] = useState("");
+  useEffect(() => {
+    // typewriter for the most recent assistant text
+    setTyped("");
+    if (!lastAssistantText) return;
+
+    let i = 0;
+    const tick = () => {
+      i++;
+      setTyped(lastAssistantText.slice(0, i));
+      if (i < lastAssistantText.length) {
+        timer = window.setTimeout(tick, 18); // ~18ms per char
+      }
+    };
+    let timer = window.setTimeout(tick, 0);
+    return () => window.clearTimeout(timer);
+  }, [lastAssistantText]);
+
+  function push(role: Role, text: string) {
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
-    pushUser(trimmed);
+
+    // keep user message in history (not displayed)
+    push("user", trimmed);
     setInput("");
 
-    // replace the stub reply with an API call
     try {
       const res = await fetch("/api/route", {
         method: "POST",
@@ -68,26 +65,27 @@ export default function Chat() {
         typeof data?.message === "string"
           ? data.message
           : "Router returned no message.";
-      pushAssistant(msg);
+      push("assistant", msg);
     } catch {
-      pushAssistant("Hmm, something went wrong. Try again?");
+      push("assistant", "Hmm, something went wrong. Try again?");
     }
-
   }
 
   return (
     <section className="w-full space-y-4">
-      <div className="space-y-3">
-        {messages.map((m) => (
-          <Bubble key={m.id} role={m.role} text={m.text} />
-        ))}
+      {/* ANSWER-ONLY DISPLAY (typewriter effect) */}
+      <div className="rounded-xl border bg-white p-4 text-base leading-7">
+        <div className="font-normal tracking-normal whitespace-pre-wrap">
+          {typed}
+        </div>
       </div>
 
-      <form ref={formRef} onSubmit={onSubmit} className="flex gap-2">
+      {/* Composer */}
+      <form onSubmit={onSubmit} className="flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder='Try: "show something bold and funny"'
+          placeholder='Type a request… e.g., "bold, funny tech ad"'
           className="flex-1 rounded-xl border px-4 py-2 outline-none focus:ring-2 focus:ring-black"
         />
         <Button type="submit">Send</Button>

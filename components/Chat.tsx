@@ -69,6 +69,7 @@ export default function Chat({
         body: JSON.stringify({ text: trimmed }),
       });
       const data = await res.json().catch(() => ({} as any));
+      globalThis.routerSink?.deliver(data); 
 
       const msg =
         typeof data?.message === "string"

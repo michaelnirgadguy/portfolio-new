@@ -6,6 +6,7 @@ import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
+import Chat from "@/components/Chat";
 
 export default function Home() {
   const initialThree = useMemo(() => getAllVideos().slice(0, 3), []);
@@ -37,6 +38,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+      {/* Chat (stubbed for now) */}
+      <Chat />
     </main>
   );
 }

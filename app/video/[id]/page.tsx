@@ -1,14 +1,11 @@
-
+// /app/video/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { getVideoById } from "@/lib/videos";
 
-type Props = { params: { id: string } };
-
-export default function VideoPage({ params }: Props) {
+export default function VideoPage({ params }: { params: { id: string } }) {
   const video = getVideoById(params.id);
   if (!video) return notFound();
 
-  // Extract YouTube videoId from the URL
   const url = new URL(video.url);
   let videoId = "";
   if (url.hostname.includes("youtu.be")) {

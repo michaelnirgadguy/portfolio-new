@@ -1,33 +1,43 @@
 // /app/api/route/route.ts
+import { getAllVideos } from "@/lib/videos";
+
 export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const text: string = typeof body?.text === "string" ? body.text.trim() : "";
+  const body = await req.json().catch(() => ({}));
+  const text: string = typeof body?.text === "string" ? body.text.trim().toLowerCase() : "";
 
-    if (!text) {
-      return new Response(
-        JSON.stringify({ error: "Missing 'text' in request body." }),
-        { status: 400, headers: { "content-type": "application/json" } }
-      );
-    }
+  const all = getAllVideos();
 
-    // STUB LOGIC ONLY:
-    // - Always return an "information" intent with a friendly echo message.
-    // - No external calls, no dataset access yet.
-    const payload = {
+  // contact
+  if (text === "contact") {
+    return Response.json({
       intent: "information",
-      message: `You said: “${text}”. (Router stub: real curation coming soon)`,
-      videoIds: [] as string[],
-    };
-
-    return new Response(JSON.stringify(payload), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Unexpected server error." }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
+      message: "Contact: michael [at] yourdomain.com (stub).",
+      videoIds: [],
     });
   }
+
+  // catalog
+  if (text === "catalog") {
+    return Response.json({
+      intent: "information",
+      message: "Full catalog (stub).",
+      videoIds: [],
+    });
+  }
+
+  // surprise
+  if (text === "surprise") {
+    return Response.json({
+      intent: "show_videos",
+      message: "Here are three random picks:",
+      videoIds: all.slice(0, 3).map((v) => v.id),
+    });
+  }
+
+  // default
+  return Response.json({
+    intent: "show_videos",
+    message: `Some videos for: “${text}”`,
+    videoIds: all.slice(0, 3).map((v) => v.id),
+  });
 }

@@ -1,14 +1,20 @@
 // /components/Chat.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
 
-export default function Chat() {
-  // We still keep the full history internally
+export default function Chat({
+  onAssistantMessage,
+  onIntent,
+}: {
+  onAssistantMessage?: (message: string) => void;
+  onIntent?: (intent: string, args?: any) => void;
+}) {
+  // Internal history (not fully displayed)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "m0",
@@ -19,26 +25,28 @@ export default function Chat() {
   ]);
   const [input, setInput] = useState("");
 
-  // ---- Display: only LAST assistant message, with typewriter ----
+  // Only show the latest assistant message, with a simple typewriter
   const lastAssistantText =
     [...messages].reverse().find((m) => m.role === "assistant")?.text ?? "";
 
   const [typed, setTyped] = useState("");
   useEffect(() => {
-    // typewriter for the most recent assistant text
     setTyped("");
     if (!lastAssistantText) return;
 
     let i = 0;
+    let timer: number | undefined;
     const tick = () => {
       i++;
       setTyped(lastAssistantText.slice(0, i));
       if (i < lastAssistantText.length) {
-        timer = window.setTimeout(tick, 18); // ~18ms per char
+        timer = window.setTimeout(tick, 18) as unknown as number;
       }
     };
-    let timer = window.setTimeout(tick, 0);
-    return () => window.clearTimeout(timer);
+    timer = window.setTimeout(tick, 0) as unknown as number;
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
   }, [lastAssistantText]);
 
   function push(role: Role, text: string) {
@@ -50,7 +58,7 @@ export default function Chat() {
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // keep user message in history (not displayed)
+    // Keep user message internally (not displayed)
     push("user", trimmed);
     setInput("");
 
@@ -61,19 +69,29 @@ export default function Chat() {
         body: JSON.stringify({ text: trimmed }),
       });
       const data = await res.json().catch(() => ({} as any));
+
       const msg =
         typeof data?.message === "string"
           ? data.message
           : "Router returned no message.";
+
+      // Show assistant text
       push("assistant", msg);
+
+      // Notify parent
+      onAssistantMessage?.(msg);
+      onIntent?.(String(data?.intent ?? ""), data?.args ?? undefined);
     } catch {
-      push("assistant", "Hmm, something went wrong. Try again?");
+      const errMsg = "Hmm, something went wrong. Try again?";
+      push("assistant", errMsg);
+      onAssistantMessage?.(errMsg);
+      onIntent?.("", undefined);
     }
   }
 
   return (
     <section className="w-full space-y-4">
-      {/* ANSWER-ONLY DISPLAY (typewriter effect) */}
+      {/* Answer-only display (typewriter) */}
       <div className="rounded-xl border bg-white p-4 text-base leading-7">
         <div className="font-normal tracking-normal whitespace-pre-wrap">
           {typed}

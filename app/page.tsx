@@ -48,9 +48,9 @@ export default function Home() {
         return;
       }
       case "show_portfolio": {
-        // TODO: implement full grid view; for now show first 3 as a stub
+        // TODO: implement full grid view; for now show first 4 as a stub
         setSelected(null);
-        setVisibleThree(allVideos.slice(0, 3));
+        setVisibleThree(allVideos.slice(0, 4));
         return;
       }
       case "information":

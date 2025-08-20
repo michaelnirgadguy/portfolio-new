@@ -1,15 +1,13 @@
 // /app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-
 
 // Matches your stubbed /api/route payload
 type Intent = "show_videos" | "show_portfolio" | "information" | "contact";
@@ -19,29 +17,30 @@ type RouterPayload = {
   message: string;
 };
 
-export default function Home() {
-  const allVideos = useMemo(() => getAllVideos(), []);
-  const searchParams = useSearchParams();
-  
-
-function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: VideoItem) => void }) {
+function DeepLink({
+  allVideos,
+  onPick,
+}: {
+  allVideos: VideoItem[];
+  onPick: (v: VideoItem) => void;
+}) {
   const sp = useSearchParams();
   useEffect(() => {
     const id = sp.get("v");
     if (!id) return;
-    const vid = allVideos.find(x => x.id === id);
+    const vid = allVideos.find((x) => x.id === id);
     if (vid) onPick(vid);
   }, [sp, allVideos, onPick]);
   return null;
 }
 
-
+export default function Home() {
+  const allVideos = useMemo(() => getAllVideos(), []);
   const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
     allVideos.slice(0, 3)
   );
   const [selected, setSelected] = useState<VideoItem | null>(null);
   const [systemMessage, setSystemMessage] = useState<string>("");
-  const [showAll, setShowAll] = useState<boolean>(false); // NEW: full-gallery mode
 
   // helper: set grid to exactly these IDs, preserving given order
   function showThreeByIds(ids: string[]) {
@@ -50,7 +49,6 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (ordered.length === 0) return;
     setSelected(null);
-    setShowAll(false); // ensure we’re not in full view
     setVisibleThree(ordered.slice(0, 3));
   }
 
@@ -65,9 +63,9 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
         return;
       }
       case "show_portfolio": {
-        // Show full gallery (replaces the 3 picks)
+        // For testing: show 4 cards so you can see a visible change
         setSelected(null);
-        setShowAll(true);
+        setVisibleThree(allVideos.slice(0, 4));
         return;
       }
       case "information":
@@ -80,7 +78,7 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
     }
   }
 
-  // Expose a SINGLE global sink the router transport can call.
+  // Global sink for router payloads
   useEffect(() => {
     (globalThis as any).routerSink = {
       deliver: (payload: RouterPayload) => {
@@ -96,13 +94,9 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
     };
   }, [allVideos]);
 
-  const gridVideos = showAll ? allVideos : visibleThree;
-
   return (
     <main className="mx-auto max-w-5xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">
-        {showAll ? "All Videos" : "Inline Player + Picks"}
-      </h1>
+      <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
       {/* Big inline player appears after a thumbnail is clicked */}
       {selected && (
@@ -116,10 +110,10 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
         </section>
       )}
 
-      {/* Thumbnails grid (either 3 picks or full gallery) */}
+      {/* Thumbnails grid */}
       <section>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {gridVideos.map((v) => (
+          {visibleThree.map((v) => (
             <VideoCard key={v.id} video={v} onSelect={setSelected} />
           ))}
         </div>
@@ -127,10 +121,11 @@ function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: V
 
       {/* Chat is just UI; it doesn't own intents */}
       <Chat />
+
+      {/* Deep-link reader (wrapped in Suspense to satisfy Next.js) */}
       <Suspense fallback={null}>
         <DeepLink allVideos={allVideos} onPick={(v) => setSelected(v)} />
       </Suspense>
-
     </main>
   );
 }

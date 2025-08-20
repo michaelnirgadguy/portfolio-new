@@ -160,13 +160,18 @@ export async function POST(req: Request) {
     }
 
     return Response.json(payload);
-  } catch (err) {
-    console.error("OpenAI error:", err);
-    const fallback: Payload = {
-      intent: "show_videos",
-      args: { videoIds: safeTrio() },
-      message: "Some videos you might like:",
-    };
-    return Response.json(fallback, { status: 200 });
-  }
+  } catch (err: any) {
+  console.error("OpenAI error:", err);
+  // TEMP: bubble the error to the client so we can see it in DevTools
+  return new Response(
+    JSON.stringify({
+      error: String(err?.message ?? err),
+      note:
+        "Check that an OpenAI key is available to this deployment. " +
+        "The server expects OPENAI_API_KEY or openai_test_key.",
+    }),
+    { status: 500, headers: { "content-type": "application/json" } },
+  );
 }
+
+

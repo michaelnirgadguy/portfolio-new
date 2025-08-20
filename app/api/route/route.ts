@@ -134,7 +134,7 @@ export async function POST(req: Request) {
         "Always return ONE JSON object matching the provided schema. " +
         "If unsure, prefer intent 'show_videos' with 2–3 fitting videoIds.",
       input,
-      response_format: { type: "json_schema", json_schema: jsonSchema },
+    
     });
 
     const raw = resp.output_text ?? "";

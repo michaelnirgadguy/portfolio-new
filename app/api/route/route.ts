@@ -132,8 +132,8 @@ export async function POST(req: Request) {
 
     // Extract parsed object safely
     // (SDK attaches `.parsed` on content items when using `responses.parse`)
-    const firstContent = resp.output?.[0]?.content?.[0] as any;
-    const parsed = firstContent?.parsed as z.infer<typeof RouterResponseSchema> | undefined;
+       const parsed = (resp as any).output_parsed ?? (resp as any).parsed ?? (resp as any).output?.[0]?.content?.[0]?.parsed;
+
 
     let payload: Payload;
     if (parsed) {

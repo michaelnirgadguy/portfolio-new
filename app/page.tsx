@@ -23,6 +23,7 @@ export default function Home() {
   );
   const [selected, setSelected] = useState<VideoItem | null>(null);
   const [systemMessage, setSystemMessage] = useState<string>("");
+  const [showAll, setShowAll] = useState<boolean>(false); // NEW: full-gallery mode
 
   // helper: set grid to exactly these IDs, preserving given order
   function showThreeByIds(ids: string[]) {
@@ -31,6 +32,7 @@ export default function Home() {
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (ordered.length === 0) return;
     setSelected(null);
+    setShowAll(false); // ensure we’re not in full view
     setVisibleThree(ordered.slice(0, 3));
   }
 
@@ -45,9 +47,9 @@ export default function Home() {
         return;
       }
       case "show_portfolio": {
-        // For testing: show 4 cards so you can see a visible change
+        // Show full gallery (replaces the 3 picks)
         setSelected(null);
-        setVisibleThree(allVideos.slice(0, 4));
+        setShowAll(true);
         return;
       }
       case "information":
@@ -61,8 +63,6 @@ export default function Home() {
   }
 
   // Expose a SINGLE global sink the router transport can call.
-  // Anywhere in your app (NOT Chat), when you get the LLM/route JSON:
-  //   globalThis.routerSink?.deliver(payload)
   useEffect(() => {
     (globalThis as any).routerSink = {
       deliver: (payload: RouterPayload) => {
@@ -78,9 +78,13 @@ export default function Home() {
     };
   }, [allVideos]);
 
+  const gridVideos = showAll ? allVideos : visibleThree;
+
   return (
     <main className="mx-auto max-w-5xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
+      <h1 className="text-2xl font-semibold">
+        {showAll ? "All Videos" : "Inline Player + Picks"}
+      </h1>
 
       {/* Big inline player appears after a thumbnail is clicked */}
       {selected && (
@@ -94,10 +98,10 @@ export default function Home() {
         </section>
       )}
 
-      {/* Thumbnails grid */}
+      {/* Thumbnails grid (either 3 picks or full gallery) */}
       <section>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleThree.map((v) => (
+          {gridVideos.map((v) => (
             <VideoCard key={v.id} video={v} onSelect={setSelected} />
           ))}
         </div>

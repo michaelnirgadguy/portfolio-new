@@ -63,14 +63,23 @@ export default function Chat({
     setInput("");
 
     try {
+      console.log("➡️ Sending to /api/route:", { text: trimmed });
+      
       const res = await fetch("/api/route", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: trimmed }),
       });
-      const data = await res.json().catch(() => ({} as any));
-      globalThis.routerSink?.deliver(data); 
-
+      
+      console.log("⬅️ Response status:", res.status);
+      
+      const data = await res.json().catch((err) => {
+        console.error("❌ Failed to parse JSON:", err);
+        return {} as any;
+      });
+      
+      console.log("⬅️ Response JSON:", data);
+ 
       const msg =
         typeof data?.message === "string"
           ? data.message

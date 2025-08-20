@@ -129,6 +129,7 @@ export async function POST(req: Request) {
       input,
       response_format: zodResponseFormat(RouterResponseSchema, "RouterResponse"),
     });
+    console.log("🔍 Raw response:", JSON.stringify(resp, null, 2));
 
     // Extract parsed object safely
     // (SDK attaches `.parsed` on content items when using `responses.parse`)

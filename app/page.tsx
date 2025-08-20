@@ -8,6 +8,7 @@ import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 
 // Matches your stubbed /api/route payload
@@ -21,13 +22,19 @@ type RouterPayload = {
 export default function Home() {
   const allVideos = useMemo(() => getAllVideos(), []);
   const searchParams = useSearchParams();
+  
 
+function DeepLink({ allVideos, onPick }: { allVideos: VideoItem[]; onPick: (v: VideoItem) => void }) {
+  const sp = useSearchParams();
   useEffect(() => {
-    const id = searchParams.get("v");
+    const id = sp.get("v");
     if (!id) return;
-    const vid = allVideos.find((x) => x.id === id);
-    if (vid) setSelected(vid);
-  }, [searchParams, allVideos]);
+    const vid = allVideos.find(x => x.id === id);
+    if (vid) onPick(vid);
+  }, [sp, allVideos, onPick]);
+  return null;
+}
+
 
   const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
     allVideos.slice(0, 3)
@@ -120,6 +127,10 @@ export default function Home() {
 
       {/* Chat is just UI; it doesn't own intents */}
       <Chat />
+      <Suspense fallback={null}>
+        <DeepLink allVideos={allVideos} onPick={(v) => setSelected(v)} />
+      </Suspense>
+
     </main>
   );
 }

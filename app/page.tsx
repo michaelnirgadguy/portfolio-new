@@ -7,6 +7,8 @@ import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
+import { useSearchParams } from "next/navigation";
+
 
 // Matches your stubbed /api/route payload
 type Intent = "show_videos" | "show_portfolio" | "information" | "contact";
@@ -18,6 +20,15 @@ type RouterPayload = {
 
 export default function Home() {
   const allVideos = useMemo(() => getAllVideos(), []);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const id = searchParams.get("v");
+    if (!id) return;
+    const vid = allVideos.find((x) => x.id === id);
+    if (vid) setSelected(vid);
+  }, [searchParams, allVideos]);
+
   const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
     allVideos.slice(0, 3)
   );

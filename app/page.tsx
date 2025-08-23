@@ -1,7 +1,7 @@
 // /app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
@@ -9,8 +9,8 @@ import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
 
-// Matches your stubbed /api/route payload
-type Intent = "show_videos" | "show_portfolio" | "information" | "contact";
+// Extend as we add more actions
+type Intent = "show_videos" | "show_portfolio" | "information" | "contact" | "navigate_video" | "share_link";
 type RouterPayload = {
   intent: Intent;
   args?: { videoIds?: string[] };
@@ -36,41 +36,95 @@ function DeepLink({
 
 export default function Home() {
   const allVideos = useMemo(() => getAllVideos(), []);
+  const byId = useMemo(() => new Map(allVideos.map((v) => [v.id, v])), [allVideos]);
+
   const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
     allVideos.slice(0, 3)
   );
   const [selected, setSelected] = useState<VideoItem | null>(null);
   const [systemMessage, setSystemMessage] = useState<string>("");
+  const [showContact, setShowContact] = useState<boolean>(false);
+
+  const topRef = useRef<HTMLDivElement | null>(null);
 
   // helper: set grid to exactly these IDs, preserving given order
   function showThreeByIds(ids: string[]) {
     if (!Array.isArray(ids) || ids.length === 0) return;
-    const byId = new Map(allVideos.map((v) => [v.id, v]));
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (ordered.length === 0) return;
     setSelected(null);
     setVisibleThree(ordered.slice(0, 3));
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // helper: pick first matching ID and play inline
+  function playFirst(ids: string[]) {
+    const first = ids.find((id) => byId.has(id));
+    if (!first) return;
+    const vid = byId.get(first)!;
+    setSelected(vid);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+    // update URL for deep-linking
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", vid.id);
+    history.replaceState(null, "", url.toString());
+  }
+
+  function copyShareLink(id?: string) {
+    const currentId = id ?? selected?.id;
+    if (!currentId) return false;
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", currentId);
+    const link = url.toString();
+    try {
+      navigator.clipboard.writeText(link);
+      setSystemMessage("Link copied to clipboard.");
+      return true;
+    } catch {
+      setSystemMessage(link); // fallback: at least show it
+      return false;
+    }
   }
 
   // main dispatcher for router intents
   function dispatchFromRouter(payload: RouterPayload) {
     if (payload?.message) setSystemMessage(payload.message);
+    setShowContact(false); // reset unless asked again
 
     switch (payload?.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
-        if (ids.length) showThreeByIds(ids);
+        if (ids.length === 1) {
+          // single strong pick → play it
+          playFirst(ids);
+        } else if (ids.length > 1) {
+          showThreeByIds(ids);
+        }
         return;
       }
       case "show_portfolio": {
-        // For testing: show 4 cards so you can see a visible change
         setSelected(null);
-        setVisibleThree(allVideos.slice(0, 4));
+        // Show more than 3 so the change is visible
+        setVisibleThree(allVideos.slice(0, 6));
         return;
       }
-      case "information":
+      case "navigate_video": {
+        const ids = payload.args?.videoIds ?? [];
+        if (ids.length) playFirst(ids);
+        return;
+      }
+      case "share_link": {
+        const ids = payload.args?.videoIds ?? [];
+        // Prefer explicit ID; else share currently selected
+        copyShareLink(ids[0]);
+        return;
+      }
       case "contact": {
-        // message already shown; no layout change here (yet)
+        setShowContact(true);
+        return;
+      }
+      case "information": {
+        // message already shown by chat UI; no layout change needed
         return;
       }
       default:
@@ -78,7 +132,7 @@ export default function Home() {
     }
   }
 
-  // Global sink for router payloads
+  // Global sink for router payloads (Chat will call window.routerSink.deliver)
   useEffect(() => {
     (globalThis as any).routerSink = {
       deliver: (payload: RouterPayload) => {
@@ -92,11 +146,37 @@ export default function Home() {
     return () => {
       if ((globalThis as any).routerSink) (globalThis as any).routerSink = undefined;
     };
-  }, [allVideos]);
+  }, [allVideos, byId]);
 
   return (
-    <main className="mx-auto max-w-5xl p-6 space-y-6">
+    <main ref={topRef} className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
+
+      {/* Optional system message surface (if Chat doesn't already render it) */}
+      {systemMessage ? (
+        <div className="rounded-lg border p-3 text-sm text-gray-800 bg-gray-50">
+          {systemMessage}
+        </div>
+      ) : null}
+
+      {/* Contact panel (revealed by `contact` intent) */}
+      {showContact && (
+        <div className="rounded-xl border p-4 bg-white shadow-sm">
+          <div className="font-medium mb-1">Contact</div>
+          <div className="text-sm text-gray-700">
+            Email:{" "}
+            <a className="underline" href="mailto:hello@michael.ng">
+              hello@michael.ng
+            </a>
+          </div>
+          <button
+            className="mt-3 inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
+            onClick={() => copyShareLink()}
+          >
+            Copy link to this view
+          </button>
+        </div>
+      )}
 
       {/* Big inline player appears after a thumbnail is clicked */}
       {selected && (
@@ -119,7 +199,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Chat is just UI; it doesn't own intents */}
+      {/* Chat owns the conversation UI; it posts to /api/route and calls routerSink.deliver */}
       <Chat />
 
       {/* Deep-link reader (wrapped in Suspense to satisfy Next.js) */}

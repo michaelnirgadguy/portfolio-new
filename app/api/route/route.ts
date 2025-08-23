@@ -113,7 +113,7 @@ export async function POST(req: Request) {
         ...finalOut,
         args: {
           ...(finalOut.args ?? {}),
-          videoIds: pickFallbackIds([...validIds]),
+          videoIds: pickFallbackIds(Array.from(validIds)),
         },
         message:
           finalOut.message ||

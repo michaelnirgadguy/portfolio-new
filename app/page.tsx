@@ -10,11 +10,18 @@ import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
 
 // Extend as we add more actions
-type Intent = "show_videos" | "show_portfolio" | "information" | "contact" | "navigate_video" | "share_link";
+type Intent =
+  | "show_videos"
+  | "show_portfolio"
+  | "information"
+  | "contact"
+  | "navigate_video"
+  | "share_link";
+
 type RouterPayload = {
   intent: Intent;
   args?: { videoIds?: string[] };
-  message: string;
+  message?: string;
 };
 
 function DeepLink({
@@ -64,6 +71,7 @@ export default function Home() {
     const vid = byId.get(first)!;
     setSelected(vid);
     topRef.current?.scrollIntoView({ behavior: "smooth" });
+
     // update URL for deep-linking
     const url = new URL(window.location.href);
     url.searchParams.set("v", vid.id);
@@ -86,12 +94,14 @@ export default function Home() {
     }
   }
 
-  // main dispatcher for router intents
+  // === Main dispatcher for router intents ===
   function dispatchFromRouter(payload: RouterPayload) {
-    if (payload?.message) setSystemMessage(payload.message);
+    if (!payload || !payload.intent) return;
+    console.log("dispatchFromRouter →", payload);
+    if (payload.message) setSystemMessage(payload.message);
     setShowContact(false); // reset unless asked again
 
-    switch (payload?.intent) {
+    switch (payload.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
         if (ids.length === 1) {
@@ -104,7 +114,6 @@ export default function Home() {
       }
       case "show_portfolio": {
         setSelected(null);
-        // Show more than 3 so the change is visible
         setVisibleThree(allVideos.slice(0, 6));
         return;
       }
@@ -115,7 +124,6 @@ export default function Home() {
       }
       case "share_link": {
         const ids = payload.args?.videoIds ?? [];
-        // Prefer explicit ID; else share currently selected
         copyShareLink(ids[0]);
         return;
       }
@@ -132,7 +140,7 @@ export default function Home() {
     }
   }
 
-  // Global sink for router payloads (Chat will call window.routerSink.deliver)
+  // Global sink for router payloads (Chat may call window.routerSink.deliver)
   useEffect(() => {
     (globalThis as any).routerSink = {
       deliver: (payload: RouterPayload) => {
@@ -148,18 +156,23 @@ export default function Home() {
     };
   }, [allVideos, byId]);
 
+  // Shim so Chat can also call onIntent(intent, args)
+  function handleChatIntent(intent: Intent, args?: { videoIds?: string[] }) {
+    dispatchFromRouter({ intent, args });
+  }
+
   return (
     <main ref={topRef} className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
-      {/* Optional system message surface (if Chat doesn't already render it) */}
+      {/* Optional system message surface */}
       {systemMessage ? (
         <div className="rounded-lg border p-3 text-sm text-gray-800 bg-gray-50">
           {systemMessage}
         </div>
       ) : null}
 
-      {/* Contact panel (revealed by `contact` intent) */}
+      {/* Contact panel */}
       {showContact && (
         <div className="rounded-xl border p-4 bg-white shadow-sm">
           <div className="font-medium mb-1">Contact</div>
@@ -178,11 +191,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* Big inline player appears after a thumbnail is clicked */}
+      {/* Big inline player appears after a thumbnail is selected or intent picks a single ID */}
       {selected && (
         <section className="space-y-3">
           <h2 className="text-xl font-medium">{selected.title}</h2>
           <div className="text-gray-500">{selected.client}</div>
+          {/* NOTE: Keep as-is to match your current VideoPlayer props */}
           <VideoPlayer url={selected.url} title={selected.title} />
           {selected.description && (
             <p className="text-gray-700 leading-relaxed">{selected.description}</p>
@@ -199,10 +213,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Chat owns the conversation UI; it posts to /api/route and calls routerSink.deliver */}
-      <Chat />
+      {/* Chat now wired: it can call onIntent and/or window.routerSink.deliver */}
+      <Chat onIntent={handleChatIntent} onAssistantMessage={setSystemMessage} />
 
-      {/* Deep-link reader (wrapped in Suspense to satisfy Next.js) */}
+      {/* Deep-link reader */}
       <Suspense fallback={null}>
         <DeepLink allVideos={allVideos} onPick={(v) => setSelected(v)} />
       </Suspense>

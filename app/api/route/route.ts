@@ -6,15 +6,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({} as any));
   const text: string = typeof body?.text === "string" ? body.text : "";
 
-  // Minimal grounding: give the LLM the list of video IDs (and a few fields)
-  const videos = getAllVideos().map(({ id, title, client, description }) => ({
-    id,
-    title,
-    client,
-    description,
-  }));
+  // tiny grounding (optional)
+  const videos = getAllVideos().map(({ id, title }) => ({ id, title }));
 
-  const input = [
+  // IMPORTANT: make this a normal mutable array (no `as const`)
+  const input: any[] = [
     {
       role: "system",
       content: [
@@ -23,50 +19,44 @@ export async function POST(req: Request) {
           text:
             "You are the router for Michael's portfolio. " +
             "Always reply with ONE JSON object: { intent: string, message: string, args?: object }. " +
-            "If suggesting videos, set args.videoIds to 2–3 IDs taken ONLY from the dataset.",
+            "If suggesting videos, set args.videoIds to 2–3 IDs from the dataset.",
         },
       ],
     },
     {
       role: "developer",
       content: [
-        {
-          type: "text",
-          text: "DATASET (read-only):\n" + JSON.stringify({ videos }, null, 2),
-        },
+        { type: "text", text: "DATASET:\n" + JSON.stringify({ videos }) },
       ],
     },
     { role: "user", content: [{ type: "text", text }] },
-  ] as const;
+  ];
 
   try {
     const resp = await client.responses.create({
       model: "gpt-4o-mini",
-      input,
+      input, // <- mutable, not readonly
     });
 
-    // Debug: see exactly what OpenAI returned
-    console.log("🔎 OpenAI raw response object:", resp);
+    // Debug logs
+    console.log("🔎 OpenAI resp object:", resp);
     const raw = resp.output_text ?? "";
     console.log("🔎 OpenAI output_text:", raw);
 
+    // Try to parse as JSON and return it verbatim
     let parsed: any = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      /* no-op */
+    try { parsed = JSON.parse(raw); } catch {}
+    if (parsed) {
+      return new Response(JSON.stringify(parsed), {
+        headers: { "content-type": "application/json" },
+      });
     }
 
-    if (!parsed) {
-      return new Response(
-        JSON.stringify({ error: "LLM did not return JSON", raw }),
-        { status: 500, headers: { "content-type": "application/json" } },
-      );
-    }
-
-    return new Response(JSON.stringify(parsed), {
-      headers: { "content-type": "application/json" },
-    });
+    // If not JSON, return what we got to inspect
+    return new Response(
+      JSON.stringify({ error: "LLM did not return JSON", raw }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
   } catch (err: any) {
     console.error("❌ OpenAI error:", err);
     return new Response(

@@ -1,10 +1,9 @@
 // /app/api/route/route.ts
-import { z } from "zod";
 import { client } from "@/lib/openai";
 import { getAllVideos } from "@/lib/videos";
 
-// Keep in sync with lib/systemPrompt.txt allowed intents
-const ALLOWED_INTENTS = [
+// Allowed intents (must match site logic)
+const ALLOWED = [
   "show_videos",
   "information",
   "contact",
@@ -13,122 +12,126 @@ const ALLOWED_INTENTS = [
   "show_portfolio",
   "easter_egg",
 ] as const;
+type AllowedIntent = typeof ALLOWED[number];
 
-const OutputSchema = z.object({
-  intent: z.enum(ALLOWED_INTENTS),
-  message: z.string(),
-  args: z
-    .object({
-      videoIds: z.array(z.string()).optional(),
-    })
-    .optional(),
-});
-
-type Output = z.infer<typeof OutputSchema>;
-
-function pickFallbackIds(allIds: string[], n = 3) {
-  return allIds.slice(0, n);
-}
+// Soft mapping for common synonyms the model might try
+const INTENT_ALIASES: Record<string, AllowedIntent> = {
+  suggest_videos: "show_videos",
+  suggest_video: "show_videos",
+  recommend_videos: "show_videos",
+  recommendations: "show_videos",
+};
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => ({} as any));
-    const text: string = typeof body?.text === "string" ? body.text : "";
+  const body = await req.json().catch(() => ({} as any));
+  const text: string = typeof body?.text === "string" ? body.text : "";
 
-    // Grounding dataset (only the fields the model needs)
-    const videos = getAllVideos().map(({ id, title, client, description }) => ({
-      id,
-      title,
-      client,
-      description,
-    }));
-    const validIds = new Set(videos.map((v) => v.id));
+  // Grounding dataset (just what the model needs)
+  const videos = getAllVideos().map(({ id, title, client, description }) => ({
+    id,
+    title,
+    client,
+    description,
+  }));
+  const validIds = new Set(videos.map((v) => v.id));
 
-    // System instruction kept short; dataset appended below
-    const system = [
-      "You are the router for Michael's portfolio.",
-      "Always reply with ONE JSON object:",
-      '{ "intent": string, "message": string, "args"?: { "videoIds"?: string[] } }',
-      "If suggesting videos, choose 2–3 IDs ONLY from the dataset I’ll give you.",
-      "Keep replies concise and helpful.",
-    ].join(" ");
+  // Short, strict system rule
+  const system = [
+    "You are the router for Michael's portfolio.",
+    'Reply with exactly ONE JSON object: {"intent": string, "message": string, "args"?: {"videoIds"?: string[]}}.',
+    "When suggesting videos, choose 2–3 IDs ONLY from the dataset provided.",
+    "Keep replies brief and helpful.",
+  ].join(" ");
 
-    // Use Chat Completions + JSON mode for strict JSON output
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" }, // JSON mode
-      messages: [
-        {
-          role: "system",
-          content: `${system}\n\nDATASET (read-only):\n${JSON.stringify(
-            { videos },
-            null,
-            2
-          )}`,
+  // Use Chat Completions + Structured Outputs (JSON Schema) to hard‑enforce shape
+  // Docs: Chat Completions + response_format / Structured Outputs. 
+  // (OpenAI platform refs) 
+  // This reduces invalid-intent/shape errors significantly.
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "router_payload",
+        strict: true,
+        schema: {
+          type: "object",
+          required: ["intent", "message"],
+          additionalProperties: false,
+          properties: {
+            intent: { type: "string", enum: [...ALLOWED] },
+            message: { type: "string" },
+            args: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                videoIds: {
+                  type: "array",
+                  items: { type: "string" },
+                  minItems: 0,
+                  maxItems: 3,
+                },
+              },
+            },
+          },
         },
-        { role: "user", content: text || "Act on the latest user input." },
-      ],
-      temperature: 0.3,
-    });
+      },
+    },
+    messages: [
+      {
+        role: "system",
+        content: `${system}\n\nDATASET (read-only):\n${JSON.stringify(
+          { videos },
+          null,
+          2
+        )}`,
+      },
+      { role: "user", content: text || "Use the latest user input." },
+    ],
+    temperature: 0.2,
+  });
 
-    const raw = completion.choices?.[0]?.message?.content ?? "";
-    if (!raw) {
-      return new Response(
-        JSON.stringify({ error: "Empty completion from model" }),
-        { status: 502, headers: { "content-type": "application/json" } }
-      );
-    }
-
-    // Parse + validate
-    let parsed: Output;
-    try {
-      parsed = OutputSchema.parse(JSON.parse(raw));
-    } catch (e) {
-      // Dev aid
-      console.error("JSON parse/validation failed. Raw:", raw, "Error:", e);
-      return new Response(
-        JSON.stringify({ error: "Model returned invalid JSON", raw }),
-        { status: 500, headers: { "content-type": "application/json" } }
-      );
-    }
-
-    // Sanitize args.videoIds against our dataset, cap at 3
-    const incomingIds = parsed.args?.videoIds ?? [];
-    const filteredIds = incomingIds.filter((id) => validIds.has(id)).slice(0, 3);
-
-    let finalOut: Output = {
-      ...parsed,
-      args:
-        filteredIds.length > 0
-          ? { ...(parsed.args ?? {}), videoIds: filteredIds }
-          : parsed.args,
-    };
-
-    // If intent asks for videos but none survived validation → fallback
-    if (
-      finalOut.intent === "show_videos" &&
-      (!finalOut.args?.videoIds || finalOut.args.videoIds.length === 0)
-    ) {
-      finalOut = {
-        ...finalOut,
-        args: {
-          ...(finalOut.args ?? {}),
-          videoIds: pickFallbackIds(Array.from(validIds)),
-        },
-        message:
-          finalOut.message ||
-          "Here are a few to start with while I think about that.",
-      };
-    }
-
-    return new Response(JSON.stringify(finalOut), {
+  // Model output (Structured Outputs returns valid JSON string here)
+  const raw = completion.choices?.[0]?.message?.content ?? "";
+  if (!raw) {
+    return new Response(JSON.stringify({ error: "Empty completion" }), {
+      status: 502,
       headers: { "content-type": "application/json" },
     });
-  } catch (err: any) {
-    console.error("❌ /api/route error:", err);
+  }
+
+  // Parse JSON
+  let out: any;
+  try {
+    out = JSON.parse(raw);
+  } catch (e) {
+    console.error("JSON parse failed:", raw, e);
     return new Response(
-      JSON.stringify({ error: String(err?.message ?? err) }),
+      JSON.stringify({ error: "Model returned non‑JSON", raw }),
       { status: 500, headers: { "content-type": "application/json" } }
     );
   }
+
+  // Defensive intent coercion (in case model slips an alias in future)
+  if (!ALLOWED.includes(out.intent)) {
+    const mapped = INTENT_ALIASES[String(out.intent).toLowerCase()];
+    out.intent = mapped ?? "information";
+  }
+
+  // Sanitize videoIds against our dataset; cap at 3
+  const incomingIds: string[] = out?.args?.videoIds ?? [];
+  const filtered = incomingIds.filter((id) => validIds.has(id)).slice(0, 3);
+  if (filtered.length > 0) {
+    out.args = { ...(out.args ?? {}), videoIds: filtered };
+  } else if (out.intent === "show_videos") {
+    // Fallback trio
+    out.args = { ...(out.args ?? {}), videoIds: Array.from(validIds).slice(0, 3) };
+    if (!out.message) {
+      out.message = "Here are a few to start with.";
+    }
+  }
+
+  return new Response(JSON.stringify(out), {
+    headers: { "content-type": "application/json" },
+  });
 }

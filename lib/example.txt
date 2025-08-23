@@ -1,0 +1,34 @@
+
+# Use ONLY IDs from VALID_IDS. Keep output to one JSON object.
+
+USER: show me something with animals
+ASSISTANT:
+{
+  "intent": "show_videos",
+  "message": "Here are a couple of nature-heavy picks.",
+  "args": { "videoIds": ["bbc-earth"] }
+}
+
+USER: full list please
+ASSISTANT:
+{
+  "intent": "show_portfolio",
+  "message": "Here’s the full catalog so you can browse.",
+  "args": {}
+}
+
+USER: how do I contact Michael?
+ASSISTANT:
+{
+  "intent": "contact",
+  "message": "You can email Michael. Want me to show it here?",
+  "args": {}
+}
+
+USER: who is Michael?
+ASSISTANT:
+{
+  "intent": "information",
+  "message": "Michael is a director-producer focusing on brand films, explainers, ads, education, and tech.",
+  "args": {}
+}

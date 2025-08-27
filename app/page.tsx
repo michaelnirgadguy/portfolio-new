@@ -1,16 +1,22 @@
 // /app/page.tsx
 "use client";
 
+/**
+ * Page coordinator:
+ * - URL ?v=<id> is the ONLY source of truth for selected video
+ * - Chat dispatches intents → we update URL or grid accordingly
+ * - Visual sections are split into components (VideoSection, VideoGrid)
+ */
+
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
-import VideoCard from "@/components/VideoCard";
-import VideoPlayer from "@/components/VideoPlayer";
+import VideoSection from "@/components/VideoSection";
+import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
-import VideoSection from "@/components/VideoSection"
 
-// Allowed intents from the router
+// Allowed intents from the router (centralized here for now)
 type Intent =
   | "show_videos"
   | "show_portfolio"
@@ -25,7 +31,7 @@ type RouterPayload = {
   message?: string;
 };
 
-// --- Suspense wrapper to satisfy useSearchParams rule ---
+// Suspense wrapper is required when using useSearchParams in Client Components.
 export default function Home() {
   return (
     <Suspense fallback={null}>
@@ -38,18 +44,18 @@ function HomeInner() {
   const router = useRouter();
   const sp = useSearchParams();
 
+  // Dataset (static JSON) → map for fast lookup
   const allVideos = useMemo(() => getAllVideos(), []);
   const byId = useMemo(() => new Map(allVideos.map((v) => [v.id, v])), [allVideos]);
 
-  // URL is the single source of truth for selection
+  // URL is the single source of truth for the selection
   const selectedId = sp.get("v");
   const selected: VideoItem | null = selectedId ? byId.get(selectedId) ?? null : null;
 
   // Grid state only (not selection)
-  const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
-    allVideos.slice(0, 3)
+  const [visibleThree, setVisibleThree] = useState<VideoItem[]>(
+    () => allVideos.slice(0, 3)
   );
-  const [showContact, setShowContact] = useState<boolean>(false);
 
   const topRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,25 +88,24 @@ function HomeInner() {
     setSelectedId(first);
   }
 
+  // Still used by the "share_link" intent. Silent success/fail (Chat is sole surface).
   function copyShareLink(id?: string) {
     const currentId = id ?? selectedId ?? undefined;
     if (!currentId) return false;
     const url = new URL(window.location.href);
     url.searchParams.set("v", currentId);
-    const link = url.toString();
     try {
-      navigator.clipboard.writeText(link);
+      navigator.clipboard.writeText(url.toString());
       return true;
     } catch {
       return false;
     }
   }
 
-  // === Main dispatcher for router intents ===
+  // === Intent dispatcher (single place that mutates URL/grid) ===
   function dispatchFromRouter(payload: RouterPayload) {
     if (!payload || !payload.intent) return;
     console.log("dispatchFromRouter →", payload);
-    setShowContact(false); // reset unless asked again
 
     switch (payload.intent) {
       case "show_videos": {
@@ -124,12 +129,9 @@ function HomeInner() {
         copyShareLink(ids[0]);
         return;
       }
+      case "information":
       case "contact": {
-        setShowContact(true);
-        return;
-      }
-      case "information": {
-        // Chat displays the assistant message; no extra surface here.
+        // Chat renders the assistant text; no extra surface here.
         return;
       }
       default:
@@ -137,7 +139,7 @@ function HomeInner() {
     }
   }
 
-  // Global sink for router payloads (Chat may call window.routerSink.deliver)
+  // Global sink so Chat (or any child) can deliver router payloads
   useEffect(() => {
     (globalThis as any).routerSink = {
       deliver: (payload: RouterPayload) => {
@@ -153,6 +155,7 @@ function HomeInner() {
     };
   }, [allVideos, byId, sp]);
 
+  // Callback used by <Chat />
   function handleChatIntent(intent: Intent, args?: { videoIds?: string[] }) {
     dispatchFromRouter({ intent, args });
   }
@@ -161,35 +164,12 @@ function HomeInner() {
     <main ref={topRef} className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
 
-      {/* Contact panel */}
-      {showContact && (
-        <div className="rounded-xl border p-4 bg-white shadow-sm">
-          <div className="font-medium mb-1">Contact</div>
-          <div className="text-sm text-gray-700">
-            Email:{" "}
-            <a className="underline" href="mailto:hello@michael.ng">
-              hello@michael.ng
-            </a>
-          </div>
-          <button
-            className="mt-3 inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50"
-            onClick={() => copyShareLink()}
-          >
-            Copy link to this view
-          </button>
-        </div>
-      )}
-
-      {/* Inline player shows only when ?v=<id> is present */}
+      {/* Selected video section shows ONLY when ?v=<id> is present */}
       {selected && <VideoSection video={selected} />}
 
       {/* Thumbnails grid */}
       <section>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleThree.map((v) => (
-            <VideoCard key={v.id} video={v} onSelect={() => setSelectedId(v.id)} />
-          ))}
-        </div>
+        <VideoGrid videos={visibleThree} onSelectId={(id) => setSelectedId(id)} />
       </section>
 
       {/* Chat is the single assistant message surface */}

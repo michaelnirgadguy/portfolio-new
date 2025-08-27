@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * CenterDock
- * - If (top + chat) fits → center as one block (chat flush under top).blabla
+ * - If (top + chat) fits → center as one block (chat flush under top).
  * - If it doesn't fit → fall back to pinned-bottom chat with scrollable top.
  * Chat height is driven by its natural content height, capped by chatMaxVh.
  */
@@ -84,7 +84,7 @@ export default function CenterDock({
             <div style={{ height: gap }} />
             <div
               ref={chatRef}
-              className="rounded-t-xl border bg-white"
+              className="rounded-t-xl bg-white"
               style={{
                 height: chatBoxHeight ?? undefined,          // use measured natural height, capped
                 maxHeight: `${chatMaxVh}vh`,
@@ -104,7 +104,7 @@ export default function CenterDock({
               <div style={{ height: gap }} />
             </div>
           </div>
-          <div className="border-t bg-white">
+          <div className="bg-white">
             <div className="mx-auto max-w-5xl px-6 py-4">
               <div
                 ref={chatRef}

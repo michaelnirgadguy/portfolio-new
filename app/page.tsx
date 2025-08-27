@@ -23,7 +23,6 @@ type Intent =
   | "information"
   | "contact"
   | "navigate_video"
-  | "share_link";
 
 type RouterPayload = {
   intent: Intent;
@@ -88,19 +87,6 @@ function HomeInner() {
     setSelectedId(first);
   }
 
-  // Still used by the "share_link" intent. Silent success/fail (Chat is sole surface).
-  function copyShareLink(id?: string) {
-    const currentId = id ?? selectedId ?? undefined;
-    if (!currentId) return false;
-    const url = new URL(window.location.href);
-    url.searchParams.set("v", currentId);
-    try {
-      navigator.clipboard.writeText(url.toString());
-      return true;
-    } catch {
-      return false;
-    }
-  }
 
   // === Intent dispatcher (single place that mutates URL/grid) ===
   function dispatchFromRouter(payload: RouterPayload) {
@@ -122,11 +108,6 @@ function HomeInner() {
       case "navigate_video": {
         const ids = payload.args?.videoIds ?? [];
         if (ids.length) playFirst(ids);
-        return;
-      }
-      case "share_link": {
-        const ids = payload.args?.videoIds ?? [];
-        copyShareLink(ids[0]);
         return;
       }
       case "information":

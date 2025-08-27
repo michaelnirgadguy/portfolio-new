@@ -8,6 +8,7 @@ import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
+import VideoSection from "@/components/VideoSection"
 
 // Allowed intents from the router
 type Intent =
@@ -180,16 +181,7 @@ function HomeInner() {
       )}
 
       {/* Inline player shows only when ?v=<id> is present */}
-      {selected && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-medium">{selected.title}</h2>
-          <div className="text-gray-500">{selected.client}</div>
-          <VideoPlayer url={selected.url} title={selected.title} />
-          {selected.description && (
-            <p className="text-gray-700 leading-relaxed">{selected.description}</p>
-          )}
-        </section>
-      )}
+      {selected && <VideoSection video={selected} />}
 
       {/* Thumbnails grid */}
       <section>

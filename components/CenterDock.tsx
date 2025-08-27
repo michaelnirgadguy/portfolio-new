@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * CenterDock
- * - If (top + chat) fits → center as one block (chat flush under top).
+ * - If (top + chat) fits → center as one block (chat flush under top).blabla
  * - If it doesn't fit → fall back to pinned-bottom chat with scrollable top.
  * Chat height is driven by its natural content height, capped by chatMaxVh.
  */

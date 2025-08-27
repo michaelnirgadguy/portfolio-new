@@ -1,7 +1,7 @@
 // /app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
@@ -24,7 +24,16 @@ type RouterPayload = {
   message?: string;
 };
 
+// --- Suspense wrapper to satisfy useSearchParams rule ---
 export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -80,10 +89,8 @@ export default function Home() {
     const link = url.toString();
     try {
       navigator.clipboard.writeText(link);
-      // No extra message surface here—Chat remains the single assistant surface.
       return true;
     } catch {
-      // As a silent fallback we do nothing visible.
       return false;
     }
   }

@@ -2,10 +2,9 @@
 "use client";
 
 /**
- * Page coordinator:
- * - URL ?v=<id> is the ONLY source of truth for selected video
- * - Chat dispatches intents → we update URL or grid accordingly
- * - Visual sections are split into components (VideoSection, VideoGrid)
+ * Page coordinator (2 elements only):
+ * 1) Top: VideoSection (if selected) OR VideoGrid (3 thumbs)
+ * 2) Bottom: pinned Chat dock (always visible)
  */
 
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
@@ -15,6 +14,7 @@ import type { VideoItem } from "@/types/video";
 import VideoSection from "@/components/VideoSection";
 import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
+import TwoPane from "@/components/TwoPane";
 
 // Allowed intents from the router (centralized here for now)
 type Intent =
@@ -22,7 +22,7 @@ type Intent =
   | "show_portfolio"
   | "information"
   | "contact"
-  | "navigate_video"
+  | "navigate_video";
 
 type RouterPayload = {
   intent: Intent;
@@ -87,12 +87,9 @@ function HomeInner() {
     setSelectedId(first);
   }
 
-
   // === Intent dispatcher (single place that mutates URL/grid) ===
   function dispatchFromRouter(payload: RouterPayload) {
     if (!payload || !payload.intent) return;
-    console.log("dispatchFromRouter →", payload);
-
     switch (payload.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
@@ -101,8 +98,9 @@ function HomeInner() {
         return;
       }
       case "show_portfolio": {
+        // Keep grid to exactly 3 items (per new layout rule)
         setSelectedId(null);
-        setVisibleThree(allVideos.slice(0, 6));
+        setVisibleThree(allVideos.slice(0, 3));
         return;
       }
       case "navigate_video": {
@@ -141,20 +139,26 @@ function HomeInner() {
     dispatchFromRouter({ intent, args });
   }
 
-  return (
-    <main ref={topRef} className="mx-auto max-w-5xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
-
-      {/* Selected video section shows ONLY when ?v=<id> is present */}
-      {selected && <VideoSection video={selected} />}
-
-      {/* Thumbnails grid */}
-      <section>
-        <VideoGrid videos={visibleThree} onSelectId={(id) => setSelectedId(id)} />
-      </section>
-
-      {/* Chat is the single assistant message surface */}
-      <Chat onIntent={handleChatIntent} />
-    </main>
+  // --- Top pane: either the selected video section OR the grid of 3 ---
+  const TopPane = (
+    <div ref={topRef} className="space-y-6">
+      {selected ? (
+        <VideoSection video={selected} />
+      ) : (
+        <VideoGrid
+          videos={visibleThree}
+          onSelectId={(id) => setSelectedId(id)}
+        />
+      )}
+    </div>
   );
+
+  // --- Bottom pane: pinned chat dock; its content scrolls if needed ---
+  const BottomDock = (
+    <div className="max-h-[42vh] overflow-y-auto">
+      <Chat onIntent={handleChatIntent} />
+    </div>
+  );
+
+  return <TwoPane top={TopPane} bottom={BottomDock} />;
 }

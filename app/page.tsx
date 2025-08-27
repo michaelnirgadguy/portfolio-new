@@ -1,15 +1,15 @@
 // /app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
 import Chat from "@/components/Chat";
 
-// Extend as we add more actions
+// Allowed intents from the router
 type Intent =
   | "show_videos"
   | "show_portfolio"
@@ -24,72 +24,66 @@ type RouterPayload = {
   message?: string;
 };
 
-function DeepLink({
-  allVideos,
-  onPick,
-}: {
-  allVideos: VideoItem[];
-  onPick: (v: VideoItem) => void;
-}) {
-  const sp = useSearchParams();
-  useEffect(() => {
-    const id = sp.get("v");
-    if (!id) return;
-    const vid = allVideos.find((x) => x.id === id);
-    if (vid) onPick(vid);
-  }, [sp, allVideos, onPick]);
-  return null;
-}
-
 export default function Home() {
+  const router = useRouter();
+  const sp = useSearchParams();
+
   const allVideos = useMemo(() => getAllVideos(), []);
   const byId = useMemo(() => new Map(allVideos.map((v) => [v.id, v])), [allVideos]);
 
+  // URL is the single source of truth for selection
+  const selectedId = sp.get("v");
+  const selected: VideoItem | null = selectedId ? byId.get(selectedId) ?? null : null;
+
+  // Grid state only (not selection)
   const [visibleThree, setVisibleThree] = useState<VideoItem[]>(() =>
     allVideos.slice(0, 3)
   );
-  const [selected, setSelected] = useState<VideoItem | null>(null);
-  const [systemMessage, setSystemMessage] = useState<string>("");
   const [showContact, setShowContact] = useState<boolean>(false);
 
   const topRef = useRef<HTMLDivElement | null>(null);
 
-  // helper: set grid to exactly these IDs, preserving given order
-  function showThreeByIds(ids: string[]) {
-    if (!Array.isArray(ids) || ids.length === 0) return;
-    const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
-    if (ordered.length === 0) return;
-    setSelected(null);
-    setVisibleThree(ordered.slice(0, 3));
+  // --- URL helpers ---
+  function replaceQuery(next: URLSearchParams) {
+    const qs = next.toString();
+    router.replace(qs ? `?${qs}` : "?", { scroll: false });
+  }
+
+  function setSelectedId(id: string | null) {
+    const next = new URLSearchParams(sp.toString());
+    if (id) next.set("v", id);
+    else next.delete("v");
+    replaceQuery(next);
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  // helper: pick first matching ID and play inline
+  // --- UI helpers ---
+  function showThreeByIds(ids: string[]) {
+    if (!Array.isArray(ids) || !ids.length) return;
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
+    if (!ordered.length) return;
+    setSelectedId(null); // clear selection via URL
+    setVisibleThree(ordered.slice(0, 3));
+  }
+
   function playFirst(ids: string[]) {
     const first = ids.find((id) => byId.has(id));
     if (!first) return;
-    const vid = byId.get(first)!;
-    setSelected(vid);
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-
-    // update URL for deep-linking
-    const url = new URL(window.location.href);
-    url.searchParams.set("v", vid.id);
-    history.replaceState(null, "", url.toString());
+    setSelectedId(first);
   }
 
   function copyShareLink(id?: string) {
-    const currentId = id ?? selected?.id;
+    const currentId = id ?? selectedId ?? undefined;
     if (!currentId) return false;
     const url = new URL(window.location.href);
     url.searchParams.set("v", currentId);
     const link = url.toString();
     try {
       navigator.clipboard.writeText(link);
-      setSystemMessage("Link copied to clipboard.");
+      // No extra message surface here—Chat remains the single assistant surface.
       return true;
     } catch {
-      setSystemMessage(link); // fallback: at least show it
+      // As a silent fallback we do nothing visible.
       return false;
     }
   }
@@ -98,22 +92,17 @@ export default function Home() {
   function dispatchFromRouter(payload: RouterPayload) {
     if (!payload || !payload.intent) return;
     console.log("dispatchFromRouter →", payload);
-    if (payload.message) setSystemMessage(payload.message);
     setShowContact(false); // reset unless asked again
 
     switch (payload.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
-        if (ids.length === 1) {
-          // single strong pick → play it
-          playFirst(ids);
-        } else if (ids.length > 1) {
-          showThreeByIds(ids);
-        }
+        if (ids.length === 1) playFirst(ids);
+        else if (ids.length > 1) showThreeByIds(ids);
         return;
       }
       case "show_portfolio": {
-        setSelected(null);
+        setSelectedId(null);
         setVisibleThree(allVideos.slice(0, 6));
         return;
       }
@@ -132,7 +121,7 @@ export default function Home() {
         return;
       }
       case "information": {
-        // message already shown by chat UI; no layout change needed
+        // Chat displays the assistant message; no extra surface here.
         return;
       }
       default:
@@ -154,9 +143,8 @@ export default function Home() {
     return () => {
       if ((globalThis as any).routerSink) (globalThis as any).routerSink = undefined;
     };
-  }, [allVideos, byId]);
+  }, [allVideos, byId, sp]);
 
-  // Shim so Chat can also call onIntent(intent, args)
   function handleChatIntent(intent: Intent, args?: { videoIds?: string[] }) {
     dispatchFromRouter({ intent, args });
   }
@@ -164,13 +152,6 @@ export default function Home() {
   return (
     <main ref={topRef} className="mx-auto max-w-5xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inline Player + 3 Thumbnails (Test)</h1>
-
-      {/* Optional system message surface */}
-      {systemMessage ? (
-        <div className="rounded-lg border p-3 text-sm text-gray-800 bg-gray-50">
-          {systemMessage}
-        </div>
-      ) : null}
 
       {/* Contact panel */}
       {showContact && (
@@ -191,12 +172,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* Big inline player appears after a thumbnail is selected or intent picks a single ID */}
+      {/* Inline player shows only when ?v=<id> is present */}
       {selected && (
         <section className="space-y-3">
           <h2 className="text-xl font-medium">{selected.title}</h2>
           <div className="text-gray-500">{selected.client}</div>
-          {/* NOTE: Keep as-is to match your current VideoPlayer props */}
           <VideoPlayer url={selected.url} title={selected.title} />
           {selected.description && (
             <p className="text-gray-700 leading-relaxed">{selected.description}</p>
@@ -208,18 +188,13 @@ export default function Home() {
       <section>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {visibleThree.map((v) => (
-            <VideoCard key={v.id} video={v} onSelect={setSelected} />
+            <VideoCard key={v.id} video={v} onSelect={() => setSelectedId(v.id)} />
           ))}
         </div>
       </section>
 
-      {/* Chat now wired: it can call onIntent and/or window.routerSink.deliver */}
-      <Chat onIntent={handleChatIntent} onAssistantMessage={setSystemMessage} />
-
-      {/* Deep-link reader */}
-      <Suspense fallback={null}>
-        <DeepLink allVideos={allVideos} onPick={(v) => setSelected(v)} />
-      </Suspense>
+      {/* Chat is the single assistant message surface */}
+      <Chat onIntent={handleChatIntent} />
     </main>
   );
 }

@@ -2,9 +2,11 @@
 "use client";
 
 /**
- * Page coordinator (2 elements only):
- * 1) Top: VideoSection (if selected) OR VideoGrid (3 thumbs)
- * 2) Bottom: pinned Chat dock (always visible)
+ * Coordinator:
+ * - URL ?v=<id> is the ONLY source of truth for selected video
+ * - Chat dispatches intents → update URL or grid accordingly
+ * - Top pane renders either VideoSection (selected) OR VideoGrid (N items)
+ * - Layout via CenterDock: center when it fits, else pin chat at bottom
  */
 
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
@@ -14,9 +16,9 @@ import type { VideoItem } from "@/types/video";
 import VideoSection from "@/components/VideoSection";
 import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
-import TwoPane from "@/components/TwoPane";
+import CenterDock from "@/components/CenterDock";
 
-// Allowed intents from the router (centralized here for now)
+// Router intents
 type Intent =
   | "show_videos"
   | "show_portfolio"
@@ -30,7 +32,6 @@ type RouterPayload = {
   message?: string;
 };
 
-// Suspense wrapper is required when using useSearchParams in Client Components.
 export default function Home() {
   return (
     <Suspense fallback={null}>
@@ -43,17 +44,17 @@ function HomeInner() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // Dataset (static JSON) → map for fast lookup
+  // Dataset → index
   const allVideos = useMemo(() => getAllVideos(), []);
   const byId = useMemo(() => new Map(allVideos.map((v) => [v.id, v])), [allVideos]);
 
-  // URL is the single source of truth for the selection
+  // URL is the single source of truth
   const selectedId = sp.get("v");
   const selected: VideoItem | null = selectedId ? byId.get(selectedId) ?? null : null;
 
-  // Grid state only (not selection)
-  const [visibleThree, setVisibleThree] = useState<VideoItem[]>(
-    () => allVideos.slice(0, 3)
+  // Grid list (can be 3 or many depending on intent)
+  const [visibleGrid, setVisibleGrid] = useState<VideoItem[]>(() =>
+    allVideos.slice(0, 3)
   );
 
   const topRef = useRef<HTMLDivElement | null>(null);
@@ -73,12 +74,12 @@ function HomeInner() {
   }
 
   // --- UI helpers ---
-  function showThreeByIds(ids: string[]) {
+  function showByIds(ids: string[], cap?: number) {
     if (!Array.isArray(ids) || !ids.length) return;
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (!ordered.length) return;
-    setSelectedId(null); // clear selection via URL
-    setVisibleThree(ordered.slice(0, 3));
+    setSelectedId(null); // clear selection
+    setVisibleGrid(typeof cap === "number" ? ordered.slice(0, cap) : ordered);
   }
 
   function playFirst(ids: string[]) {
@@ -87,20 +88,21 @@ function HomeInner() {
     setSelectedId(first);
   }
 
-  // === Intent dispatcher (single place that mutates URL/grid) ===
+  // === Intent dispatcher ===
   function dispatchFromRouter(payload: RouterPayload) {
     if (!payload || !payload.intent) return;
+
     switch (payload.intent) {
       case "show_videos": {
         const ids = payload.args?.videoIds ?? [];
         if (ids.length === 1) playFirst(ids);
-        else if (ids.length > 1) showThreeByIds(ids);
+        else if (ids.length > 1) showByIds(ids, 3); // cap curated suggestions to 3
         return;
       }
       case "show_portfolio": {
-        // Keep grid to exactly 3 items (per new layout rule)
+        // portfolio can be many (e.g., all)
         setSelectedId(null);
-        setVisibleThree(allVideos.slice(0, 3));
+        setVisibleGrid(allVideos); // show full list (adjust later if you prefer a subset)
         return;
       }
       case "navigate_video": {
@@ -110,7 +112,7 @@ function HomeInner() {
       }
       case "information":
       case "contact": {
-        // Chat renders the assistant text; no extra surface here.
+        // Chat renders the text; no surface change needed.
         return;
       }
       default:
@@ -139,26 +141,22 @@ function HomeInner() {
     dispatchFromRouter({ intent, args });
   }
 
-  // --- Top pane: either the selected video section OR the grid of 3 ---
+  // --- Top pane: either the selected player OR a grid (3 or many) ---
   const TopPane = (
     <div ref={topRef} className="space-y-6">
       {selected ? (
         <VideoSection video={selected} />
       ) : (
         <VideoGrid
-          videos={visibleThree}
+          videos={visibleGrid}
           onSelectId={(id) => setSelectedId(id)}
         />
       )}
     </div>
   );
 
-  // --- Bottom pane: pinned chat dock; its content scrolls if needed ---
-  const BottomDock = (
-    <div className="max-h-[42vh] overflow-y-auto">
-      <Chat onIntent={handleChatIntent} />
-    </div>
-  );
+  // --- Chat (let CenterDock manage size/overflow) ---
+  const ChatPane = <Chat onIntent={handleChatIntent} />;
 
-  return <TwoPane top={TopPane} bottom={BottomDock} />;
+  return <CenterDock top={TopPane} chat={ChatPane} />;
 }

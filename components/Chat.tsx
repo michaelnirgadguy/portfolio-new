@@ -132,44 +132,52 @@ export default function Chat({
   }
 
   return (
-    <section className="w-full space-y-4">
-      {/* Curator surface (no bubbles) */}
-      <div className="rounded-xl border bg-white p-5 leading-7 shadow-sm">
-        {status === "pending" ? (
-          <div className="space-y-2">
-            <div className="text-[0.95rem]">{userLine}</div>
-            <div className="text-sm text-muted-foreground">
-              {"•".repeat(dots)}
-            </div>
+  <section className="w-full space-y-5">
+    {/* Curator surface (no bubbles) */}
+    <div className="surface elevated p-6 md:p-7 leading-8 text-[17px] md:text-[18px] tracking-tight">
+      {status === "pending" ? (
+        <div className="space-y-2">
+          <div className="text-[16px] md:text-[17px]">{userLine}</div>
+          <div className="text-sm text-muted-foreground">
+            {"•".repeat(dots)}
           </div>
-        ) : (
-          <div className="font-normal tracking-normal whitespace-pre-wrap">
-            {typed}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="whitespace-pre-wrap">
+          {typed}
+        </div>
+      )}
+    </div>
 
-      {/* Composer */}
-      <form onSubmit={onSubmit} className="flex items-center gap-2">
+    {/* Composer */}
+    <form onSubmit={onSubmit} className="flex items-center">
+      <div className="w-full flex items-center gap-2 rounded-2xl border bg-white px-2 py-1 shadow-sm">
         {/* ✨ prompt generator */}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={handleSparkle}
           title="Generate a prompt"
           aria-label="Generate a prompt"
-          className="rounded-xl border px-3 py-2 hover:bg-accent hover:text-accent-foreground transition"
+          className="shrink-0 rounded-xl"
         >
           ✨
-        </button>
+        </Button>
 
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder='Type a request… e.g., "bold, funny tech ad"'
-          className="flex-1 rounded-xl border px-4 py-2 outline-none focus:ring-2 focus:ring-black"
+          className="flex-1 bg-transparent px-2 py-2 outline-none placeholder:text-muted-foreground focus:ring-0"
         />
-        <Button type="submit">Send</Button>
-      </form>
-    </section>
-  );
+
+        <Button type="submit" className="shrink-0 rounded-xl">
+          Send
+        </Button>
+      </div>
+    </form>
+  </section>
+);
+
 }

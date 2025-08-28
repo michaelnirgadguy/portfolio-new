@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp} from "lucide-react";
 
 
 type Role = "user" | "assistant";
@@ -134,60 +134,40 @@ export default function Chat({
   }
 
   return (
-  <section className="w-full space-y-6">
-      {/* Curator surface (no box, no bubbles) */}
-      <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
-        {status === "pending" ? (
-          <div className="space-y-2">
-            <div className="text-[16px] md:text-[17px]">{userLine}</div>
-            <div className="text-sm text-muted-foreground/70">
-              {"•".repeat(dots)}
-            </div>
-          </div>
-        ) : (
-          <div className="whitespace-pre-wrap">{typed}</div>
-        )}
-      </div>
+ <form onSubmit={onSubmit} className="flex items-center">
+  <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
+    {/* ✨ prompt generator — pill, emoji, no text */}
+    <Button
+      type="button"
+      variant="outlineAccent"
+      size="pill"
+      onClick={handleSparkle}
+      title="Generate a prompt"
+      aria-label="Generate a prompt"
+      className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+    >
+      <span className="text-xl">✨</span>
+    </Button>
 
-    {/* Composer */}
-    <form onSubmit={onSubmit} className="flex items-center">
-      <div className="w-full flex items-center gap-2 rounded-2xl border bg-white px-2 py-1 shadow-sm">
-      {/* ✨ prompt generator — pill outline */}
-      <Button
-        type="button"
-        variant="outlineAccent"
-        size="pill"
-        onClick={handleSparkle}
-        title="Generate a prompt"
-        aria-label="Generate a prompt"
-        className="shrink-0"
-      >
-        <Sparkles className="w-4 h-4" />
-        <span className="sr-only md:not-sr-only md:inline">Prompt</span>
-      </Button>
+    <input
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder='Type a request… e.g., "bold, funny tech ad"'
+      className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
+    />
 
-
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder='Type a request… e.g., "bold, funny tech ad"'
-          className="flex-1 bg-transparent px-2 py-2 outline-none placeholder:text-muted-foreground focus:ring-0"
-        />
-
-      {/* Send — circular outline with arrow */}
-      <Button
-        type="submit"
-        variant="outlineAccent"
-        size="icon"
-        title="Send"
-        aria-label="Send"
-        className="shrink-0"
-      >
-        <ArrowUp className="w-4 h-4" />
-      </Button>
-      </div>
-    </form>
-  </section>
-);
+    {/* Send — circular, bigger/thicker arrow; no border until hover */}
+    <Button
+      type="submit"
+      variant="outlineAccent"
+      size="icon"
+      title="Send"
+      aria-label="Send"
+      className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+    >
+      <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+    </Button>
+  </div>
+</form>
 
 }

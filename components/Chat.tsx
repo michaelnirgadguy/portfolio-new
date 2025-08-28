@@ -134,22 +134,20 @@ export default function Chat({
   }
 
   return (
-  <section className="w-full space-y-5">
-    {/* Curator surface (no bubbles) */}
-    <div className="surface elevated p-6 md:p-7 leading-8 text-[17px] md:text-[18px] tracking-tight">
-      {status === "pending" ? (
-        <div className="space-y-2">
-          <div className="text-[16px] md:text-[17px]">{userLine}</div>
-          <div className="text-sm text-muted-foreground">
-            {"•".repeat(dots)}
+  <section className="w-full space-y-6">
+      {/* Curator surface (no box, no bubbles) */}
+      <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
+        {status === "pending" ? (
+          <div className="space-y-2">
+            <div className="text-[16px] md:text-[17px]">{userLine}</div>
+            <div className="text-sm text-muted-foreground/70">
+              {"•".repeat(dots)}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="whitespace-pre-wrap">
-          {typed}
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="whitespace-pre-wrap">{typed}</div>
+        )}
+      </div>
 
     {/* Composer */}
     <form onSubmit={onSubmit} className="flex items-center">

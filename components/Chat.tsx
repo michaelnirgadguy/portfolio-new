@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
+import { ArrowUp, Sparkles } from "lucide-react";
+
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -152,18 +154,20 @@ export default function Chat({
     {/* Composer */}
     <form onSubmit={onSubmit} className="flex items-center">
       <div className="w-full flex items-center gap-2 rounded-2xl border bg-white px-2 py-1 shadow-sm">
-        {/* ✨ prompt generator */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleSparkle}
-          title="Generate a prompt"
-          aria-label="Generate a prompt"
-          className="shrink-0 rounded-xl"
-        >
-          ✨
-        </Button>
+      {/* ✨ prompt generator — pill outline */}
+      <Button
+        type="button"
+        variant="outlineAccent"
+        size="pill"
+        onClick={handleSparkle}
+        title="Generate a prompt"
+        aria-label="Generate a prompt"
+        className="shrink-0"
+      >
+        <Sparkles className="w-4 h-4" />
+        <span className="sr-only md:not-sr-only md:inline">Prompt</span>
+      </Button>
+
 
         <input
           value={input}
@@ -172,9 +176,17 @@ export default function Chat({
           className="flex-1 bg-transparent px-2 py-2 outline-none placeholder:text-muted-foreground focus:ring-0"
         />
 
-        <Button type="submit" className="shrink-0 rounded-xl">
-          Send
-        </Button>
+      {/* Send — circular outline with arrow */}
+      <Button
+        type="submit"
+        variant="outlineAccent"
+        size="icon"
+        title="Send"
+        aria-label="Send"
+        className="shrink-0"
+      >
+        <ArrowUp className="w-4 h-4" />
+      </Button>
       </div>
     </form>
   </section>

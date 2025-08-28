@@ -9,6 +9,18 @@ type Message = { id: string; role: Role; text: string };
 
 type SurfaceStatus = "idle" | "pending" | "answer";
 
+// Pre-made prompt ideas (expand later or swap to LLM generation)
+const PROMPTS = [
+  "Show me three witty tech explainers.",
+  "Pick something poetic and visually striking.",
+  "I want bold, funny, under 60 seconds.",
+  "Suggest educational work with kids.",
+  "Give me a cinematic brand film.",
+  "Surprise me with contrasting tones.",
+  "Something tender and human, not flashy.",
+  "Tech + education crossover, please.",
+];
+
 export default function Chat({
   onAssistantMessage,
   onIntent,
@@ -39,7 +51,7 @@ export default function Chat({
   useEffect(() => {
     if (status !== "pending") return;
     setDots(0);
-    const t = setInterval(() => setDots((d) => (d + 1) % 4), 400);
+    const t = setInterval(() => setDots((d) => (d + 1) % 4, 400));
     return () => clearInterval(t);
   }, [status]);
 
@@ -122,6 +134,13 @@ export default function Chat({
     }
   }
 
+  // ✨ Prompt generator: insert a random idea into the input (don’t submit yet)
+  function handleSparkle() {
+    if (!PROMPTS.length) return;
+    const idx = Math.floor(Math.random() * PROMPTS.length);
+    setInput(PROMPTS[idx]);
+  }
+
   return (
     <section className="w-full space-y-4">
       {/* Curator surface (no bubbles) */}
@@ -130,7 +149,7 @@ export default function Chat({
           <div className="space-y-2">
             <div className="text-[0.95rem]">{userLine}</div>
             <div className="text-sm text-muted-foreground">
-              {Array(dots).fill("•").join("")}
+              {"•".repeat(dots)}
             </div>
           </div>
         ) : (
@@ -141,7 +160,18 @@ export default function Chat({
       </div>
 
       {/* Composer */}
-      <form onSubmit={onSubmit} className="flex gap-2">
+      <form onSubmit={onSubmit} className="flex items-center gap-2">
+        {/* ✨ prompt generator */}
+        <button
+          type="button"
+          onClick={handleSparkle}
+          title="Generate a prompt"
+          aria-label="Generate a prompt"
+          className="rounded-xl border px-3 py-2 hover:bg-accent hover:text-accent-foreground transition"
+        >
+          ✨
+        </button>
+
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

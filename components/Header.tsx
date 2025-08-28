@@ -15,9 +15,7 @@ export default function Header() {
             className="rounded-md"
             priority
           />
-          <span className="text-sm font-medium tracking-tight">
-            Michael Nirgad Guy
-          </span>
+
         </Link>
       </div>
     </header>

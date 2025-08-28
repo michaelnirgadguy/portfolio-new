@@ -3,23 +3,12 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
 
 type SurfaceStatus = "idle" | "pending" | "answer";
-
-// Pre-made prompt ideas (expand later or swap to LLM generation)
-const PROMPTS = [
-  "Show me three witty tech explainers.",
-  "Pick something poetic and visually striking.",
-  "I want bold, funny, under 60 seconds.",
-  "Suggest educational work with kids.",
-  "Give me a cinematic brand film.",
-  "Surprise me with contrasting tones.",
-  "Something tender and human, not flashy.",
-  "Tech + education crossover, please.",
-];
 
 export default function Chat({
   onAssistantMessage,
@@ -137,9 +126,9 @@ export default function Chat({
 
   // ✨ Prompt generator: insert a random idea into the input (don’t submit yet)
   function handleSparkle() {
-    if (!PROMPTS.length) return;
-    const idx = Math.floor(Math.random() * PROMPTS.length);
-    setInput(PROMPTS[idx]);
+    if (!SuggestedPrompts.length) return;
+    const idx = Math.floor(Math.random() * SuggestedPrompts.length);
+    setInput(SuggestedPrompts[idx]);
   }
 
   return (

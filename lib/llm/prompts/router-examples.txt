@@ -1,7 +1,7 @@
 # Few-shot examples for the ROUTER ONLY.
 # Must output exactly one JSON object per turn. No extra text.
 
-USER: show me clever tech explainers
+USER: show me some clever tech explainers
 ASSISTANT:
 {
   "intent": "show_videos",

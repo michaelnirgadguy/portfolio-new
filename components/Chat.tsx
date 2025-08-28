@@ -133,41 +133,59 @@ export default function Chat({
     setInput(SuggestedPrompts[idx]);
   }
 
-  return (
- <form onSubmit={onSubmit} className="flex items-center">
-  <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
-    {/* ✨ prompt generator — pill, emoji, no text */}
-    <Button
-      type="button"
-      variant="outlineAccent"
-      size="pill"
-      onClick={handleSparkle}
-      title="Generate a prompt"
-      aria-label="Generate a prompt"
-      className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-    >
-      <span className="text-xl">✨</span>
-    </Button>
+return (
+  <section className="w-full space-y-6">
+    {/* Curator surface (no box, no bubbles) */}
+    <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
+      {status === "pending" ? (
+        <div className="space-y-2">
+          <div className="text-[16px] md:text-[17px]">{userLine}</div>
+          <div className="text-sm text-muted-foreground/70">
+            {"•".repeat(dots)}
+          </div>
+        </div>
+      ) : (
+        <div className="whitespace-pre-wrap">{typed}</div>
+      )}
+    </div>
 
-    <input
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-      placeholder='Type a request… e.g., "bold, funny tech ad"'
-      className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
-    />
+    {/* Composer */}
+    <form onSubmit={onSubmit} className="flex items-center">
+      <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
+        {/* ✨ prompt generator — pill, emoji, no text */}
+        <Button
+          type="button"
+          variant="outlineAccent"
+          size="pill"
+          onClick={handleSparkle}
+          title="Generate a prompt"
+          aria-label="Generate a prompt"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <span className="text-xl leading-none">✨</span>
+        </Button>
 
-    {/* Send — circular, bigger/thicker arrow; no border until hover */}
-    <Button
-      type="submit"
-      variant="outlineAccent"
-      size="icon"
-      title="Send"
-      aria-label="Send"
-      className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-    >
-      <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-    </Button>
-  </div>
-</form>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder='Type a request… e.g., "bold, funny tech ad"'
+          className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
+        />
+
+        {/* Send — circular, bigger/thicker arrow; no border until hover */}
+        <Button
+          type="submit"
+          variant="outlineAccent"
+          size="icon"
+          title="Send"
+          aria-label="Send"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+        </Button>
+      </div>
+    </form>
+  </section>
+);
 
 }

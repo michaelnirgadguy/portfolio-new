@@ -1,42 +1,239 @@
 [
   {
-    "id": "space-odyssey",
-    "title": "2001: A Space Odyssey Trailer",
-    "client": "MGM",
-    "url": "https://www.youtube.com/watch?v=oR_e9y-bka0",
-    "thumbnail": "https://img.youtube.com/vi/oR_e9y-bka0/hqdefault.jpg",
-    "description": "The original trailer for Stanley Kubrick’s groundbreaking science fiction film. Useful as a cinematic test clip with strong visuals and sound design."
+    "id": "iia-autonomous-buses",
+    "title": "Autonomous busses",
+    "client": "Israel Innovation Authority",
+    "url": "https://youtu.be/qoJ7-xiC5Qc",
+    "thumbnail": "https://img.youtube.com/vi/qoJ7-xiC5Qc/hqdefault.jpg",
+    "description": "Climb aboard the future! This explainer takes viewers on a ride inside a real self-driving bus, mixing expert interviews, crisp narration, and playful animated segments to show how autonomous tech is steering us into tomorrow.",
+    "language": "he",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "explainer",
+      "autonomous vehicles",
+      "expert interviews",
+      "animation",
+      "technology"
+    ],
+    "my_roles": [
+      "writer",
+      "producer",
+      "director"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
   },
   {
-    "id": "bbc-earth",
-    "title": "BBC Earth: Planet Earth II Official Trailer",
-    "client": "BBC Earth",
-    "url": "https://www.youtube.com/watch?v=c8aFcHFu8QM",
-    "thumbnail": "https://img.youtube.com/vi/c8aFcHFu8QM/hqdefault.jpg",
-    "description": "A stunning trailer showcasing wildlife footage from Planet Earth II. Great test material for high-resolution visuals and nature storytelling."
+    "id": "aui-apollo",
+    "title": "Apollo",
+    "client": "AUI",
+    "url": "https://youtu.be/f_9eLfuV3Qk",
+    "thumbnail": "https://img.youtube.com/vi/f_9eLfuV3Qk/hqdefault.jpg",
+    "description": "A whirlwind one-minute script that unpacks Apollo’s cutting-edge Agentic AI: distilling dense tech into crisp, captivating storytelling. The challenge (and fun!) was translating a breakthrough in autonomous agents into something anyone can grasp—without losing the precision that makes it revolutionary.",
+    "language": "en",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "AI",
+      "explainer",
+      "innovation",
+      "tech",
+      "product"
+    ],
+    "my_roles": [
+      "writer"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
   },
   {
-    "id": "apple-hello",
-    "title": "Apple 1984 Super Bowl Ad",
-    "client": "Apple",
-    "url": "https://www.youtube.com/watch?v=2zfqw8nhUwA",
-    "thumbnail": "https://img.youtube.com/vi/2zfqw8nhUwA/hqdefault.jpg",
-    "description": "The famous Ridley Scott–directed Super Bowl commercial that introduced the Macintosh. Ideal test for shorter runtime and cultural reference."
+    "id": "forter-hybrid-ai",
+    "title": "Fighting Fraud With Hybrid AI",
+    "client": "Forter",
+    "url": "https://youtu.be/w48M82t31mM",
+    "thumbnail": "https://img.youtube.com/vi/w48M82t31mM/hqdefault.jpg",
+    "description": "From Kasparov vs. Deep Blue to today’s battle against online fraud—this three-minute explainer zips through the story of AI. It contrasts rule-based logic with learning systems, then shows how Forter cleverly blends both into a hybrid shield that keeps fraudsters in check.",
+    "language": "en",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "explainer",
+      "AI history",
+      "chess",
+      "fraud prevention",
+      "fintech"
+    ],
+    "my_roles": [
+      "writer"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
   },
   {
-    "id": "ted-ai",
-    "title": "What is Artificial Intelligence? | Andrew Ng | TED",
-    "client": "TED",
-    "url": "https://www.youtube.com/watch?v=NKpuX_yzdYs",
-    "thumbnail": "https://img.youtube.com/vi/NKpuX_yzdYs/hqdefault.jpg",
-    "description": "Andrew Ng explains the basics of AI in a TED talk format. Perfect for testing spoken-word, educational content embedding."
+    "id": "blings-next-gen-video",
+    "title": "The Next Generation Of Video",
+    "client": "Blings",
+    "url": "https://youtu.be/ejUua6VKf7o",
+    "thumbnail": "https://img.youtube.com/vi/ejUua6VKf7o/hqdefault.jpg",
+    "description": "Aliens crash the marketing party to deliver one message: stop blasting, start engaging! This playful animated video introduces Blings’ dynamic, interactive video platform.",
+    "language": "en",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "animation",
+      "aliens",
+      "marketing tech",
+      "playful",
+      "conversions",
+      "product"
+    ],
+    "my_roles": [
+      "writer"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
   },
   {
-    "id": "coldplay-scientist",
-    "title": "Coldplay - The Scientist (Official Video)",
-    "client": "Coldplay",
-    "url": "https://www.youtube.com/watch?v=RB-RcX5DS5A",
-    "thumbnail": "https://img.youtube.com/vi/RB-RcX5DS5A/hqdefault.jpg",
-    "description": "A music video with reverse-shot storytelling. Great test for music embedding and different pacing from trailers or talks."
+    "id": "melio-musical",
+    "title": "Accounting Musical",
+    "client": "Melio",
+    "url": "https://youtu.be/vnLFO20bt2Y",
+    "thumbnail": "https://img.youtube.com/vi/vnLFO20bt2Y/hqdefault.jpg",
+    "description": "A musical journey into the future of finance: a straight-laced accountant is swept up by a dazzling, genie-like host who sings, dances, and whisks him through a whirlwind of change. The showy number turns spreadsheets into spectacle, inviting everyone to join the ride as accounting transforms before our eyes.",
+    "language": "en",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "musical",
+      "fintech",
+      "humor",
+      "theatrical",
+      "playful",
+      "award-winning"
+    ],
+    "my_roles": [
+      "co-writer"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
+  },
+  {
+    "id": "vaxa-microalgae",
+    "title": "Microalgae Save The World",
+    "client": "Vaxa",
+    "url": "https://youtu.be/_AtlRNz5Bbc",
+    "thumbnail": "https://img.youtube.com/vi/_AtlRNz5Bbc/hqdefault.jpg",
+    "description": "From toxic primordial Earth to today’s climate challenges, this cinematic script reimagines microalgae as the tiny superheroes of our planet. Blending planetary drama with playful touches like “five-star algae getaways,” the film turns science into spectacle—showing how these ancient organisms may hold the key to our future.",
+    "language": "en",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "science storytelling",
+      "microalgae",
+      "climate",
+      "explainer",
+      "cinematic",
+      "playful",
+      "educational",
+      "visitor center"
+    ],
+    "my_roles": [
+      "writer"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
+  },
+  {
+    "id": "jlm-moments-of-light",
+    "title": "Moments Of Light",
+    "client": "Jerusalem Muni",
+    "url": "https://youtu.be/hbh9t18Les4",
+    "thumbnail": "https://img.youtube.com/vi/hbh9t18Les4/hqdefault.jpg",
+    "description": "Three tender stories from Jerusalem’s schools shine a spotlight on “moments of light.” A 5-year-old speaks about the kindergarten teacher who raised her—and her parents too. A teacher recalls a student who cared for his family during reserve duty. And a teen shares how a teacher became like family after her father passed away. Gentle illustrations bring each story to life with warmth and heart.",
+    "language": "he",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "heartfelt",
+      "education",
+      "Jerusalem",
+      "illustrated",
+      "emotional",
+      "inspirational"
+    ],
+    "my_roles": [
+      "concept",
+      "producer",
+      "director"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
+  },
+  {
+    "id": "jlm-heart-of",
+    "title": "Heart of Jerusalem",
+    "client": "Jerusalm Muni",
+    "url": "https://youtu.be/wLs7Bh9mu60",
+    "thumbnail": "https://img.youtube.com/vi/wLs7Bh9mu60/hqdefault.jpg",
+    "description": "From preschool giggles to teen wisdom, Jerusalem’s students and teachers answer “Who’s in your heart?” in a cascade of short, moving stories—set inside dreamy, animated 3D rooms. A warm, city-proud opener made to light up the Jerusalem education awards night.",
+    "language": "he",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "heartfelt",
+      "education",
+      "interviews",
+      "kids & teens",
+      "3D animation",
+      "inspirational",
+      "event opener",
+      "Jerusalem"
+    ],
+    "my_roles": [
+      "concept",
+      "producer",
+      "director"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
+  },
+  {
+    "id": "music-of-spheres",
+    "title": "Music of The Spheres",
+    "client": "Passion Project",
+    "url": "https://youtu.be/dliU3jfUtBc",
+    "thumbnail": "https://img.youtube.com/vi/dliU3jfUtBc/hqdefault.jpg",
+    "description": "From Pythagoras and Plato to Kepler—and even Queen’s Brian May—thinkers have dreamed of cosmic music hidden in the heavens. This self-made passion project asks: can we actually hear the secret symphony of the solar system? Written, researched, edited, and even “badly animated in Paint” by yours truely",
+    "language": "he",
+    "duration_seconds": null,
+    "priority": "standard",
+    "tags": [
+      "cience storytelling",
+      "astronomy",
+      "philosophy",
+      "DIY project",
+      "music & cosmos",
+      "playful",
+      "animation",
+      "passion project"
+    ],
+    "my_roles": [
+      "writer",
+      "producer",
+      "director",
+      "animator"
+    ],
+    "long_description": null,
+    "display_credits": null,
+    "related_ids": null
   }
 ]

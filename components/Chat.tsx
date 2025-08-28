@@ -51,7 +51,8 @@ export default function Chat({
   useEffect(() => {
     if (status !== "pending") return;
     setDots(0);
-    const t = setInterval(() => setDots((d) => (d + 1) % 4, 400));
+    const t = setInterval(() => setDots((d) => (d + 1) % 4), 400);
+
     return () => clearInterval(t);
   }, [status]);
 

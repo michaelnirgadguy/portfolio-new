@@ -96,11 +96,13 @@ export default function Chat({
     setStatus("pending");
 
     try {
-      const res = await fetch("/api/route", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: trimmed }),
-      });
+    const recent = messages.slice(-5).map(m => ({ role: m.role, content: m.text }));
+    
+    const res = await fetch("/api/route", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: trimmed, recent }),
+    });
       const data = await res.json().catch(() => ({} as any));
 
       const msg =

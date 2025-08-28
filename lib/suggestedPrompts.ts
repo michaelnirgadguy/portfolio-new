@@ -1,3 +1,5 @@
+// Pre-made prompt ideas (expand later or swap to LLM generation)
+
 export const SuggestedPrompts = [
   "Show me three witty tech explainers.",
   "Pick something poetic and visually striking.",

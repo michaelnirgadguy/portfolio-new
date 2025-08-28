@@ -10,7 +10,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({} as any));
     const userText: string = typeof body?.text === "string" ? body.text : "";
-    const recent: { role: "user" | "assistant"; content: string }[] = Array.isArray(body?.recent) ? body.recent : [];
+    const recent: { role: "user" | "assistant"; content: string }[] =
+      Array.isArray(body?.recent) ? body.recent : [];
 
     // 1) Build prompt + schema for the router
     const request = await buildRouterRequest({ userText, recent });
@@ -24,11 +25,18 @@ export async function POST(req: Request) {
     });
 
     const raw = completion.choices?.[0]?.message?.content ?? "";
+
+    // --- Debug log (enable with DEBUG_ROUTER=1) -----------------------------
+    if (process.env.DEBUG_ROUTER === "1") {
+      console.debug("📥 /api/route input:", userText);
+      console.debug("📤 raw LLM output:", raw);
+    }
+
     if (!raw) {
-      return new Response(JSON.stringify({ error: "Empty completion from model" }), {
-        status: 502,
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Empty completion from model" }),
+        { status: 502, headers: { "content-type": "application/json" } }
+      );
     }
 
     // 3) Parse → validate with Zod
@@ -44,10 +52,10 @@ export async function POST(req: Request) {
 
     const result = RouterPayloadSchema.safeParse(parsed);
     if (!result.success) {
-      return new Response(JSON.stringify({ error: "Invalid payload", issues: result.error.flatten() }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Invalid payload", issues: result.error.flatten() }),
+        { status: 400, headers: { "content-type": "application/json" } }
+      );
     }
 
     let out = result.data;
@@ -73,8 +81,15 @@ export async function POST(req: Request) {
       };
     }
 
+    // --- Debug log final decision ------------------------------------------
+    if (process.env.DEBUG_ROUTER === "1") {
+      console.debug("✅ final router payload:", out);
+    }
+
     // 6) Return clean JSON (always)
-    return new Response(JSON.stringify(out), { headers: { "content-type": "application/json" } });
+    return new Response(JSON.stringify(out), {
+      headers: { "content-type": "application/json" },
+    });
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
     return new Response(

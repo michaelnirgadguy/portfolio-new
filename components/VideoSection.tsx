@@ -12,17 +12,13 @@ type Props = {
 export default function VideoSection({ video }: Props) {
   return (
     <section className="space-y-3">
-      {/* Title and client credit */}
-      <h2 className="text-xl font-medium">{video.title}</h2>
-      <div className="text-gray-500">{video.client}</div>
-
-      {/* Player uses existing YouTube URL extractor */}
-      <VideoPlayer url={video.url} title={video.title} />
-
-      {/* Optional long description */}
-      {video.description && (
-        <p className="text-gray-700 leading-relaxed">{video.description}</p>
+      <h2 className="heading-secondary">{video.title}</h2>
+      <div className="meta-secondary">{video.client}</div>
+      {video.display_credits && (
+        <div className="meta-tertiary">{video.display_credits}</div>
       )}
+      <VideoPlayer url={video.url} title={video.title} />
     </section>
+
   );
 }

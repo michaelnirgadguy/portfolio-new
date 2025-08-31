@@ -116,6 +116,15 @@
   .container-prose {
     @apply max-w-3xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+ 
+  /* Portfolio typography scale */
+  .heading-primary { @apply text-2xl md:text-3xl font-semibold text-foreground; }
+  .heading-secondary { @apply text-xl md:text-2xl font-medium text-foreground; }
+
+  /* Meta text */
+  .meta-secondary { @apply text-base text-muted-foreground; }  /* client */
+  .meta-tertiary  { @apply text-sm  text-muted-foreground; }  /* credits */
+
 }
 
 /* 4) Subtle motion (respect reduce-motion) */

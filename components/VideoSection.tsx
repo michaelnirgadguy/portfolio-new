@@ -1,5 +1,5 @@
 // components/VideoSection.tsx
-// Renders the selected video area: title, client, player, and description.
+// Renders the selected video area: title, client, player, and credits.
 // Keeps layout/markup isolated so page.tsx can stay a thin coordinator.
 
 import type { VideoItem } from "@/types/video";

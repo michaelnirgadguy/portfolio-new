@@ -11,14 +11,24 @@ type Props = {
 
 export default function VideoSection({ video }: Props) {
   return (
-    <section className="space-y-3">
-      <h2 className="heading-secondary">{video.title}</h2>
-      <div className="meta-secondary">{video.client}</div>
-      {video.display_credits && (
-        <div className="meta-tertiary">{video.display_credits}</div>
-      )}
-      <VideoPlayer url={video.url} title={video.title} />
-    </section>
+   <section className="space-y-3">
+  {/* Title */}
+  <h2 className="heading-secondary">{video.title}</h2>
+
+  {/* Client (left) + Credits (right) in one row, wraps on small screens */}
+  <div className="flex flex-wrap items-baseline gap-2">
+    <span className="meta-secondary">{video.client}</span>
+    {video.display_credits && (
+      <span className="meta-tertiary ml-auto text-right">
+        {video.display_credits}
+      </span>
+    )}
+  </div>
+
+  {/* Player */}
+  <VideoPlayer url={video.url} title={video.title} />
+</section>
+
 
   );
 }

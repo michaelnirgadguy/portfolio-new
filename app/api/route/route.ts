@@ -63,7 +63,7 @@ ${JSON.stringify(videos)}
     const output = (resp as any)?.output ?? [];
 
     // Helpful server logs while you iterate
-    console.log(">>> INPUT (preview):", JSON.stringify(input_list).slice(0, 400));
+    console.log(">>> INPUT (preview):", JSON.stringify(input_list).slice(0, 4000));
     console.log(">>> OUTPUT_TEXT:", text);
     console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 

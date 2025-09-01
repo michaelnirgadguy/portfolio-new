@@ -119,7 +119,8 @@ async function onSubmit(e: React.FormEvent) {
     setInput(SuggestedPrompts[idx]);
   }
 
- seEffect(() => {
+//  Register global `dispatchLLMEvent` (called from page.tsx) to handle `video_opened` → send chat-only screen event (no tools) and display the assistant reply.
+ useEffect(() => {
   (globalThis as any).dispatchLLMEvent = async (evt: { type: string; id?: string; url?: string }) => {
     if (evt?.type === "video_opened") {
       const msg = `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;

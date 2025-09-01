@@ -31,6 +31,8 @@ const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
 
     // Load Mimsy’s instructions
     const systemPrompt = await loadSystemPrompt();
+    const messages = [{ role: "user", content: userText || "Show me a cool video." }];
+
 
     // 2) Ask model with tools
     const resp = await client.responses.create({
@@ -40,10 +42,10 @@ const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
       tool_choice: "auto",
       parallel_tool_calls: false,
       instructions: systemPrompt,
-      input: request.messages,
+      input: messages,
     });
 console.log(">>> SYSTEM PROMPT:", systemPrompt.slice(0, 400));
-console.log(">>> INPUT MESSAGES:", JSON.stringify(request.messages, null, 2));
+console.log(">>> INPUT MESSAGES:", JSON.stringify(messages, null, 2));
 console.log(">>> RAW OUTPUT:", JSON.stringify(resp.output, null, 2));
 
 

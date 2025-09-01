@@ -202,22 +202,23 @@ export default function Chat({
     const idx = Math.floor(Math.random() * SuggestedPrompts.length);
     setInput(SuggestedPrompts[idx]);
   }
-  // 🔔 Register global function so page can notify us about video opens
+
+  // 🔔 Screen events → send a SHORT, chat-only message and DISPLAY the reply
   useEffect(() => {
     (globalThis as any).dispatchLLMEvent = (evt: { type: string; id?: string; url?: string }) => {
       if (evt?.type === "video_opened") {
-        const msg =`Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+        const msg = `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
         void sendEventToLLM(msg);
       }
     };
     return () => {
       delete (globalThis as any).dispatchLLMEvent;
     };
+    // Always use the latest log for context
   }, [log]);
 
-  
+  // Helper: send event turn and SHOW assistant reply (no tools expected)
   async function sendEventToLLM(text: string) {
-    // Build a minimal turn list: previous log + this event as a user turn
     const turnStartLog = [...log, { role: "user", content: text }];
 
     try {
@@ -230,8 +231,16 @@ export default function Chat({
       console.log(">>> SCREEN EVENT SENT:", text);
       console.log(">>> SCREEN EVENT RESPONSE:", data);
 
-      // Keep internal log in sync so the next user turn has context
       const modelOut: any[] = Array.isArray(data?.output) ? data.output : [];
+      const assistantText =
+        (typeof data?.text === "string" && data.text.trim()) || "";
+
+      if (assistantText) {
+        push("assistant", assistantText);
+        setAssistantFull(assistantText);
+        setStatus("answer");
+      }
+
       setLog([...turnStartLog, ...modelOut]);
     } catch (e) {
       console.error("sendEventToLLM error:", e);

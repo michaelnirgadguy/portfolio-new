@@ -24,6 +24,10 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as { text?: string };
     const userText = (body?.text ?? "").toString().trim();
     const systemPrompt = await loadSystemPrompt();
+    const catalogBlock = `
+    # Full video catalog (use ONLY these ids)
+    ${JSON.stringify(catalog)}
+    `;
 
     // Ask the model with ONE tool; let it choose to chat or call the tool
     const resp = await client.responses.create({
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
       tools: TOOLS,               // must include the single UI tool (e.g., ui_show_videos)
       tool_choice: "auto",
       parallel_tool_calls: false,
-      instructions: systemPrompt,
+      instructions: systemPrompt + catalogBlock,
       input: userText || "Show me a cool video.",
     });
 

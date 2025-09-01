@@ -206,7 +206,7 @@ export default function Chat({
   useEffect(() => {
     (globalThis as any).dispatchLLMEvent = (evt: { type: string; id?: string; url?: string }) => {
       if (evt?.type === "video_opened") {
-        const msg = `The visitor opened a video: id="${evt.id ?? "unknown"}"`;
+        const msg =`Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
         void sendEventToLLM(msg);
       }
     };

@@ -4,7 +4,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
-import { buildRouterRequest } from "@/lib/llm/buildRouterRequest";
 import catalog from "@/data/videos.json";
 
 export const runtime = "nodejs";
@@ -24,35 +23,33 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => ({}))) as { text?: string };
     const userText = (body?.text ?? "").toString().trim();
-
-    // 1) Ask the model with our single tool
-  // Build a short whitelist string (limit to 24 to keep tokens low)
-const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
-
-    // Load Mimsy’s instructions
     const systemPrompt = await loadSystemPrompt();
-    
 
-
-    // 2) Ask model with tools
+    // Ask the model with ONE tool; let it choose to chat or call the tool
     const resp = await client.responses.create({
       model: "gpt-4.1-mini",
-      tools: TOOLS,
-      // let Mimsy decide: chat or call tool
+      tools: TOOLS,               // must include the single UI tool (e.g., ui_show_videos)
       tool_choice: "auto",
       parallel_tool_calls: false,
       instructions: systemPrompt,
       input: userText || "Show me a cool video.",
     });
-console.log(">>> SYSTEM PROMPT:", systemPrompt.slice(0, 400));
-console.log(">>> USER TEXT:", userText);
-console.log(">>> RAW OUTPUT:", JSON.stringify(resp.output, null, 2));
 
+    // --- Extract assistant text (if any) ---
+    const assistantText = (resp as any)?.output_text
+      ? String((resp as any).output_text).trim()
+      : "";
 
-
-    // 2) Extract function call and parse arguments
+    // --- Extract tool call (first matching ui_show_videos) ---
     let chosen: string[] = [];
-    for (const item of resp.output ?? []) {
+    let toolCall:
+      | null
+      | {
+          name: string;
+          args: { videoIds: string[] };
+        } = null;
+
+    for (const item of ((resp as any).output ?? []) as any[]) {
       if (item.type === "function_call" && item.name === "ui_show_videos") {
         try {
           const parsed = JSON.parse(item.arguments || "{}");
@@ -61,48 +58,40 @@ console.log(">>> RAW OUTPUT:", JSON.stringify(resp.output, null, 2));
             chosen = ids
               .map((x) => String(x))
               .filter((id) => VALID_IDS.includes(id))
-              .slice(0, 6);
+              .slice(0, 12); // cap if you like
           }
         } catch {
-          // ignore parse errors; we'll fall back below
+          // ignore parse errors
         }
+        break; // only handle the first call
       }
     }
 
-    // 3) Fallback if model didn’t provide valid IDs
-    if (chosen.length === 0) {
-      chosen = VALID_IDS.slice(0, 3);
+    if (chosen.length > 0) {
+      toolCall = {
+        name: "ui_show_videos", // keep the exact tool name used in TOOLS
+        args: { videoIds: chosen },
+      };
     }
 
-    const message =
-      chosen.length === 1
-        ? `Opened video ${chosen[0]} on site.`
-        : `Showing ${chosen.length} videos on site.`;
-
-    // 4) Return the simple shape the UI can act on
-return new Response(
-  JSON.stringify({
-    intent: "show_videos",
-    args: { videoIds: chosen },
-    message,
-    // ⬇️ TEMP DEBUG (remove later)
-    _debug: {
-      receivedBody: body,                                   // what the client sent
-      modelInput: [{ role: "user", content: userText || "Show me a cool video." }],
-      rawOutput: resp.output?.map((it) => ({
-        type: it.type,
-        name: (it as any).name,
-        call_id: (it as any).call_id,
-        // arguments can be large; include for now
-        arguments: (it as any).arguments,
-      })),
-      validIdsCount: VALID_IDS.length,
-      chosen,
-    },
-  }),
-  { headers: { "content-type": "application/json" } }
-);
-
+    // --- Return NEW shape: { text, tool_call } ---
+    return new Response(
+      JSON.stringify({
+        text: assistantText || null,       // chat message to render (if any)
+        tool_call: toolCall,               // client should execute this (if present)
+        _debug: {
+          receivedBody: body,
+          rawOutput: (resp as any).output?.map((it: any) => ({
+            type: it.type,
+            name: it.name,
+            arguments: it.arguments,
+          })),
+          validIdsCount: VALID_IDS.length,
+          chosen,
+        },
+      }),
+      { headers: { "content-type": "application/json" } }
+    );
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
     return new Response(

@@ -1,15 +1,24 @@
 // app/api/route/route.ts
 import { NextRequest } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
+import { buildRouterRequest } from "@/lib/llm/buildRouterRequest";
 import catalog from "@/data/videos.json";
 
 export const runtime = "nodejs";
 
-// Small helper: collect valid IDs from the catalog
+// Whitelist of valid IDs
 const VALID_IDS: string[] = Array.isArray(catalog)
-  ? (catalog as any[]).map((v) => String(v.id))
+  ? (catalog as any[]).map((v) => String(v.id)).filter(Boolean)
   : [];
+
+// Helper to load system prompt text
+async function loadSystemPrompt(): Promise<string> {
+  const p = path.join(process.cwd(), "lib", "llm", "prompts", "system.txt");
+  return fs.readFile(p, "utf8");
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,22 +29,20 @@ export async function POST(req: NextRequest) {
   // Build a short whitelist string (limit to 24 to keep tokens low)
 const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
 
-const resp = await client.responses.create({
-  model: "gpt-4.1-mini",
-  tools: TOOLS,
-  tool_choice: "required",            // <-- must call a tool
-  parallel_tool_calls: false,
-  instructions:
-    [
-      "You are the site router for Michael’s portfolio.",
-      "Always call ui_show_videos with 1–6 IDs chosen from this whitelist:",
-      idWhitelist,
-      "If the user just greets or is vague, choose 3 varied IDs.",
-      "If the user asks for a single cool/best video, choose 1.",
-      "Return the tool call; no text assistant reply is needed."
-    ].join("\n"),
-  input: [{ role: "user", content: userText || "Show me a cool video." }],
-});
+    // Load Mimsy’s instructions
+    const systemPrompt = await loadSystemPrompt();
+
+    // 2) Ask model with tools
+    const resp = await client.responses.create({
+      model: "gpt-4.1-mini",
+      tools: TOOLS,
+      // let Mimsy decide: chat or call tool
+      tool_choice: "auto",
+      parallel_tool_calls: false,
+      instructions: systemPrompt,
+      input: request.messages,
+    });
+
 
 
     // 2) Extract function call and parse arguments

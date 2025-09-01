@@ -17,12 +17,26 @@ export async function POST(req: NextRequest) {
     const userText = (body?.text ?? "").toString().trim();
 
     // 1) Ask the model with our single tool
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      tools: TOOLS,
-      input: [{ role: "user", content: userText || "Show me a cool video." }],
-      parallel_tool_calls: false,
-    });
+  // Build a short whitelist string (limit to 24 to keep tokens low)
+const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
+
+const resp = await client.responses.create({
+  model: "gpt-4.1-mini",
+  tools: TOOLS,
+  tool_choice: "required",            // <-- must call a tool
+  parallel_tool_calls: false,
+  instructions:
+    [
+      "You are the site router for Michael’s portfolio.",
+      "Always call ui_show_videos with 1–6 IDs chosen from this whitelist:",
+      idWhitelist,
+      "If the user just greets or is vague, choose 3 varied IDs.",
+      "If the user asks for a single cool/best video, choose 1.",
+      "Return the tool call; no text assistant reply is needed."
+    ].join("\n"),
+  input: [{ role: "user", content: userText || "Show me a cool video." }],
+});
+
 
     // 2) Extract function call and parse arguments
     let chosen: string[] = [];

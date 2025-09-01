@@ -215,6 +215,28 @@ export default function Chat({
       delete (globalThis as any).dispatchLLMEvent;
     };
   }, []);
+  
+  async function sendEventToLLM(text: string) {
+    // Build a minimal turn list: previous log + this event as a user turn
+    const turnStartLog = [...log, { role: "user", content: text }];
+
+    try {
+      const res = await fetch("/api/route", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ input: turnStartLog }),
+      });
+      const data = await res.json();
+      console.log(">>> SCREEN EVENT SENT:", text);
+      console.log(">>> SCREEN EVENT RESPONSE:", data);
+
+      // Keep internal log in sync so the next user turn has context
+      const modelOut: any[] = Array.isArray(data?.output) ? data.output : [];
+      setLog([...turnStartLog, ...modelOut]);
+    } catch (e) {
+      console.error("sendEventToLLM error:", e);
+    }
+  }
 
   return (
     <section className="w-full space-y-6">

@@ -79,12 +79,20 @@ export default function Chat({
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
+
+function toolPending() {
+  setUserLine("");      // hide the user's line
+  setAssistantFull(""); // clear previous answer
+  setTyped("");         // reset typewriter
+  setStatus("pending"); // show dots
+}
+
 async function onSubmit(e: React.FormEvent) {
   e.preventDefault();
   const trimmed = input.trim();
   if (!trimmed) return;
 
-  // UI surface
+  // UI surface (initially show what they typed)
   push("user", trimmed);
   setInput("");
   setUserLine(trimmed);
@@ -96,7 +104,11 @@ async function onSubmit(e: React.FormEvent) {
     const { text, nextLog } = await sendTurn({
       log,
       userText: trimmed,
-      onShowVideo, // keeps tool-driven UI working
+      // NEW: when the LLM calls the UI tool, switch to dots and hide the user line
+      onShowVideo: (ids: string[]) => {
+        toolPending();            // <- clears the user message immediately
+        onShowVideo?.(ids);       // keep existing UI behavior
+      },
     });
 
     const reply = text || "Done.";
@@ -111,6 +123,7 @@ async function onSubmit(e: React.FormEvent) {
     setStatus("answer");
   }
 }
+
 
   // ✨ Prompt generator
   function handleSparkle() {

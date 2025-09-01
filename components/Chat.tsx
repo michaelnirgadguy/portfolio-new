@@ -207,14 +207,14 @@ export default function Chat({
     (globalThis as any).dispatchLLMEvent = (evt: { type: string; id?: string; url?: string }) => {
       if (evt?.type === "video_opened") {
         const msg = `The visitor opened a video: id="${evt.id ?? "unknown"}"`;
-        // Reuse existing submit logic
-        onSubmit({ preventDefault: () => {} } as any);
+        void sendEventToLLM(msg);
       }
     };
     return () => {
       delete (globalThis as any).dispatchLLMEvent;
     };
-  }, []);
+  }, [log]);
+
   
   async function sendEventToLLM(text: string) {
     // Build a minimal turn list: previous log + this event as a user turn

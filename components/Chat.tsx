@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
+import { sendTurn } from "@/lib/llm/sendTurn";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -77,124 +78,38 @@ export default function Chat({
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
+async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  const trimmed = input.trim();
+  if (!trimmed) return;
 
-    // UI surface
-    push("user", trimmed);
-    setInput("");
-    setUserLine(trimmed);
-    setAssistantFull("");
-    setTyped("");
-    setStatus("pending");
+  // UI surface
+  push("user", trimmed);
+  setInput("");
+  setUserLine(trimmed);
+  setAssistantFull("");
+  setTyped("");
+  setStatus("pending");
 
-    // 1) Append user to running log
-    const turnStartLog = [...log, { role: "user", content: trimmed }];
+  try {
+    const { text, nextLog } = await sendTurn({
+      log,
+      userText: trimmed,
+      onShowVideo, // keeps tool-driven UI working
+    });
 
-    try {
-      // 2) PRIMARY CALL — get assistant text + potential tool calls
-      const res1 = await fetch("/api/route", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: turnStartLog }),
-      });
-      const data1 = await res1.json();
-
-      const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
-      // Extend log with model output (includes function_call items)
-      let afterModelLog = [...turnStartLog, ...output];
-
-      // 3) Execute any tool calls locally and append function_call_output
-      const toolOutputs: any[] = [];
-      for (const item of output) {
-        if (item?.type !== "function_call") continue;
-        if (item?.name !== "ui_show_videos") continue;
-
-        // Parse arguments
-        let ids: string[] = [];
-        try {
-          const parsed = JSON.parse(item.arguments || "{}");
-          const arr = Array.isArray(parsed?.videoIds) ? parsed.videoIds : [];
-          ids = arr.filter((x: any) => typeof x === "string");
-        } catch {
-          ids = [];
-        }
-
-        // Execute UI tool
-        const hasIds = Array.isArray(ids) && ids.length > 0;
-        if (hasIds) {
-          if (onShowVideo) onShowVideo(ids);
-          else if ((globalThis as any).uiTool?.show_videos) {
-            (globalThis as any).uiTool.show_videos(ids);
-          }
-        }
-
-        // Prepare function_call_output result for the model
-        const outputPayload = hasIds
-          ? {
-              ok: true,
-              kind: ids.length === 1 ? "player" : "grid",
-              videoIds: ids,
-              message:
-                ids.length === 1
-                  ? `UI launched player for ${ids[0]}`
-                  : `UI showing grid for ${ids.join(", ")}`,
-            }
-          : {
-              ok: false,
-              kind: "error",
-              videoIds: [],
-              message: "No valid video IDs provided to ui_show_videos.",
-            };
-
-        toolOutputs.push({
-          type: "function_call_output",
-          call_id: item.call_id,
-          output: JSON.stringify(outputPayload),
-        });
-      }
-
-      // If no tool calls: we can finalize with assistant’s text (if any)
-      if (toolOutputs.length === 0) {
-        const text = (typeof data1?.text === "string" && data1.text.trim()) || "Done.";
-        push("assistant", text);
-        setAssistantFull(text);
-        setStatus("answer");
-        // Keep log in sync with model output
-        setLog(afterModelLog);
-        return;
-      }
-
-      // 4) SECOND CALL — send function_call_output back for a contextual follow-up
-      const logWithToolOutputs = [...afterModelLog, ...toolOutputs];
-      const res2 = await fetch("/api/route", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: logWithToolOutputs }),
-      });
-      const data2 = await res2.json();
-
-      const followText =
-        (typeof data2?.text === "string" && data2.text.trim()) ||
-        "All set — enjoy!";
-
-      // Visible surface
-      push("assistant", followText);
-      setAssistantFull(followText);
-      setStatus("answer");
-
-      // Persist the full log for future turns
-      const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
-      setLog([...logWithToolOutputs, ...finalOutput]);
-    } catch {
-      const errMsg = "Hmm, something went wrong. Try again?";
-      push("assistant", errMsg);
-      setAssistantFull(errMsg);
-      setStatus("answer");
-    }
+    const reply = text || "Done.";
+    push("assistant", reply);
+    setAssistantFull(reply);
+    setStatus("answer");
+    setLog(nextLog);
+  } catch {
+    const errMsg = "Hmm, something went wrong. Try again?";
+    push("assistant", errMsg);
+    setAssistantFull(errMsg);
+    setStatus("answer");
   }
+}
 
   // ✨ Prompt generator
   function handleSparkle() {

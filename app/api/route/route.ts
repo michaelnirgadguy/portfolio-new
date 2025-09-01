@@ -1,99 +1,83 @@
 // app/api/route/route.ts
+import { NextRequest } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
 import { client } from "@/lib/openai";
-import { buildRouterRequest } from "@/lib/llm/buildRouterRequest";
-import { RouterPayloadSchema } from "@/lib/llm/routerSchema";
-import { isRouterIntent } from "@/lib/llm/intents";
+import { TOOLS } from "@/lib/llm/tools";
+import videos from "@/data/videos.json";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+// Load system prompt
+async function loadSystemPrompt(): Promise<string> {
+  const p = path.join(process.cwd(), "lib", "llm", "prompts", "system.txt");
+  return fs.readFile(p, "utf8");
+}
+
+/**
+ * POST body shapes supported:
+ *  A) { text: string }                                   // first turn from user
+ *  B) { input: Array<any> }                              // full running log (includes function_call_output)
+ * 
+ * Response:
+ *  { text: string | null, output: any[] }                // output_text & raw output array (contains function_call items with call_id)
+ */
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({} as any));
-    const userText: string = typeof body?.text === "string" ? body.text : "";
-    const recent: { role: "user" | "assistant"; content: string }[] =
-      Array.isArray(body?.recent) ? body.recent : [];
+    const body = (await req.json().catch(() => ({}))) as {
+      text?: string;
+      input?: any[];
+    };
 
-    // 1) Build prompt + schema for the router
-    const request = await buildRouterRequest({ userText, recent });
+    const system = await loadSystemPrompt();
+    const catalogBlock = `
 
-    // 2) Call LLM
-    const completion = await client.chat.completions.create({
-      model: request.model,
-      temperature: request.temperature,
-      response_format: request.response_format,
-      messages: request.messages,
+# Full video catalog (use ONLY these ids)
+${JSON.stringify(videos)}
+`;
+
+    // Build the input list the model expects
+    let input_list: any[] | null = null;
+
+    if (Array.isArray(body.input) && body.input.length > 0) {
+      // Client supplied the full running log (best practice)
+      input_list = body.input;
+    } else {
+      // First user turn (simple case)
+      const userText = (body?.text ?? "").toString().trim();
+      input_list = [{ role: "user", content: userText || "Show me a cool video." }];
+    }
+
+    // Call the model using the running log + tools
+    const resp = await client.responses.create({
+      model: "gpt-4.1-mini",
+      tools: TOOLS,
+      tool_choice: "auto",
+      parallel_tool_calls: false,
+      instructions: system + catalogBlock,
+      input: input_list,
     });
 
-    const raw = completion.choices?.[0]?.message?.content ?? "";
+    // Expose both human text and raw tool calls
+    const text = (resp as any)?.output_text?.trim() || null;
+    const output = (resp as any)?.output ?? [];
 
-    // --- Debug log (enable with DEBUG_ROUTER=1) -----------------------------
-    if (process.env.DEBUG_ROUTER === "1") {
-      console.debug("📥 /api/route input:", userText);
-      console.debug("📤 raw LLM output:", raw);
-    }
+    // Helpful server logs while you iterate
+    console.log(">>> INPUT (preview):", JSON.stringify(input_list).slice(0, 400));
+    console.log(">>> OUTPUT_TEXT:", text);
+    console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 
-    if (!raw) {
-      return new Response(
-        JSON.stringify({ error: "Empty completion from model" }),
-        { status: 502, headers: { "content-type": "application/json" } }
-      );
-    }
-
-    // 3) Parse → validate with Zod
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return new Response(JSON.stringify({ error: "Model returned non-JSON", raw }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    const result = RouterPayloadSchema.safeParse(parsed);
-    if (!result.success) {
-      return new Response(
-        JSON.stringify({ error: "Invalid payload", issues: result.error.flatten() }),
-        { status: 400, headers: { "content-type": "application/json" } }
-      );
-    }
-
-    let out = result.data;
-
-    // 4) Coerce/guard intent
-    if (!isRouterIntent(out.intent)) {
-      out.intent = "show_portfolio";
-    }
-
-    // 5) Sanitize videoIds to whitelist (max 3)
-    const validSet = new Set<string>(request.VALID_IDS);
-    const incomingIds = Array.isArray(out.args?.videoIds) ? out.args!.videoIds : [];
-    const filtered = incomingIds.filter((id) => validSet.has(id)).slice(0, 3);
-
-    if (filtered.length > 0) {
-      out = { ...out, args: { ...(out.args ?? {}), videoIds: filtered } };
-    } else if (out.intent === "show_videos") {
-      const fallback = request.VALID_IDS.slice(0, 3);
-      out = {
-        ...out,
-        message: out.message || "Here are a few to start with.",
-        args: { ...(out.args ?? {}), videoIds: fallback },
-      };
-    }
-
-    // --- Debug log final decision ------------------------------------------
-    if (process.env.DEBUG_ROUTER === "1") {
-      console.debug("✅ final router payload:", out);
-    }
-
-    // 6) Return clean JSON (always)
-    return new Response(JSON.stringify(out), {
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ text, output }),
+      { headers: { "content-type": "application/json" } }
+    );
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal Server Error", details: String(err?.message ?? err) }),
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: String(err?.message ?? err),
+      }),
       { status: 500, headers: { "content-type": "application/json" } }
     );
   }

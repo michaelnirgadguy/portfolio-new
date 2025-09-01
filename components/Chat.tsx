@@ -4,22 +4,18 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
-import { ArrowUp} from "lucide-react";
-
+import { ArrowUp } from "lucide-react";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
-
 type SurfaceStatus = "idle" | "pending" | "answer";
 
 export default function Chat({
-  onAssistantMessage,
-  onIntent,
+  onShowVideo,
 }: {
-  onAssistantMessage?: (message: string) => void;
-  onIntent?: (intent: string, args?: any) => void;
+  onShowVideo?: (videoIds: string[]) => void;
 }) {
-  // Internal history (not fully displayed)
+  // Visible messages (simple surface)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "m0",
@@ -29,25 +25,26 @@ export default function Chat({
     },
   ]);
 
+  // Running log we send to the API (best practice for tools)
+  const [log, setLog] = useState<any[]>([]);
+
   const [input, setInput] = useState("");
 
-  // Single visible “surface” (no thread UI)
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [userLine, setUserLine] = useState<string>("");
   const [assistantFull, setAssistantFull] = useState<string>("");
   const [typed, setTyped] = useState<string>("");
 
-  // Dots animation for the pending state
+  // Dots animation
   const [dots, setDots] = useState<number>(0);
   useEffect(() => {
     if (status !== "pending") return;
     setDots(0);
     const t = setInterval(() => setDots((d) => (d + 1) % 4), 400);
-
     return () => clearInterval(t);
   }, [status]);
 
-  // Typewriter effect for assistant answer
+  // Typewriter
   useEffect(() => {
     if (status !== "answer" || !assistantFull) return;
     setTyped("");
@@ -66,7 +63,7 @@ export default function Chat({
     };
   }, [status, assistantFull]);
 
-  // On first render, show the greeting as the visible surface
+  // Show greeting as the first visible surface
   useEffect(() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
     if (status === "idle" && lastAssistant) {
@@ -85,109 +82,177 @@ export default function Chat({
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // Keep internal history (not displayed as a thread)
+    // UI surface
     push("user", trimmed);
     setInput("");
-
-    // Visible surface → show the user line + pending dots
     setUserLine(trimmed);
     setAssistantFull("");
     setTyped("");
     setStatus("pending");
 
+    // 1) Append user to running log
+    const turnStartLog = [...log, { role: "user", content: trimmed }];
+
     try {
-    const recent = messages.slice(-5).map(m => ({ role: m.role, content: m.text }));
-    
-    const res = await fetch("/api/route", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: trimmed, recent }),
-    });
-      const data = await res.json().catch(() => ({} as any));
+      // 2) PRIMARY CALL — get assistant text + potential tool calls
+      const res1 = await fetch("/api/route", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ input: turnStartLog }),
+      });
+      const data1 = await res1.json();
 
-      const msg =
-        typeof data?.message === "string"
-          ? data.message
-          : "Router returned no message.";
+      const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
+      // Extend log with model output (includes function_call items)
+      let afterModelLog = [...turnStartLog, ...output];
 
-      // Update visible surface → replace with assistant typewriter
-      push("assistant", msg);
-      setAssistantFull(msg);
+      // 3) Execute any tool calls locally and append function_call_output
+      const toolOutputs: any[] = [];
+      for (const item of output) {
+        if (item?.type !== "function_call") continue;
+        if (item?.name !== "ui_show_videos") continue;
+
+        // Parse arguments
+        let ids: string[] = [];
+        try {
+          const parsed = JSON.parse(item.arguments || "{}");
+          const arr = Array.isArray(parsed?.videoIds) ? parsed.videoIds : [];
+          ids = arr.filter((x: any) => typeof x === "string");
+        } catch {
+          ids = [];
+        }
+
+        // Execute UI tool
+        const hasIds = Array.isArray(ids) && ids.length > 0;
+        if (hasIds) {
+          if (onShowVideo) onShowVideo(ids);
+          else if ((globalThis as any).uiTool?.show_videos) {
+            (globalThis as any).uiTool.show_videos(ids);
+          }
+        }
+
+        // Prepare function_call_output result for the model
+        const outputPayload = hasIds
+          ? {
+              ok: true,
+              kind: ids.length === 1 ? "player" : "grid",
+              videoIds: ids,
+              message:
+                ids.length === 1
+                  ? `UI launched player for ${ids[0]}`
+                  : `UI showing grid for ${ids.join(", ")}`,
+            }
+          : {
+              ok: false,
+              kind: "error",
+              videoIds: [],
+              message: "No valid video IDs provided to ui_show_videos.",
+            };
+
+        toolOutputs.push({
+          type: "function_call_output",
+          call_id: item.call_id,
+          output: JSON.stringify(outputPayload),
+        });
+      }
+
+      // If no tool calls: we can finalize with assistant’s text (if any)
+      if (toolOutputs.length === 0) {
+        const text = (typeof data1?.text === "string" && data1.text.trim()) || "Done.";
+        push("assistant", text);
+        setAssistantFull(text);
+        setStatus("answer");
+        // Keep log in sync with model output
+        setLog(afterModelLog);
+        return;
+      }
+
+      // 4) SECOND CALL — send function_call_output back for a contextual follow-up
+      const logWithToolOutputs = [...afterModelLog, ...toolOutputs];
+      const res2 = await fetch("/api/route", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ input: logWithToolOutputs }),
+      });
+      const data2 = await res2.json();
+
+      const followText =
+        (typeof data2?.text === "string" && data2.text.trim()) ||
+        "All set — enjoy!";
+
+      // Visible surface
+      push("assistant", followText);
+      setAssistantFull(followText);
       setStatus("answer");
 
-      // Notify parent
-      onAssistantMessage?.(msg);
-      onIntent?.(String(data?.intent ?? ""), data?.args ?? undefined);
+      // Persist the full log for future turns
+      const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
+      setLog([...logWithToolOutputs, ...finalOutput]);
     } catch {
       const errMsg = "Hmm, something went wrong. Try again?";
       push("assistant", errMsg);
       setAssistantFull(errMsg);
       setStatus("answer");
-      onAssistantMessage?.(errMsg);
-      onIntent?.("", undefined);
     }
   }
 
-  // ✨ Prompt generator: insert a random idea into the input (don’t submit yet)
+  // ✨ Prompt generator
   function handleSparkle() {
     if (!SuggestedPrompts.length) return;
     const idx = Math.floor(Math.random() * SuggestedPrompts.length);
     setInput(SuggestedPrompts[idx]);
   }
 
-return (
-  <section className="w-full space-y-6">
-    {/* Curator surface (no box, no bubbles) */}
-    <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
-      {status === "pending" ? (
-        <div className="space-y-2">
-          <div className="text-[16px] md:text-[17px]">{userLine}</div>
-          <div className="text-sm text-muted-foreground/70">
-            {"•".repeat(dots)}
+  return (
+    <section className="w-full space-y-6">
+      {/* Curator surface */}
+      <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
+        {status === "pending" ? (
+          <div className="space-y-2">
+            <div className="text-[16px] md:text-[17px]">{userLine}</div>
+            <div className="text-sm text-muted-foreground/70">
+              {"•".repeat(dots)}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="whitespace-pre-wrap">{typed}</div>
-      )}
-    </div>
-
-    {/* Composer */}
-    <form onSubmit={onSubmit} className="flex items-center">
-      <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
-        {/* ✨ prompt generator — pill, emoji, no text */}
-        <Button
-          type="button"
-          variant="outlineAccent"
-          size="pill"
-          onClick={handleSparkle}
-          title="Generate a prompt"
-          aria-label="Generate a prompt"
-          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-        >
-          <span className="text-xl leading-none">✨</span>
-        </Button>
-
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder='Type a request… e.g., "bold, funny tech ad"'
-          className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
-        />
-
-        {/* Send — circular, bigger/thicker arrow; no border until hover */}
-        <Button
-          type="submit"
-          variant="outlineAccent"
-          size="icon"
-          title="Send"
-          aria-label="Send"
-          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-        >
-          <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-        </Button>
+        ) : (
+          <div className="whitespace-pre-wrap">{typed}</div>
+        )}
       </div>
-    </form>
-  </section>
-);
 
+      {/* Composer */}
+      <form onSubmit={onSubmit} className="flex items-center">
+        <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
+          <Button
+            type="button"
+            variant="outlineAccent"
+            size="pill"
+            onClick={handleSparkle}
+            title="Generate a prompt"
+            aria-label="Generate a prompt"
+            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+          >
+            <span className="text-xl leading-none">✨</span>
+          </Button>
+
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder='Type a request… e.g., "bold, funny tech ad"'
+            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
+          />
+
+          <Button
+            type="submit"
+            variant="outlineAccent"
+            size="icon"
+            title="Send"
+            aria-label="Send"
+            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+          >
+            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+          </Button>
+        </div>
+      </form>
+    </section>
+  );
 }

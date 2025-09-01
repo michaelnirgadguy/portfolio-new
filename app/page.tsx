@@ -1,12 +1,10 @@
-// /app/page.tsx
 "use client";
 
 /**
- * Coordinator:
+ * Simple coordinator:
  * - URL ?v=<id> is the ONLY source of truth for selected video
- * - Chat dispatches intents → update URL or grid accordingly
- * - Top pane renders either VideoSection (selected) OR VideoGrid (N items)
- * - Layout via CenterDock: center when it fits, else pin chat at bottom
+ * - onShowVideo(ids): if 1 → player, if many → grid
+ * - Global tool: globalThis.uiTool.show_videos(ids)
  */
 
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
@@ -17,20 +15,6 @@ import VideoSection from "@/components/VideoSection";
 import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
 import CenterDock from "@/components/CenterDock";
-
-// Router intents
-type Intent =
-  | "show_videos"
-  | "show_portfolio"
-  | "information"
-  | "contact"
-  | "navigate_video";
-
-type RouterPayload = {
-  intent: Intent;
-  args?: { videoIds?: string[] };
-  message?: string;
-};
 
 export default function Home() {
   return (
@@ -52,10 +36,8 @@ function HomeInner() {
   const selectedId = sp.get("v");
   const selected: VideoItem | null = selectedId ? byId.get(selectedId) ?? null : null;
 
-  // Grid list (can be 3 or many depending on intent)
-  const [visibleGrid, setVisibleGrid] = useState<VideoItem[]>(() =>
-    allVideos.slice(0, 3)
-  );
+  // Grid list
+  const [visibleGrid, setVisibleGrid] = useState<VideoItem[]>(() => allVideos.slice(0, 3));
 
   const topRef = useRef<HTMLDivElement | null>(null);
 
@@ -74,12 +56,12 @@ function HomeInner() {
   }
 
   // --- UI helpers ---
-  function showByIds(ids: string[], cap?: number) {
+  function showByIds(ids: string[]) {
     if (!Array.isArray(ids) || !ids.length) return;
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (!ordered.length) return;
-    setSelectedId(null); // clear selection
-    setVisibleGrid(typeof cap === "number" ? ordered.slice(0, cap) : ordered);
+    setSelectedId(null); // clear selection → grid
+    setVisibleGrid(ordered); // LLM decides the count
   }
 
   function playFirst(ids: string[]) {
@@ -88,75 +70,42 @@ function HomeInner() {
     setSelectedId(first);
   }
 
-  // === Intent dispatcher ===
-  function dispatchFromRouter(payload: RouterPayload) {
-    if (!payload || !payload.intent) return;
-
-    switch (payload.intent) {
-      case "show_videos": {
-        const ids = payload.args?.videoIds ?? [];
-        if (ids.length === 1) playFirst(ids);
-        else if (ids.length > 1) showByIds(ids, 3); // cap curated suggestions to 3
-        return;
-      }
-      case "show_portfolio": {
-        // portfolio can be many (e.g., all)
-        setSelectedId(null);
-        setVisibleGrid(allVideos); // show full list (adjust later if you prefer a subset)
-        return;
-      }
-      case "navigate_video": {
-        const ids = payload.args?.videoIds ?? [];
-        if (ids.length) playFirst(ids);
-        return;
-      }
-      case "information":
-      case "contact": {
-        // Chat renders the text; no surface change needed.
-        return;
-      }
-      default:
-        return;
-    }
+  // === Unified tool handler ===
+  function onShowVideo(ids: string[]) {
+    if (!ids?.length) return;
+    if (ids.length === 1) playFirst(ids);
+    else showByIds(ids);
   }
 
-  // Global sink so Chat (or any child) can deliver router payloads
+  // Global UI tool for children (e.g., Chat)
   useEffect(() => {
-    (globalThis as any).routerSink = {
-      deliver: (payload: RouterPayload) => {
+    (globalThis as any).uiTool = {
+      show_videos: (ids: string[]) => {
         try {
-          dispatchFromRouter(payload);
+          onShowVideo(ids);
         } catch (e) {
-          console.error("routerSink.deliver error:", e);
+          console.error("uiTool.show_videos error:", e);
         }
       },
     };
     return () => {
-      if ((globalThis as any).routerSink) (globalThis as any).routerSink = undefined;
+      if ((globalThis as any).uiTool) (globalThis as any).uiTool = undefined;
     };
-  }, [allVideos, byId, sp]);
+  }, [byId, sp]);
 
-  // Callback used by <Chat />
-  function handleChatIntent(intent: Intent, args?: { videoIds?: string[] }) {
-    dispatchFromRouter({ intent, args });
-  }
-
-  // --- Top pane: either the selected player OR a grid (3 or many) ---
+  // --- Top pane: either the selected player OR a grid ---
   const TopPane = (
     <div ref={topRef} className="space-y-6">
       {selected ? (
         <VideoSection video={selected} />
       ) : (
-        <VideoGrid
-          videos={visibleGrid}
-          onSelectId={(id) => setSelectedId(id)}
-        />
+        <VideoGrid videos={visibleGrid} onSelectId={(id) => setSelectedId(id)} />
       )}
     </div>
   );
 
-  // --- Chat (let CenterDock manage size/overflow) ---
-  const ChatPane = <Chat onIntent={handleChatIntent} />;
+  // --- Chat (new prop; will be used after Chat.tsx update) ---
+  const ChatPane = <Chat onShowVideo={onShowVideo} />;
 
   return <CenterDock top={TopPane} chat={ChatPane} />;
 }

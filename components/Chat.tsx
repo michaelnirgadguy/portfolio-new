@@ -202,6 +202,19 @@ export default function Chat({
     const idx = Math.floor(Math.random() * SuggestedPrompts.length);
     setInput(SuggestedPrompts[idx]);
   }
+  // 🔔 Register global function so page can notify us about video opens
+  useEffect(() => {
+    (globalThis as any).dispatchLLMEvent = (evt: { type: string; id?: string; url?: string }) => {
+      if (evt?.type === "video_opened") {
+        const msg = `The visitor opened a video: id="${evt.id ?? "unknown"}"`;
+        // Reuse existing submit logic
+        onSubmit({ preventDefault: () => {} } as any);
+      }
+    };
+    return () => {
+      delete (globalThis as any).dispatchLLMEvent;
+    };
+  }, []);
 
   return (
     <section className="w-full space-y-6">

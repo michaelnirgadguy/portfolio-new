@@ -54,14 +54,29 @@ export async function POST(req: NextRequest) {
         : `Showing ${chosen.length} videos on site.`;
 
     // 4) Return the simple shape the UI can act on
-    return new Response(
-      JSON.stringify({
-        intent: "show_videos",
-        args: { videoIds: chosen },
-        message,
-      }),
-      { headers: { "content-type": "application/json" } }
-    );
+return new Response(
+  JSON.stringify({
+    intent: "show_videos",
+    args: { videoIds: chosen },
+    message,
+    // ⬇️ TEMP DEBUG (remove later)
+    _debug: {
+      receivedBody: body,                                   // what the client sent
+      modelInput: [{ role: "user", content: userText || "Show me a cool video." }],
+      rawOutput: resp.output?.map((it) => ({
+        type: it.type,
+        name: (it as any).name,
+        call_id: (it as any).call_id,
+        // arguments can be large; include for now
+        arguments: (it as any).arguments,
+      })),
+      validIdsCount: VALID_IDS.length,
+      chosen,
+    },
+  }),
+  { headers: { "content-type": "application/json" } }
+);
+
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
     return new Response(

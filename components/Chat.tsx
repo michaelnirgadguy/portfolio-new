@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { sendTurn } from "@/lib/llm/sendTurn";
+import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -118,50 +119,30 @@ async function onSubmit(e: React.FormEvent) {
     setInput(SuggestedPrompts[idx]);
   }
 
-  // 🔔 Screen events → send a SHORT, chat-only message and DISPLAY the reply
-  useEffect(() => {
-    (globalThis as any).dispatchLLMEvent = (evt: { type: string; id?: string; url?: string }) => {
-      if (evt?.type === "video_opened") {
-        const msg = `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
-        void sendEventToLLM(msg);
+ seEffect(() => {
+  (globalThis as any).dispatchLLMEvent = async (evt: { type: string; id?: string; url?: string }) => {
+    if (evt?.type === "video_opened") {
+      const msg = `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+
+      try {
+        const { text, nextLog } = await sendScreenEvent({ log, message: msg });
+        if (text) {
+          push("assistant", text);
+          setAssistantFull(text);
+          setStatus("answer");
+        }
+        setLog(nextLog);
+      } catch (e) {
+        console.error("sendScreenEvent error:", e);
       }
-    };
-    return () => {
-      delete (globalThis as any).dispatchLLMEvent;
-    };
-    // Always use the latest log for context
-  }, [log]);
-
-  // Helper: send event turn and SHOW assistant reply (no tools expected)
-  async function sendEventToLLM(text: string) {
-    const turnStartLog = [...log, { role: "user", content: text }];
-
-    try {
-      const res = await fetch("/api/route", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ input: turnStartLog }),
-      });
-      const data = await res.json();
-      console.log(">>> SCREEN EVENT SENT:", text);
-      console.log(">>> SCREEN EVENT RESPONSE:", data);
-
-      const modelOut: any[] = Array.isArray(data?.output) ? data.output : [];
-      const assistantText =
-        (typeof data?.text === "string" && data.text.trim()) || "";
-
-      if (assistantText) {
-        push("assistant", assistantText);
-        setAssistantFull(assistantText);
-        setStatus("answer");
-      }
-
-      setLog([...turnStartLog, ...modelOut]);
-    } catch (e) {
-      console.error("sendEventToLLM error:", e);
     }
-  }
+  };
+  return () => {
+    delete (globalThis as any).dispatchLLMEvent;
+  };
+}, [log]);
 
+  
   return (
     <section className="w-full space-y-6">
       {/* Curator surface */}

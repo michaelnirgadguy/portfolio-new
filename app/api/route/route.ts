@@ -42,6 +42,9 @@ const idWhitelist = VALID_IDS.slice(0, 24).join(", ");
       instructions: systemPrompt,
       input: request.messages,
     });
+console.log(">>> SYSTEM PROMPT:", systemPrompt.slice(0, 400));
+console.log(">>> INPUT MESSAGES:", JSON.stringify(request.messages, null, 2));
+console.log(">>> RAW OUTPUT:", JSON.stringify(resp.output, null, 2));
 
 
 

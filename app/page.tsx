@@ -92,6 +92,18 @@ function HomeInner() {
       if ((globalThis as any).uiTool) (globalThis as any).uiTool = undefined;
     };
   }, [byId, sp]);
+  
+  // Notify Chat/LLM whenever a single video is opened (via click or ?v=)
+  useEffect(() => {
+    if (!selected) return;
+    try {
+      (globalThis as any).dispatchLLMEvent?.({
+        type: "video_opened",
+        id: selected.id,
+        url: selected.url,
+      });
+    } catch {}
+  }, [selected]);
 
   // --- Top pane: either the selected player OR a grid ---
   const TopPane = (

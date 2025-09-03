@@ -90,8 +90,8 @@ export default function CenterDock({
         </div>
       ) : (
         // PINNED — ONLY TOP SCROLLS
-        <div className="grid h-full min-h-0 grid-rows-[1fr_auto]">
-          <div className="min-h-0 overflow-y-auto">
+       <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+          <div className="h-full min-h-0 overflow-y-auto">
             <div className="mx-auto max-w-7xl px-6 py-6">
               <div ref={topRef}>{top}</div>
               <div style={{ height: gap }} />

@@ -66,7 +66,30 @@ export default function CenterDock({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+  
+    const ro = new ResizeObserver(() => {
+      // re-measure when thumbnails/images/iframes/fonts change layout
+      measure();
+    });
+  
+    const els: Element[] = [];
+    if (wrapRef.current) els.push(wrapRef.current);
+    if (topRef.current) els.push(topRef.current);
+    if (chatRef.current) els.push(chatRef.current);
+    els.forEach((el) => ro.observe(el));
+  
+    // also once after all loads complete (images/iframes)
+    window.addEventListener("load", measure);
+  
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("load", measure);
+    };
+  }, []);
 
+  
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
       {mode === "center" ? (

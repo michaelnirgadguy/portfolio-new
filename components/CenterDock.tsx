@@ -70,10 +70,10 @@ export default function CenterDock({
   }, []);
 
   return (
-    <div ref={wrapRef} className={cn("min-h-screen w-full", className)}>
+    <div ref={wrapRef} className={cn("h-full w-full", className)}>
       {mode === "center" ? (
         // CENTERED BLOCK
-        <div className="mx-auto max-w-7xl flex min-h-screen items-center justify-center px-6">
+        <div className="mx-auto max-w-7xl flex min-h-full items-center justify-center px-6">
           <div className="w-full">
             <div ref={topRef}>{top}</div>
             <div style={{ height: gap }} />
@@ -92,7 +92,7 @@ export default function CenterDock({
         </div>
       ) : (
         // PINNED MODE — lock the grid to the viewport so only the top pane scrolls
-        <div className="grid h-screen grid-rows-[1fr_auto]">
+        <div className="grid h-full grid-rows-[1fr_auto]">
           <div className="overflow-y-auto">
             <div className="mx-auto max-w-7xl px-6 py-6">
               <div ref={topRef}>{top}</div>

@@ -11,7 +11,7 @@ export default function RootLayout({
       <body className="min-h-screen">
         <Header />
         {/* Fill viewport minus 64px header; prevent page scrolling */}
-        <main className="min-h-[calc(100vh-64px)] overflow-hidden">
+        <main className="h-[calc(100vh-64px)] overflow-hidden">
           {children}
         </main>
       </body>

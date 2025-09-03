@@ -14,10 +14,10 @@ export default function CenterDock({
   top,
   chat,
   className,
-  gap = 24,            // vertical gap between top and chat, in px
-  containerPad = 24,   // safe padding in px for centering calculations
-  chatMaxVh = 60,      // cap chat visual height (viewport %)
-  chatMinPx = 0,       // allow shrinking to natural height; keep 0 unless you want a floor
+  gap = 24,
+  containerPad = 24,
+  chatMaxVh = 60,
+  chatMinPx = 0,
 }: {
   top: ReactNode;
   chat: ReactNode;
@@ -48,15 +48,12 @@ export default function CenterDock({
     chatEl.style.height = "";
     chatEl.style.overflowY = "visible";
 
-    // Natural heights
     const topH = topEl.offsetHeight;
     const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
     const chatTarget = Math.min(chatNatural, maxChatPx);
 
-    // Save target height so we render consistently
     setChatBoxHeight(chatTarget);
 
-    // Will the centered block fit?
     const total = topH + gap + chatTarget + containerPad * 2;
     if (total <= viewportH) setMode("center");
     else setMode("pinned");
@@ -64,21 +61,19 @@ export default function CenterDock({
 
   useLayoutEffect(() => {
     measure();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div ref={wrapRef} className={cn("min-h-screen w-full", className)}>
       {mode === "center" ? (
         // CENTERED BLOCK
-        <div className="mx-auto max-w-5xl flex min-h-screen items-center justify-center px-6">
+        <div className="mx-auto max-w-7xl flex min-h-screen items-center justify-center px-6">
           <div className="w-full">
             <div ref={topRef}>{top}</div>
             <div style={{ height: gap }} />
@@ -86,7 +81,7 @@ export default function CenterDock({
               ref={chatRef}
               className="rounded-t-xl bg-white"
               style={{
-                height: chatBoxHeight ?? undefined,          // use measured natural height, capped
+                height: chatBoxHeight ?? undefined,
                 maxHeight: `${chatMaxVh}vh`,
                 overflowY: "auto",
               }}
@@ -96,16 +91,16 @@ export default function CenterDock({
           </div>
         </div>
       ) : (
-        // PINNED MODE
-        <div className="grid min-h-screen grid-rows-[1fr_auto]">
+        // PINNED MODE — lock the grid to the viewport so only the top pane scrolls
+        <div className="grid h-screen grid-rows-[1fr_auto]">
           <div className="overflow-y-auto">
-            <div className="mx-auto max-w-5xl px-6 py-6">
+            <div className="mx-auto max-w-7xl px-6 py-6">
               <div ref={topRef}>{top}</div>
               <div style={{ height: gap }} />
             </div>
           </div>
           <div className="bg-white">
-            <div className="mx-auto max-w-5xl px-6 py-4">
+            <div className="mx-auto max-w-7xl px-6 py-4">
               <div
                 ref={chatRef}
                 style={{

@@ -25,8 +25,13 @@ export default function VideoSection({ video }: Props) {
     )}
   </div>
 
-  {/* Player */}
-  <VideoPlayer url={video.url} title={video.title} />
+   {/* Player */}
+  <VideoPlayer
+    url={video.url}
+    title={video.title}
+    className="max-w-3xl mx-auto"
+  />
+
 </section>
 
 

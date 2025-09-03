@@ -119,5 +119,5 @@ function HomeInner() {
   // --- Chat (new prop; will be used after Chat.tsx update) ---
   const ChatPane = <Chat onShowVideo={onShowVideo} />;
 
-  return <CenterDock top={TopPane} chat={ChatPane} chatMaxVh={72} />;
+  return <CenterDock top={TopPane} chat={ChatPane} />;
 }

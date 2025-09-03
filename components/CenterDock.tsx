@@ -38,8 +38,8 @@ export default function CenterDock({
     const chatEl = chatRef.current;
     if (!topEl || !chatEl) return;
 
-    const viewportH = window.innerHeight;
-    const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
+  const viewportH = Math.round(wrapRef.current?.getBoundingClientRect().height || window.innerHeight);
+  const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
 
     // clear to get natural height
     chatEl.style.maxHeight = "";

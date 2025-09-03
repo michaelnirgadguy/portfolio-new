@@ -89,6 +89,16 @@ export default function CenterDock({
     };
   }, []);
 
+  useEffect(() => {
+  // Some browsers don’t trigger resize when fonts load
+  // (layout shifts can change measured heights).
+  // This ensures a final accurate measure on fresh loads.
+  (document as any).fonts?.ready?.then(() => {
+    measure();
+  });
+}, []);
+
+
   
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>

@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
  * - If (top + chat) fits → center as one block.
  * - If it doesn't fit → pinned chat, only TOP pane scrolls.
  */
+
+const HYSTERESIS = 24; // px buffer to avoid rapid flipping near the threshold
 export default function CenterDock({
   top,
   chat,
@@ -36,7 +38,40 @@ export default function CenterDock({
   const measure = () => {
     const topEl = topRef.current;
     const chatEl = chatRef.current;
+    const wrapEl = wrapRef.current;
     if (!topEl || !chatEl) return;
+  
+    const viewportH = Math.round(wrapEl?.getBoundingClientRect().height || window.innerHeight);
+    const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
+  
+    // Clear styles only if currently constrained
+    if (chatEl.style.maxHeight || chatEl.style.height || chatEl.style.overflowY) {
+      chatEl.style.maxHeight = "";
+      chatEl.style.height = "";
+      chatEl.style.overflowY = "";
+    }
+  
+    const topH = topEl.offsetHeight;
+    const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
+    const nextChatTarget = Math.min(chatNatural, maxChatPx);
+  
+    // Avoid re-render churn
+    setChatBoxHeight((prev) => (prev === nextChatTarget ? prev : nextChatTarget));
+  
+    const total = topH + gap + nextChatTarget + containerPad * 2;
+  
+    // Hysteresis: only flip modes when clearly on one side
+    setMode((prev) => {
+      const centerBoundary = viewportH;
+      const tooSmall = total <= centerBoundary - HYSTERESIS;
+      const tooLarge = total >= centerBoundary + HYSTERESIS;
+      if (prev === "center") {
+        return tooLarge ? "pinned" : "center";
+      } else {
+        return tooSmall ? "center" : "pinned";
+      }
+    });
+  };
 
   const viewportH = Math.round(wrapRef.current?.getBoundingClientRect().height || window.innerHeight);
   const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);

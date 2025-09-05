@@ -10,7 +10,7 @@ export default function VideoSection({ video }: Props) {
   return (
     <section className="space-y-4">
       {/* 2-col: player column + right rail. On mobile it stacks. */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,820px)_260px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,720px)_260px]">
         {/* LEFT: meta + player (aligned and width-constrained) */}
         <div className="space-y-3">
           <h2 className="heading-secondary">{video.title}</h2>

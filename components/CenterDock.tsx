@@ -4,8 +4,7 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Hysteresis to avoid flip-flopping near the boundary
-const HYSTERESIS = 24;
+const HYSTERESIS = 24; // keeps the centered mode from flip-flopping
 
 export default function CenterDock({
   top,
@@ -40,7 +39,7 @@ export default function CenterDock({
     const viewportH = Math.round(wrapEl?.getBoundingClientRect().height || window.innerHeight);
     const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
 
-    // Clear constraints to read natural height
+    // remove constraints to read natural height
     chatEl.style.maxHeight = "";
     chatEl.style.height = "";
     chatEl.style.overflowY = "visible";
@@ -52,12 +51,12 @@ export default function CenterDock({
 
     const total = topH + gap + nextChatTarget + containerPad * 2;
 
-    // Center if everything fits comfortably; use hysteresis to prevent jitter
+    // vertical centering when it clearly fits
     setIsCentered((prev) => {
-      const tooSmall = total <= viewportH - HYSTERESIS;
-      const tooLarge = total >= viewportH + HYSTERESIS;
-      if (prev) return !tooLarge; // stay centered until clearly too large
-      return tooSmall;            // switch to centered only when clearly small
+      const fits = total <= viewportH - HYSTERESIS;
+      const over = total >= viewportH + HYSTERESIS;
+      if (prev) return !over;   // stay centered until clearly too tall
+      return fits;              // only switch to centered when clearly small
     });
   };
 
@@ -87,20 +86,21 @@ export default function CenterDock({
 
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
-      {/* Single DOM tree. We only toggle classes for centered vs pinned. */}
+      {/* Single DOM tree. Center vertically (when it fits), never horizontally. */}
       <div
         className={cn(
           "grid h-full min-h-0",
           isCentered
-            ? "grid-rows-[auto_auto] place-content-center"
+            ? "grid-rows-[auto_auto] content-center"      // vertical center only
             : "grid-rows-[minmax(0,1fr)_auto]"
         )}
       >
-        {/* TOP: either centered (no scroll) or scrollable when tall */}
+        {/* TOP: scrolls when tall; centered vertically when short */}
         <div className={cn("min-h-0", isCentered ? "overflow-visible" : "h-full overflow-y-auto")}>
           <div
             className={cn(
-              "mx-auto max-w-7xl px-6 py-6",
+              // w-full prevents “content-width” centering wiggle
+              "mx-auto max-w-7xl w-full px-6 py-6",
               isCentered ? "flex min-h-full items-center" : ""
             )}
           >
@@ -111,9 +111,12 @@ export default function CenterDock({
           </div>
         </div>
 
-        {/* CHAT: always mounted; in centered mode it sits just below the top block */}
+        {/* CHAT: always mounted; a little bottom space even without safe-area */}
         <div className="bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-4 pb-[env(safe-area-inset-bottom)]">
+          <div
+            className="mx-auto max-w-7xl w-full px-6 py-4"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
+          >
             <div
               ref={chatRef}
               style={{

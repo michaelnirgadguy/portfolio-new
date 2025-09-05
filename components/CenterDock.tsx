@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-// We keep this in case you want to reintroduce mode switching later.
+// Hysteresis to avoid flip-flopping near the boundary
 const HYSTERESIS = 24;
 
 export default function CenterDock({
@@ -28,8 +28,8 @@ export default function CenterDock({
   const topRef = useRef<HTMLDivElement | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
 
-  // Single-tree: no mode switching → no remounts
   const [chatBoxHeight, setChatBoxHeight] = useState<number | null>(null);
+  const [isCentered, setIsCentered] = useState<boolean>(true);
 
   const measure = () => {
     const topEl = topRef.current;
@@ -45,62 +45,75 @@ export default function CenterDock({
     chatEl.style.height = "";
     chatEl.style.overflowY = "visible";
 
+    const topH = topEl.offsetHeight;
     const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
     const nextChatTarget = Math.min(chatNatural, maxChatPx);
-
     setChatBoxHeight((prev) => (prev === nextChatTarget ? prev : nextChatTarget));
+
+    const total = topH + gap + nextChatTarget + containerPad * 2;
+
+    // Center if everything fits comfortably; use hysteresis to prevent jitter
+    setIsCentered((prev) => {
+      const tooSmall = total <= viewportH - HYSTERESIS;
+      const tooLarge = total >= viewportH + HYSTERESIS;
+      if (prev) return !tooLarge; // stay centered until clearly too large
+      return tooSmall;            // switch to centered only when clearly small
+    });
   };
 
-  useLayoutEffect(() => {
-    measure();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  useLayoutEffect(() => { measure(); }, []);
   useEffect(() => {
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => measure());
-
     const els: Element[] = [];
     if (wrapRef.current) els.push(wrapRef.current);
     if (topRef.current) els.push(topRef.current);
     if (chatRef.current) els.push(chatRef.current);
     els.forEach((el) => ro.observe(el));
-
     window.addEventListener("load", measure);
     return () => {
       ro.disconnect();
       window.removeEventListener("load", measure);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   useEffect(() => {
     (document as any).fonts?.ready?.then(() => measure());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
-      {/* Single, stable DOM tree: scrollable top + pinned bottom chat */}
-      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
-        {/* Scrollable content area (video/grid) */}
-        <div className="h-full min-h-0 overflow-y-auto">
-          <div className="mx-auto max-w-7xl px-6 py-6">
-            <div ref={topRef}>{top}</div>
-            <div style={{ height: gap }} />
+      {/* Single DOM tree. We only toggle classes for centered vs pinned. */}
+      <div
+        className={cn(
+          "grid h-full min-h-0",
+          isCentered
+            ? "grid-rows-[auto_auto] place-content-center"
+            : "grid-rows-[minmax(0,1fr)_auto]"
+        )}
+      >
+        {/* TOP: either centered (no scroll) or scrollable when tall */}
+        <div className={cn("min-h-0", isCentered ? "overflow-visible" : "h-full overflow-y-auto")}>
+          <div
+            className={cn(
+              "mx-auto max-w-7xl px-6 py-6",
+              isCentered ? "flex min-h-full items-center" : ""
+            )}
+          >
+            <div className="w-full">
+              <div ref={topRef}>{top}</div>
+              <div style={{ height: gap }} />
+            </div>
           </div>
         </div>
 
-        {/* Pinned bottom chat (always mounted) */}
+        {/* CHAT: always mounted; in centered mode it sits just below the top block */}
         <div className="bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="mx-auto max-w-7xl px-6 py-4 pb-[env(safe-area-inset-bottom)]">
             <div
               ref={chatRef}
               style={{

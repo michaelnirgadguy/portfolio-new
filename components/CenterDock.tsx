@@ -4,7 +4,7 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Buffer in px to avoid rapid flipping near the viewport boundary
+// We keep this in case you want to reintroduce mode switching later.
 const HYSTERESIS = 24;
 
 export default function CenterDock({
@@ -28,7 +28,7 @@ export default function CenterDock({
   const topRef = useRef<HTMLDivElement | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
 
-  const [mode, setMode] = useState<"center" | "pinned">("center");
+  // Single-tree: no mode switching → no remounts
   const [chatBoxHeight, setChatBoxHeight] = useState<number | null>(null);
 
   const measure = () => {
@@ -40,30 +40,15 @@ export default function CenterDock({
     const viewportH = Math.round(wrapEl?.getBoundingClientRect().height || window.innerHeight);
     const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
 
-    // Clear styles only if previously constrained
-    if (chatEl.style.maxHeight || chatEl.style.height || chatEl.style.overflowY) {
-      chatEl.style.maxHeight = "";
-      chatEl.style.height = "";
-      chatEl.style.overflowY = "visible";
-    }
+    // Clear constraints to read natural height
+    chatEl.style.maxHeight = "";
+    chatEl.style.height = "";
+    chatEl.style.overflowY = "visible";
 
-    const topH = topEl.offsetHeight;
     const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
     const nextChatTarget = Math.min(chatNatural, maxChatPx);
 
-    // Avoid state churn
     setChatBoxHeight((prev) => (prev === nextChatTarget ? prev : nextChatTarget));
-
-    const total = topH + gap + nextChatTarget + containerPad * 2;
-
-    // Hysteresis: flip modes only when clearly past the boundary
-    setMode((prev) => {
-      const centerBoundary = viewportH;
-      const tooSmall = total <= centerBoundary - HYSTERESIS;
-      const tooLarge = total >= centerBoundary + HYSTERESIS;
-      if (prev === "center") return tooLarge ? "pinned" : "center";
-      return tooSmall ? "center" : "pinned";
-    });
   };
 
   useLayoutEffect(() => {
@@ -103,50 +88,32 @@ export default function CenterDock({
 
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
-      {mode === "center" ? (
-        // CENTERED
-        <div className="mx-auto max-w-7xl flex min-h-full items-center justify-center px-6">
-          <div className="w-full">
+      {/* Single, stable DOM tree: scrollable top + pinned bottom chat */}
+      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+        {/* Scrollable content area (video/grid) */}
+        <div className="h-full min-h-0 overflow-y-auto">
+          <div className="mx-auto max-w-7xl px-6 py-6">
             <div ref={topRef}>{top}</div>
             <div style={{ height: gap }} />
+          </div>
+        </div>
+
+        {/* Pinned bottom chat (always mounted) */}
+        <div className="bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-4">
             <div
               ref={chatRef}
-              className="rounded-t-xl bg-white"
               style={{
                 height: chatBoxHeight ?? undefined,
                 maxHeight: `${chatMaxVh}vh`,
                 overflowY: "auto",
               }}
             >
-              <div className="p-4">{chat}</div>
+              {chat}
             </div>
           </div>
         </div>
-      ) : (
-        // PINNED — ONLY TOP SCROLLS
-        <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
-          <div className="h-full min-h-0 overflow-y-auto">
-            <div className="mx-auto max-w-7xl px-6 py-6">
-              <div ref={topRef}>{top}</div>
-              <div style={{ height: gap }} />
-            </div>
-          </div>
-          <div className="bg-white">
-            <div className="mx-auto max-w-7xl px-6 py-4">
-              <div
-                ref={chatRef}
-                style={{
-                  height: chatBoxHeight ?? undefined,
-                  maxHeight: `${chatMaxVh}vh`,
-                  overflowY: "auto",
-                }}
-              >
-                {chat}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

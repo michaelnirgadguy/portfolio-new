@@ -41,6 +41,9 @@ function HomeInner() {
 
   const topRef = useRef<HTMLDivElement | null>(null);
 
+  // NEW: one-shot suppress flag for LLM-triggered opens
+  const suppressNextOpenRef = useRef(false);
+
   // --- URL helpers ---
   function replaceQuery(next: URLSearchParams) {
     const qs = next.toString();
@@ -73,6 +76,10 @@ function HomeInner() {
   // === Unified tool handler ===
   function onShowVideo(ids: string[]) {
     if (!ids?.length) return;
+
+    // This path is LLM-triggered → do NOT announce "visitor clicked" once
+    suppressNextOpenRef.current = true;
+
     if (ids.length === 1) playFirst(ids);
     else showByIds(ids);
   }
@@ -96,6 +103,13 @@ function HomeInner() {
   // Notify Chat/LLM whenever a single video is opened (via click or ?v=)
   useEffect(() => {
     if (!selected) return;
+
+    // Skip once if this select came from the LLM (not a real click / not a direct-link)
+    if (suppressNextOpenRef.current) {
+      suppressNextOpenRef.current = false;
+      return;
+    }
+
     try {
       (globalThis as any).dispatchLLMEvent?.({
         type: "video_opened",

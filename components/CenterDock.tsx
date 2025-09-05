@@ -4,13 +4,9 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * CenterDock
- * - If (top + chat) fits → center as one block.
- * - If it doesn't fit → pinned chat, only TOP pane scrolls.
- */
+// Buffer in px to avoid rapid flipping near the viewport boundary
+const HYSTERESIS = 24;
 
-const HYSTERESIS = 24; // px buffer to avoid rapid flipping near the threshold
 export default function CenterDock({
   top,
   chat,
@@ -40,101 +36,71 @@ export default function CenterDock({
     const chatEl = chatRef.current;
     const wrapEl = wrapRef.current;
     if (!topEl || !chatEl) return;
-  
+
     const viewportH = Math.round(wrapEl?.getBoundingClientRect().height || window.innerHeight);
     const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
-  
-    // Clear styles only if currently constrained
+
+    // Clear styles only if previously constrained
     if (chatEl.style.maxHeight || chatEl.style.height || chatEl.style.overflowY) {
       chatEl.style.maxHeight = "";
       chatEl.style.height = "";
-      chatEl.style.overflowY = "";
+      chatEl.style.overflowY = "visible";
     }
-  
+
     const topH = topEl.offsetHeight;
     const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
     const nextChatTarget = Math.min(chatNatural, maxChatPx);
-  
-    // Avoid re-render churn
+
+    // Avoid state churn
     setChatBoxHeight((prev) => (prev === nextChatTarget ? prev : nextChatTarget));
-  
+
     const total = topH + gap + nextChatTarget + containerPad * 2;
-  
-    // Hysteresis: only flip modes when clearly on one side
+
+    // Hysteresis: flip modes only when clearly past the boundary
     setMode((prev) => {
       const centerBoundary = viewportH;
       const tooSmall = total <= centerBoundary - HYSTERESIS;
       const tooLarge = total >= centerBoundary + HYSTERESIS;
-      if (prev === "center") {
-        return tooLarge ? "pinned" : "center";
-      } else {
-        return tooSmall ? "center" : "pinned";
-      }
+      if (prev === "center") return tooLarge ? "pinned" : "center";
+      return tooSmall ? "center" : "pinned";
     });
-  };
-
-  const viewportH = Math.round(wrapRef.current?.getBoundingClientRect().height || window.innerHeight);
-  const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
-
-    // clear to get natural height
-    chatEl.style.maxHeight = "";
-    chatEl.style.height = "";
-    chatEl.style.overflowY = "visible";
-
-    const topH = topEl.offsetHeight;
-    const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
-    const chatTarget = Math.min(chatNatural, maxChatPx);
-
-    setChatBoxHeight(chatTarget);
-
-    const total = topH + gap + chatTarget + containerPad * 2;
-    if (total <= viewportH) setMode("center");
-    else setMode("pinned");
   };
 
   useLayoutEffect(() => {
     measure();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
-  
-    const ro = new ResizeObserver(() => {
-      // re-measure when thumbnails/images/iframes/fonts change layout
-      measure();
-    });
-  
+    const ro = new ResizeObserver(() => measure());
+
     const els: Element[] = [];
     if (wrapRef.current) els.push(wrapRef.current);
     if (topRef.current) els.push(topRef.current);
     if (chatRef.current) els.push(chatRef.current);
     els.forEach((el) => ro.observe(el));
-  
-    // also once after all loads complete (images/iframes)
+
     window.addEventListener("load", measure);
-  
     return () => {
       ro.disconnect();
       window.removeEventListener("load", measure);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-  // Some browsers don’t trigger resize when fonts load
-  // (layout shifts can change measured heights).
-  // This ensures a final accurate measure on fresh loads.
-  (document as any).fonts?.ready?.then(() => {
-    measure();
-  });
-}, []);
+    (document as any).fonts?.ready?.then(() => measure());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-
-  
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
       {mode === "center" ? (
@@ -158,7 +124,7 @@ export default function CenterDock({
         </div>
       ) : (
         // PINNED — ONLY TOP SCROLLS
-       <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+        <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
           <div className="h-full min-h-0 overflow-y-auto">
             <div className="mx-auto max-w-7xl px-6 py-6">
               <div ref={topRef}>{top}</div>

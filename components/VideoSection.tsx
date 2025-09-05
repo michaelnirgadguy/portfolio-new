@@ -9,10 +9,10 @@ type Props = { video: VideoItem };
 export default function VideoSection({ video }: Props) {
   return (
     <section className="space-y-4">
-      {/* Desktop: [820px player | 300px meta]. Mobile: stacked. */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,820px)_300px]">
+    
+       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* LEFT — Player (bigger, left-aligned) */}
-        <div>
+       <div className="max-w-[960px]">
           <VideoPlayer url={video.url} title={video.title} className="w-full" />
         </div>
 

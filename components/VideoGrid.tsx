@@ -1,30 +1,24 @@
 // components/VideoGrid.tsx
-import VideoCard from "@/components/VideoCard";
+// Displays a grid of thumbnail cards. Keeps layout + click handling isolated.
+// Parent passes in the videos to show and a handler to set the selected ID via URL.
+
 import type { VideoItem } from "@/types/video";
+import VideoCard from "@/components/VideoCard";
 
-export default function VideoGrid({
-  videos,
-  onSelectId,
-}: {
-  videos: VideoItem[];
-  onSelectId?: (id: string) => void;
-}) {
-  const needsLeftGap = videos.length >= 3 && videos.length % 2 === 1;
+type Props = {
+  videos: VideoItem[];                // the 3–6 items to display
+  onSelectId: (id: string) => void;   // parent handles URL update
+  className?: string;                 // optional layout control
+};
 
+export default function VideoGrid({ videos, onSelectId, className }: Props) {
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {videos.map((v, i) => (
-        <>
-          {/* Spacer goes in the bottom-left when odd (≥3) */}
-          {needsLeftGap && i === videos.length - 1 && (
-            <div className="hidden md:block" aria-hidden="true" />
-          )}
-
-          <div key={v.id}>
-            <VideoCard video={v} onSelect={() => onSelectId?.(v.id)} />
-          </div>
-        </>
-      ))}
+    <div className={className}>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {videos.map((v) => (
+          <VideoCard key={v.id} video={v} onSelect={() => onSelectId(v.id)} />
+        ))}
+      </div>
     </div>
   );
 }

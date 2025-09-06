@@ -29,7 +29,7 @@ export default function VideoSection({ video }: Props) {
         
             {/* Credits (smaller, visually separated) */}
             {video.display_credits && (
-              <div className="mt-4 pt-3 border-t border-border meta-tertiary">
+              <div className="mt-4 pt-3 border-t border-border meta-tertiary whitespace-pre-line">
                 {video.display_credits}
               </div>
             )}
@@ -47,7 +47,7 @@ export default function VideoSection({ video }: Props) {
             </div>
           )}
           {video.display_credits && (
-            <div className="mt-4 pt-3 border-t border-border meta-tertiary">
+            <div className="mt-4 pt-3 border-t border-border meta-tertiary whitespace-pre-line">
               {video.display_credits}
             </div>
   )}

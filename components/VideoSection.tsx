@@ -38,15 +38,20 @@ export default function VideoSection({ video }: Props) {
 
 
         {/* MOBILE — Meta under player */}
-        <div className="lg:hidden">
+       
+        <div className="lg:hidden mt-4">
           <h2 className="heading-secondary">{video.title}</h2>
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="meta-secondary">{video.client}</span>
-            {video.display_credits && (
-              <span className="meta-tertiary ml-auto text-right">{video.display_credits}</span>
-            )}
-          </div>
-        </div>
+          {video.client && (
+            <div className="mt-1 text-sm font-medium text-accent">
+              {video.client}
+            </div>
+          )}
+          {video.display_credits && (
+            <div className="mt-4 pt-3 border-t border-border meta-tertiary">
+              {video.display_credits}
+            </div>
+  )}
+</div>
       </div>
     </section>
   );

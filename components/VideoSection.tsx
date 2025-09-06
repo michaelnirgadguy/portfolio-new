@@ -18,14 +18,24 @@ export default function VideoSection({ video }: Props) {
 
         {/* RIGHT — Meta panel (desktop only) */}
         <aside className="hidden lg:block">
-           <div className="rounded-xl bg-muted/60 p-4">
+          <div className="rounded-xl bg-muted/60 p-4">
+            {/* Title + client (tight pair) */}
             <h2 className="heading-secondary">{video.title}</h2>
-            <div className="mt-2 space-y-1">
-              {video.client && <div className="meta-secondary">{video.client}</div>}
-              {video.display_credits && <div className="meta-tertiary">{video.display_credits}</div>}
-            </div>
+            {video.client && (
+              <div className="mt-1 text-sm font-medium text-accent">
+                {video.client}
+              </div>
+            )}
+        
+            {/* Credits (smaller, visually separated) */}
+            {video.display_credits && (
+              <div className="mt-4 pt-3 border-t border-border meta-tertiary">
+                {video.display_credits}
+              </div>
+            )}
           </div>
         </aside>
+
 
         {/* MOBILE — Meta under player */}
         <div className="lg:hidden">

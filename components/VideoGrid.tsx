@@ -21,7 +21,7 @@ export default function VideoGrid({
           )}
 
           <div key={v.id}>
-            <VideoCard video={v} onClick={() => onSelectId?.(v.id)} />
+            <VideoCard video={v} onSelect={() => onSelectId?.(v.id)} />
           </div>
         </>
       ))}

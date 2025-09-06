@@ -1,34 +1,43 @@
 // components/VideoSection.tsx
-// Renders the selected video area: title, client, player, and credits.
-// Keeps layout/markup isolated so page.tsx can stay a thin coordinator.
+// Player left (bigger), meta right (slim panel)
 
 import type { VideoItem } from "@/types/video";
 import VideoPlayer from "@/components/VideoPlayer";
 
-type Props = {
-  video: VideoItem; // the currently selected video (already validated upstream)
-};
+type Props = { video: VideoItem };
 
 export default function VideoSection({ video }: Props) {
   return (
-   <section className="space-y-3">
-  {/* Title */}
-  <h2 className="heading-secondary">{video.title}</h2>
+    <section className="space-y-4">
+    
+       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {/* LEFT — Player (bigger, left-aligned) */}
+       <div className="max-w-[960px]">
+          <VideoPlayer url={video.url} title={video.title} className="w-full" />
+        </div>
 
-  {/* Client (left) + Credits (right) in one row, wraps on small screens */}
-  <div className="flex flex-wrap items-baseline gap-2">
-    <span className="meta-secondary">{video.client}</span>
-    {video.display_credits && (
-      <span className="meta-tertiary ml-auto text-right">
-        {video.display_credits}
-      </span>
-    )}
-  </div>
+        {/* RIGHT — Meta panel (desktop only) */}
+        <aside className="hidden lg:block">
+          <div className="rounded-xl bg-muted/60 p-4">
+            <h2 className="heading-secondary">{video.title}</h2>
+            <div className="mt-2 text-sm text-muted-foreground">
+              <div>{video.client}</div>
+              {video.display_credits && <div className="mt-1">{video.display_credits}</div>}
+            </div>
+          </div>
+        </aside>
 
-  {/* Player */}
-  <VideoPlayer url={video.url} title={video.title} />
-</section>
-
-
+        {/* MOBILE — Meta under player */}
+        <div className="lg:hidden">
+          <h2 className="heading-secondary">{video.title}</h2>
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="meta-secondary">{video.client}</span>
+            {video.display_credits && (
+              <span className="meta-tertiary ml-auto text-right">{video.display_credits}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

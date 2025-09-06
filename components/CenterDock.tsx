@@ -4,11 +4,8 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * CenterDock
- * - If (top + chat) fits → center as one block.
- * - If it doesn't fit → pinned chat, only TOP pane scrolls.
- */
+const HYSTERESIS = 24; // keeps the centered mode from flip-flopping
+
 export default function CenterDock({
   top,
   chat,
@@ -30,37 +27,40 @@ export default function CenterDock({
   const topRef = useRef<HTMLDivElement | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
 
-  const [mode, setMode] = useState<"center" | "pinned">("center");
   const [chatBoxHeight, setChatBoxHeight] = useState<number | null>(null);
+  const [isCentered, setIsCentered] = useState<boolean>(true);
 
   const measure = () => {
     const topEl = topRef.current;
     const chatEl = chatRef.current;
+    const wrapEl = wrapRef.current;
     if (!topEl || !chatEl) return;
 
-  const viewportH = Math.round(wrapRef.current?.getBoundingClientRect().height || window.innerHeight);
-  const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
+    const viewportH = Math.round(wrapEl?.getBoundingClientRect().height || window.innerHeight);
+    const maxChatPx = Math.round((chatMaxVh / 100) * viewportH);
 
-    // clear to get natural height
+    // remove constraints to read natural height
     chatEl.style.maxHeight = "";
     chatEl.style.height = "";
     chatEl.style.overflowY = "visible";
 
     const topH = topEl.offsetHeight;
     const chatNatural = Math.max(chatMinPx, chatEl.scrollHeight || chatEl.offsetHeight || 0);
-    const chatTarget = Math.min(chatNatural, maxChatPx);
+    const nextChatTarget = Math.min(chatNatural, maxChatPx);
+    setChatBoxHeight((prev) => (prev === nextChatTarget ? prev : nextChatTarget));
 
-    setChatBoxHeight(chatTarget);
+    const total = topH + gap + nextChatTarget + containerPad * 2;
 
-    const total = topH + gap + chatTarget + containerPad * 2;
-    if (total <= viewportH) setMode("center");
-    else setMode("pinned");
+    // vertical centering when it clearly fits
+    setIsCentered((prev) => {
+      const fits = total <= viewportH - HYSTERESIS;
+      const over = total >= viewportH + HYSTERESIS;
+      if (prev) return !over;   // stay centered until clearly too tall
+      return fits;              // only switch to centered when clearly small
+    });
   };
 
-  useLayoutEffect(() => {
-    measure();
-  }, []);
-
+  useLayoutEffect(() => { measure(); }, []);
   useEffect(() => {
     const onResize = () => measure();
     window.addEventListener("resize", onResize);
@@ -68,84 +68,68 @@ export default function CenterDock({
   }, []);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") return;
-  
-    const ro = new ResizeObserver(() => {
-      // re-measure when thumbnails/images/iframes/fonts change layout
-      measure();
-    });
-  
+    const ro = new ResizeObserver(() => measure());
     const els: Element[] = [];
     if (wrapRef.current) els.push(wrapRef.current);
     if (topRef.current) els.push(topRef.current);
     if (chatRef.current) els.push(chatRef.current);
     els.forEach((el) => ro.observe(el));
-  
-    // also once after all loads complete (images/iframes)
     window.addEventListener("load", measure);
-  
     return () => {
       ro.disconnect();
       window.removeEventListener("load", measure);
     };
   }, []);
-
   useEffect(() => {
-  // Some browsers don’t trigger resize when fonts load
-  // (layout shifts can change measured heights).
-  // This ensures a final accurate measure on fresh loads.
-  (document as any).fonts?.ready?.then(() => {
-    measure();
-  });
-}, []);
+    (document as any).fonts?.ready?.then(() => measure());
+  }, []);
 
-
-  
   return (
     <div ref={wrapRef} className={cn("h-full w-full min-h-0", className)}>
-      {mode === "center" ? (
-        // CENTERED
-        <div className="mx-auto max-w-7xl flex min-h-full items-center justify-center px-6">
-          <div className="w-full">
-            <div ref={topRef}>{top}</div>
-            <div style={{ height: gap }} />
+      {/* Single DOM tree. Center vertically (when it fits), never horizontally. */}
+      <div
+        className={cn(
+          "grid h-full min-h-0",
+          isCentered
+            ? "grid-rows-[auto_auto] content-center"      // vertical center only
+            : "grid-rows-[minmax(0,1fr)_auto]"
+        )}
+      >
+        {/* TOP: scrolls when tall; centered vertically when short */}
+        <div className={cn("min-h-0", isCentered ? "overflow-visible" : "h-full overflow-y-auto")}>
+          <div
+            className={cn(
+              // w-full prevents “content-width” centering wiggle
+              "mx-auto max-w-7xl w-full px-6 py-6",
+              isCentered ? "flex min-h-full items-center" : ""
+            )}
+          >
+            <div className="w-full">
+              <div ref={topRef}>{top}</div>
+              <div style={{ height: gap }} />
+            </div>
+          </div>
+        </div>
+
+        {/* CHAT: always mounted; a little bottom space even without safe-area */}
+        <div className="bg-white">
+          <div
+            className="mx-auto max-w-7xl w-full px-6 py-4"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
+          >
             <div
               ref={chatRef}
-              className="rounded-t-xl bg-white"
               style={{
                 height: chatBoxHeight ?? undefined,
                 maxHeight: `${chatMaxVh}vh`,
                 overflowY: "auto",
               }}
             >
-              <div className="p-4">{chat}</div>
+              {chat}
             </div>
           </div>
         </div>
-      ) : (
-        // PINNED — ONLY TOP SCROLLS
-       <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
-          <div className="h-full min-h-0 overflow-y-auto">
-            <div className="mx-auto max-w-7xl px-6 py-6">
-              <div ref={topRef}>{top}</div>
-              <div style={{ height: gap }} />
-            </div>
-          </div>
-          <div className="bg-white">
-            <div className="mx-auto max-w-7xl px-6 py-4">
-              <div
-                ref={chatRef}
-                style={{
-                  height: chatBoxHeight ?? undefined,
-                  maxHeight: `${chatMaxVh}vh`,
-                  overflowY: "auto",
-                }}
-              >
-                {chat}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -55,10 +55,17 @@ export default function Chat({
     const tick = () => {
       i++;
       setTyped(assistantFull.slice(0, i));
+    
+      // 🔔 Force a re-measure once per animation frame
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+    
       if (i < assistantFull.length) {
         timer = window.setTimeout(tick, 16) as unknown as number;
       }
     };
+
     timer = window.setTimeout(tick, 0) as unknown as number;
     return () => {
       if (timer) window.clearTimeout(timer);

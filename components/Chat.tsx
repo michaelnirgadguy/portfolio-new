@@ -184,16 +184,20 @@ useEffect(() => {
     <section className="w-full space-y-6">
       {/* Curator surface */}
       <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
-        {status === "pending" ? (
-          <div className="space-y-2">
-            <div className="text-[16px] md:text-[17px]">{userLine}</div>
-            <div className="text-sm text-muted-foreground/70">
-              {"•".repeat(dots)}
-            </div>
-          </div>
-        ) : (
-          <div className="whitespace-pre-wrap">{typed}</div>
-        )}
+    {status === "pending" ? (
+  <div className="space-y-2">
+    <div className="text-[16px] md:text-[17px]">{userLine}</div>
+
+    {/* Persistent typing row: fixed height so layout doesn't jump */}
+    <div className="h-5 leading-5 text-sm text-muted-foreground/70">
+      <span className={dots > 0 ? "inline-block" : "inline-block opacity-0 select-none"}>
+        {"•".repeat(Math.max(dots, 1))}
+      </span>
+    </div>
+    </div>
+  ) : (
+    <div className="whitespace-pre-wrap">{typed}</div>
+  )}
       </div>
 
       {/* Composer */}

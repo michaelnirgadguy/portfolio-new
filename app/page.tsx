@@ -15,14 +15,34 @@ import VideoSection from "@/components/VideoSection";
 import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
 import CenterDock from "@/components/CenterDock";
+import Act1 from "@/components/acts/Act1";
+import { Acts } from "@/lib/acts";
+
 
 export default function Home() {
   return (
     <Suspense fallback={null}>
-      <HomeInner />
+      <ActGate />
     </Suspense>
   );
 }
+
+function ActGate() {
+  const [act, setAct] = useState<"none" | "1" | "2" | "all">(() => {
+    if (typeof window !== "undefined") {
+      Acts.applyDevOverridesFromLocation();
+      return Acts.get();
+    }
+    return "none";
+  });
+
+  if (act === "none") {
+    return <Act1 onDone={() => setAct("1")} />;
+  }
+
+  return <HomeInner />;
+}
+
 
 function HomeInner() {
   const router = useRouter();

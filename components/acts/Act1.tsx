@@ -137,13 +137,7 @@ useEffect(() => {
                 </div>
               )}
               
-              {/* countdown after last line */}
-              {status === "countdown" && (
-                <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">
-                  <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/50" />
-                  <span>Redirecting in {count}…</span>
-                </div>
-              )}
+          
             </div>
           )}
         </section>

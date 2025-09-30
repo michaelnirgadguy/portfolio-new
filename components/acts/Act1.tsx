@@ -23,19 +23,29 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
     return () => clearInterval(t);
   }, [status, shown, lines.length]);
 
-  // reveal lines with slower cadence (~2.5s)
-  useEffect(() => {
-    if (status !== "revealing") return;
+  // reveal lines with controllable cadence
+useEffect(() => {
+  if (status !== "revealing") return;
 
-    if (shown >= lines.length) {
-      setStatus("countdown");
-      setCount(3);
-      return;
-    }
+  // nothing shown yet → show first line instantly
+  if (shown === 0 && lines.length > 0) {
+    setShown(1);
+    return;
+  }
 
-    const t = setTimeout(() => setShown((n) => n + 1), 2500);
-    return () => clearTimeout(t);
-  }, [status, shown, lines.length]);
+  // all lines revealed → start countdown
+  if (shown >= lines.length) {
+    setStatus("countdown");
+    setCount(5); // 5 seconds total
+    return;
+  }
+
+  // delay between lines (adjust here!)
+  const delay = 3500; // 3.5 seconds per line
+  const t = setTimeout(() => setShown((n) => n + 1), delay);
+  return () => clearTimeout(t);
+}, [status, shown, lines.length]);
+
 
   // countdown then finish
   useEffect(() => {
@@ -101,7 +111,11 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                       <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
                     )}
                     <span className="whitespace-pre-wrap">
-                      {l}{isLastVisible && " " + ".".repeat(Math.max(dots, 1))}
+                      {isLastVisible && status === "countdown"
+                        ? ` Redirecting in ${count}…`
+                        : l + (isLastVisible ? " " + ".".repeat(Math.max(dots, 1)) : "")
+                      }
+                      
                     </span>
                   </div>
                 );

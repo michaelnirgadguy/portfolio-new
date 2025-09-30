@@ -17,15 +17,23 @@ export default function Chat({
 }: {
   onShowVideo?: (videoIds: string[]) => void;
 }) {
+  
+  // check if Act1 set an intro override
+  let intro =
+    "Hi! I’m Mimsy. a hamster, a genius, and your guide to Michael’s video portfolio. Tell me what would you like to watch?";
+  try {
+    const override = sessionStorage.getItem("mimsy_intro_override");
+    if (override) {
+      intro = override;
+      sessionStorage.removeItem("mimsy_intro_override"); // clear after using
+    }
+  } catch {}
+  
   // Visible messages (simple surface)
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "m0",
-      role: "assistant",
-      text:
-        "Hi! I’m Michael’s portfolio guide. Ask for a vibe (e.g., “clever tech explainer”), and I’ll suggest a few videos.",
-    },
+    { id: "m0", role: "assistant", text: intro },
   ]);
+
 
   // Running log we send to the API (best practice for tools)
   const [log, setLog] = useState<any[]>([]);

@@ -91,29 +91,30 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           {(status === "pending" || status === "revealing" || status === "countdown") && (
             <div className="space-y-3 font-mono text-[15px] leading-7">
               {/* revealed lines */}
-              {lines.slice(0, shown).map((l, i) => (
-                <div key={i} className="grid grid-cols-[16px,1fr] gap-3 items-start">
-                  <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
-                  <span className="whitespace-pre-wrap">{l}</span>
-                </div>
-              ))}
-
-              {/* immediate row while waiting for LLM */}
-              {status === "pending" && (
+              {lines.slice(0, shown).map((l, i) => {
+                const isLastVisible = i === shown - 1 && (status === "pending" || (status === "revealing" && shown < lines.length));
+                return (
+                  <div key={i} className="grid grid-cols-[16px,1fr] gap-3 items-start">
+                    {isLastVisible ? (
+                      <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
+                    ) : (
+                      <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
+                    )}
+                    <span className="whitespace-pre-wrap">
+                      {l}{isLastVisible && " " + ".".repeat(Math.max(dots, 1))}
+                    </span>
+                  </div>
+                );
+              })}
+              
+              {/* if still pending and no first line yet, show placeholder */}
+              {status === "pending" && shown === 0 && (
                 <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">
                   <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
-                  <span>Warming up render hamsters{".".repeat(Math.max(dots, 1))}</span>
+                  <span>{".".repeat(Math.max(dots, 1))}</span>
                 </div>
               )}
-
-              {/* still revealing → working row */}
-              {status === "revealing" && shown < lines.length && (
-                <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">
-                  <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
-                  <span>Working{".".repeat(Math.max(dots, 1))}</span>
-                </div>
-              )}
-
+              
               {/* countdown after last line */}
               {status === "countdown" && (
                 <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">

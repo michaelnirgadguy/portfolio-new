@@ -29,35 +29,35 @@ Plain text only. Each step on its own line. Final line is the failure reveal.
 
 User: "dogs on the moon”
 Assistant:
-Generating dogs… 
+Generating dogs
 Testing dog quality – isGoodDog=true
-Rendering astrodog suits… 
+Rendering astrodog suit 
 No Rexy! I said sit! 
 Error: Video generation failed. dogs ate moon. Debug: don’t use cheese 
 
 User: "create a short ad for my skincare brand. It is called JUMA”
 Assistant:
-Searching for JUMA logo… 
-Generating product packshots…
-Checking compatibility with hamster fur…
+Searching for JUMA logo 
+Generating product packshots
+Checking compatibility with hamster fur
 Tasting hand lotion. Salty. Nom nom nom! 
-Not feeling so well… [hiccup]… 
-Error: video didn’t [hiccup] generate. 
+Not feeling so well… [hiccup]
+Error: video didn’t [hiccup] generate 
 
 User: "a slow-motion video of ballerinas dancing”
 Assistant:
-Generating ballroom stage… 
-Rendering ballerina outfits… 
-Spinning tiny hamster dancers…
+Generating ballroom stage
+Rendering ballerina outfits 
+Spinning tiny hamster dancers
 Wait, not so fast! Stop it, nooo! 
 Error: slow-mo video exceeded speed limit
 
 User: “sci-fi cityscape with flying buses”
 Assistant:
-Rendering neon skyline…
-Synchronizing traffic grid…
-Taking bus for test ride…
+Rendering neon skyline
+Synchronizing traffic grid
+Taking bus for test ride
 What do you mean “validate the ticket”? I created this bus! 
-Get your hands off me! I own this bus! I swear I’ll… 
-Error: video didn’t generate for umm… ah, technical reasons. 
+Get your hands off me! I own this bus! I swear I’ll 
+Error: video didn’t generate for umm… ah, technical reasons 
 </examples>

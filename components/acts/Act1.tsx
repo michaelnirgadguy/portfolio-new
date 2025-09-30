@@ -102,24 +102,32 @@ useEffect(() => {
             <div className="space-y-3 font-mono text-[15px] leading-7">
               {/* revealed lines */}
               {lines.slice(0, shown).map((l, i) => {
-                const isLastVisible = i === shown - 1 && (status === "pending" || (status === "revealing" && shown < lines.length));
+                const isLastVisible =
+                  i === shown - 1 &&
+                  (status === "pending" || status === "revealing" || status === "countdown");
+              
                 return (
                   <div key={i} className="grid grid-cols-[16px,1fr] gap-3 items-start">
-                    {isLastVisible ? (
+                    {isLastVisible && status !== "countdown" ? (
                       <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
                     ) : (
                       <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
                     )}
                     <span className="whitespace-pre-wrap">
-                      {isLastVisible && status === "countdown"
-                        ? ` Redirecting in ${count}…`
-                        : l + (isLastVisible ? " " + ".".repeat(Math.max(dots, 1)) : "")
-                      }
-                      
+                      {(() => {
+                        if (isLastVisible && status === "countdown") {
+                          return `${l}  Redirecting in ${count}…`;
+                        }
+                        if (isLastVisible) {
+                          return l + " " + ".".repeat(Math.max(dots, 1));
+                        }
+                        return l;
+                      })()}
                     </span>
                   </div>
                 );
               })}
+
               
               {/* if still pending and no first line yet, show placeholder */}
               {status === "pending" && shown === 0 && (

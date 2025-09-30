@@ -2,11 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Acts } from "@/lib/acts";
-import { Button } from "@/components/ui/button";
 
 export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");
-  const [status, setStatus] = useState<"idle" | "pending" | "revealing">("idle");
+  const [status, setStatus] = useState<"idle" | "pending" | "revealing" | "countdown">("idle");
   const [llmText, setLlmText] = useState("");
   const lines = useMemo(
     () => llmText.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
@@ -14,26 +13,42 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   );
   const [shown, setShown] = useState(0);
   const [dots, setDots] = useState(0);
+  const [count, setCount] = useState(3);
 
-  // dots animation while pending / revealing
+  // animate “thinking” dots while pending/revealing
   useEffect(() => {
     const active = status === "pending" || (status === "revealing" && shown < lines.length);
     if (!active) return;
-    const t = setInterval(() => setDots((d) => (d + 1) % 4), 400);
+    const t = setInterval(() => setDots((d) => (d + 1) % 4), 450);
     return () => clearInterval(t);
   }, [status, shown, lines.length]);
 
-  // reveal lines with a small delay
+  // reveal lines with slower cadence
   useEffect(() => {
     if (status !== "revealing") return;
+
     if (shown >= lines.length) {
-      // All lines revealed → wait 2s → auto handoff
-      const t = setTimeout(() => finish(), 2000);
-      return () => clearTimeout(t);
+      // all lines done → start countdown
+      setStatus("countdown");
+      setCount(3);
+      return;
     }
-    const t = setTimeout(() => setShown((n) => n + 1), 650);
+
+    // slower fixed delay; can tune later
+    const t = setTimeout(() => setShown((n) => n + 1), 1100);
     return () => clearTimeout(t);
   }, [status, shown, lines.length]);
+
+  // countdown then finish
+  useEffect(() => {
+    if (status !== "countdown") return;
+    if (count <= 0) {
+      finish();
+      return;
+    }
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [status, count]);
 
   async function run() {
     if (!idea.trim() || status !== "idle") return;
@@ -57,7 +72,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   }
 
   function finish() {
-    // handoff for Chat.tsx to read and show instead of the default greeting
+    // handoff line for Chat to show instead of its generic greeting
     const handoff =
       "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.";
     try { sessionStorage.setItem("mimsy_intro_override", handoff); } catch {}
@@ -67,9 +82,8 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
 
   return (
     <div className="h-full w-full bg-white">
-      {/* Centered content area, like the main page's top pane */}
       <div className="mx-auto max-w-7xl px-6 pt-10 pb-24 flex flex-col gap-8">
-        {/* “Chat bubble” surface */}
+        {/* Bubble surface */}
         <section className="max-w-3xl">
           <div className="rounded-2xl border border-border bg-muted/40 p-5 shadow-sm">
             {status === "idle" && (
@@ -78,21 +92,27 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
               </div>
             )}
 
-            {(status === "pending" || status === "revealing") && (
-              <div className="space-y-2 text-[16px] leading-7 whitespace-pre-wrap">
-                {/* revealed lines */}
+            {(status === "pending" || status === "revealing" || status === "countdown") && (
+              <div className="space-y-3 text-[16px] leading-7">
+                {/* revealed lines with a small pulsing dot prefix */}
                 {lines.slice(0, shown).map((l, i) => (
-                  <div key={i}>{l}</div>
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="mt-[7px] inline-block h-[6px] w-[6px] rounded-full bg-current animate-pulse" />
+                    <span className="whitespace-pre-wrap">{l}</span>
+                  </div>
                 ))}
-                {/* typing dots while more lines are coming */}
+
+                {/* while still revealing, show thinking dots row */}
                 {status === "revealing" && shown < lines.length && (
                   <div className="h-5 text-sm text-muted-foreground/80">
                     {"•".repeat(Math.max(dots, 1))}
                   </div>
                 )}
-                {status === "pending" && (
-                  <div className="h-5 text-sm text-muted-foreground/80">
-                    {"•".repeat(Math.max(dots, 1))}
+
+                {/* countdown after last line */}
+                {status === "countdown" && (
+                  <div className="text-sm text-muted-foreground/90">
+                    Redirecting in {count}…
                   </div>
                 )}
               </div>
@@ -100,54 +120,41 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           </div>
         </section>
 
-        {/* Composer (mirrors main site’s input look) */}
-        <section className="max-w-3xl">
-          <form
-            onSubmit={(e) => { e.preventDefault(); run(); }}
-            className="flex items-center"
-          >
-            <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
-              <Button
-                type="button"
-                variant="outlineAccent"
-                size="pill"
-                onClick={() => {
-                  // tiny helper to prefill a playful idea
-                  if (!idea) setIdea("dogs on the moon");
-                  else run();
-                }}
-                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-              >
-                ✨
-              </Button>
+        {/* Composer — hidden once generation starts */}
+        {status === "idle" && (
+          <section className="max-w-3xl">
+            <form
+              onSubmit={(e) => { e.preventDefault(); run(); }}
+              className="flex items-center"
+            >
+              <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
+                <button
+                  type="button"
+                  onClick={() => { if (!idea) setIdea("dogs on the moon"); else run(); }}
+                  title="Generate a prompt"
+                  aria-label="Generate a prompt"
+                  className="shrink-0 rounded-full h-10 px-3 border border-transparent hover:border-[hsl(var(--accent))] transition"
+                >
+                  ✨
+                </button>
 
-              <input
-                value={idea}
-                onChange={(e) => setIdea(e.target.value)}
-                placeholder='e.g., "dogs on the moon"'
-                disabled={status === "pending"}
-                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-              />
+                <input
+                  value={idea}
+                  onChange={(e) => setIdea(e.target.value)}
+                  placeholder='e.g., "dogs on the moon"'
+                  className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+                />
 
-              <Button
-                type="submit"
-                variant="outlineAccent"
-                size="pill"
-                disabled={status !== "idle"}
-                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-              >
-                Generate
-              </Button>
-            </div>
-          </form>
-
-          {/* Fallback manual continue button, only shown after reveal finishes (just in case) */}
-          {status === "revealing" && shown >= lines.length && (
-            <div className="mt-4 text-center">
-              <Button onClick={finish}>Show Michael’s real work</Button>
-            </div>
-          )}
-        </section>
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-full h-10 px-4 border border-input hover:border-[hsl(var(--accent))] transition"
+                >
+                  Generate
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
       </div>
     </div>
   );

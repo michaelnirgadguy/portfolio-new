@@ -21,11 +21,31 @@ export async function POST(req: Request) {
         { role: "user", content: idea || "" },
       ],
       temperature: 0.9,
-      max_tokens: 200,
+      max_tokens: 250,
     });
 
-    const text = completion.choices[0]?.message?.content?.trim() || "";
-    return NextResponse.json({ text });
+    const raw = completion.choices[0]?.message?.content?.trim() || "";
+
+    // Robust JSON parse (model should return strict JSON per prompt)
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Fallback: try to extract a JSON object substring if something slipped in
+      const m = raw.match(/\{[\s\S]*\}$/);
+      if (m) {
+        parsed = JSON.parse(m[0]);
+      }
+    }
+
+    const title =
+      (typeof parsed?.title === "string" && parsed.title.trim()) ||
+      "Disco Hamster";
+    const description =
+      (typeof parsed?.description === "string" && parsed.description.trim()) ||
+      raw || "A perfectly reasonable justification, surely.";
+
+    return NextResponse.json({ title, description });
   } catch (err: any) {
     console.error("Act2 API error", err);
     return NextResponse.json(

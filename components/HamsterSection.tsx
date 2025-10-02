@@ -28,23 +28,27 @@ export default function HamsterSection({
           md:grid-cols-[1.25fr,1fr]
         "
       >
-        {/* Left: slightly-larger video pane */}
-        <div className="w-full">
-          <div className="relative w-full overflow-hidden rounded-2xl shadow-sm">
-            {/* If you serve MP4/WebM under the same base, use <video> with sources */}
-            <video
-              className="w-full h-auto"
-              controls
-              playsInline
-              preload="metadata"
-              poster={`${srcBase}.jpg`}
-            >
-              <source src={`${srcBase}.mp4`} type="video/mp4" />
-              <source src={`${srcBase}.webm`} type="video/webm" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
+      {/* Left: slightly-larger video pane */}
+      <div className="w-full">
+        {/* Stable 16:9 box so poster/first frame never looks “half-hidden” */}
+        <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-sm">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            preload="metadata"
+            poster={`${srcBase}.jpg`}
+          >
+            <source src={`${srcBase}.mp4`} type="video/mp4" />
+            <source src={`${srcBase}.webm`} type="video/webm" />
+            Your browser does not support the video tag.
+          </video>
         </div>
+      </div>
+
 
         {/* Right: metadata + description */}
         <aside className="w-full">

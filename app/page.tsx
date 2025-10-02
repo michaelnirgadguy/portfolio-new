@@ -162,6 +162,12 @@ function HomeInner() {
       // show hamster section and clear any selected video
       setHamster(detail);
       setSelectedId(null);
+  
+      // ✅ advance journey only once the hamster section actually opens
+      try {
+        Acts.set("2");
+      } catch {}
+      
     }
 
     function onStartAct3(e: Event) {

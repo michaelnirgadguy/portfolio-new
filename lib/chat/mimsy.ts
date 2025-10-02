@@ -40,31 +40,36 @@ function getActSafe(): ActKey {
 export async function routeMimsy(idea: string): Promise<MimsyAction> {
   const act = getActSafe();
 
-  if (act === "1") {
-    let excuse = "";
-    try {
-      excuse = await act2Justify(idea);
-    } catch {
-      excuse = "Behold: flawless disco metaphor. Any resemblance to your brief is purely intentional.";
-    }
-
-    const followup =
-      "i hope you can appreciate my hamster-genius. if you want more mundane human stuff i can show you more of michael’s videos, of course. or you can try me again — just type 'Mimsy:' followed by your video idea.";
-
-    return {
-      kind: "act2",
-      followup,
-      event: {
-        name: "mimsy-show-hamster",
-        detail: {
-          srcBase: "/vid/disco-hamster",
-          title: "Disco Hamster",
-          client: "Mimsy Stock",
-          text: excuse,
-        },
-      },
+if (act === "1") {
+  let result: { title: string; description: string };
+  try {
+    result = await act2Justify(idea);
+  } catch {
+    result = {
+      title: "Disco Hamster (Temp Title)",
+      description:
+        "Behold: flawless disco metaphor. Any resemblance to your brief is purely intentional.",
     };
   }
+
+  const followup =
+    "i hope you can appreciate my hamster-genius. if you want more mundane human stuff i can show you more of michael’s videos, of course. or you can try me again — just type 'Mimsy:' followed by your video idea.";
+
+  return {
+    kind: "act2",
+    followup,
+    event: {
+      name: "mimsy-show-hamster",
+      detail: {
+        srcBase: "/vid/disco-hamster",
+        title: result.title,          // ✅ LLM title
+        client: "Mimsy Stock",
+        text: result.description,     // ✅ LLM description
+      },
+    },
+  };
+}
+
 
   if (act === "2") {
     return {

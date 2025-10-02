@@ -50,33 +50,37 @@ export default function HamsterSection({
       </div>
 
 
-        {/* Right: metadata + description */}
-        <aside className="w-full">
-          <div className="space-y-4">
-            <h2 className="text-2xl md:text-3xl font-semibold leading-tight">
-              {safeTitle}
-            </h2>
-
-            <div className="space-y-1 text-sm">
-              <div className="text-muted-foreground">
-                <span className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>
-                  client:
-                </span>{" "}
-                you!
-              </div>
-              <div className="text-muted-foreground">
-                <span className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>
-                  director, producer, genius:
-                </span>{" "}
-                Mimsy the hamster
-              </div>
+      {/* Right: metadata + description */}
+      <aside className="w-full">
+        <div className="space-y-5">
+          {/* Title — keep strong but not oversized */}
+          <h2 className="text-2xl md:text-3xl font-semibold leading-tight">
+            {safeTitle}
+          </h2>
+      
+          {/* Meta rows — consistent size/weight; accent on labels only */}
+          <dl className="space-y-1 text-sm md:text-base">
+            <div className="flex gap-2">
+              <dt className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>
+                client:
+              </dt>
+              <dd className="text-foreground">you!</dd>
             </div>
+            <div className="flex gap-2">
+              <dt className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>
+                director, producer, genius:
+              </dt>
+              <dd className="text-foreground">Mimsy the hamster</dd>
+            </div>
+          </dl>
+      
+          {/* Description — regular body text */}
+          <p className="text-base leading-7 whitespace-pre-wrap text-foreground/90">
+            {safeDesc}
+          </p>
+        </div>
+      </aside>
 
-            <p className="text-[15px] md:text-base leading-7 whitespace-pre-wrap">
-              {safeDesc}
-            </p>
-          </div>
-        </aside>
       </div>
     </section>
   );

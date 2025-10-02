@@ -64,7 +64,7 @@ export default function HamsterSection({
               <dt className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>
                 client:
               </dt>
-              <dd className="text-foreground">you!</dd>
+              <dd className="text-foreground">You!</dd>
             </div>
             <div className="flex gap-2">
               <dt className="uppercase tracking-wide font-medium" style={{ color: "hsl(var(--accent))" }}>

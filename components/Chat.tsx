@@ -7,6 +7,7 @@ import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
+import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -107,7 +108,63 @@ async function onSubmit(e: React.FormEvent) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
-  // UI surface (initially show what they typed)
+  // ✅ NEW: Mimsy command path
+  const maybeIdea = extractMimsyIdea(trimmed);
+  if (maybeIdea !== null) {
+    // show user line then clear input
+    push("user", trimmed);
+    setInput("");
+
+    // empty idea → quick nudge
+    if (maybeIdea === "") {
+      const msg = "Type “Mimsy:” followed by your video idea.";
+      push("assistant", msg);
+      setAssistantFull(msg);
+      setStatus("answer");
+      return;
+    }
+
+    // run router
+    setUserLine("");
+    setAssistantFull("");
+    setTyped("");
+    setStatus("pending");
+
+    try {
+      const action = await routeMimsy(maybeIdea);
+
+      if (action.kind === "act2") {
+        // fire event so the top pane renders HamsterSection
+        try {
+          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
+        } catch {}
+        push("assistant", action.followup);
+        setAssistantFull(action.followup);
+      } else if (action.kind === "act3") {
+        try {
+          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
+        } catch {}
+        push("assistant", action.line);
+        setAssistantFull(action.line);
+      } else if (action.kind === "handoff") {
+        push("assistant", action.text);
+        setAssistantFull(action.text);
+      } else {
+        push("assistant", action.text);
+        setAssistantFull(action.text);
+      }
+
+      setStatus("answer");
+    } catch {
+      const err = "hmm… hamster wheels jammed. try again?";
+      push("assistant", err);
+      setAssistantFull(err);
+      setStatus("answer");
+    }
+    return;
+  }
+
+  // 🔁 Normal chat path (unchanged)
   push("user", trimmed);
   setInput("");
   setUserLine(trimmed);
@@ -119,10 +176,9 @@ async function onSubmit(e: React.FormEvent) {
     const { text, nextLog } = await sendTurn({
       log,
       userText: trimmed,
-      // NEW: when the LLM calls the UI tool, switch to dots and hide the user line
       onShowVideo: (ids: string[]) => {
-        toolPending();            // <- clears the user message immediately
-        onShowVideo?.(ids);       // keep existing UI behavior
+        toolPending();
+        onShowVideo?.(ids);
       },
     });
 
@@ -138,6 +194,7 @@ async function onSubmit(e: React.FormEvent) {
     setStatus("answer");
   }
 }
+
 
 
   // ✨ Prompt generator

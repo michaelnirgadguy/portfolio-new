@@ -17,7 +17,7 @@ import Chat from "@/components/Chat";
 import CenterDock from "@/components/CenterDock";
 import Act1 from "@/components/acts/Act1";
 import { Acts } from "@/lib/acts";
-
+import HamsterSection from "@/components/HamsterSection";
 
 export default function Home() {
   return (
@@ -43,7 +43,6 @@ function ActGate() {
   return <HomeInner />;
 }
 
-
 function HomeInner() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -64,6 +63,14 @@ function HomeInner() {
   // NEW: one-shot suppress flag for LLM-triggered opens
   const suppressOpenForIdRef = useRef<string | null>(null);
 
+  // NEW: hamster pane state (set by custom events from Chat)
+  const [hamster, setHamster] = useState<{
+    srcBase: string;
+    title: string;
+    client: string;
+    text: string;
+  } | null>(null);
+
   // --- URL helpers ---
   function replaceQuery(next: URLSearchParams) {
     const qs = next.toString();
@@ -83,6 +90,7 @@ function HomeInner() {
     if (!Array.isArray(ids) || !ids.length) return;
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (!ordered.length) return;
+    setHamster(null); // if we’re showing a grid, hide hamster gag
     setSelectedId(null); // clear selection → grid
     setVisibleGrid(ordered); // LLM decides the count
   }
@@ -90,6 +98,7 @@ function HomeInner() {
   function playFirst(ids: string[]) {
     const first = ids.find((id) => byId.has(id));
     if (!first) return;
+    setHamster(null); // if we’re opening a player, hide hamster gag
     setSelectedId(first);
   }
 
@@ -119,32 +128,75 @@ function HomeInner() {
       if ((globalThis as any).uiTool) (globalThis as any).uiTool = undefined;
     };
   }, [byId, sp]);
-  
+
   // Notify Chat/LLM whenever a single video is opened (via click or ?v=)
-    useEffect(() => {
-      if (!selected) return;
-    
-      const suppressId = suppressOpenForIdRef.current;
-      // Always clear so it never “sticks” beyond one selection
-      suppressOpenForIdRef.current = null;
-    
-      // Skip only if this exact video was LLM-opened
-      if (suppressId && suppressId === selected.id) return;
-    
+  useEffect(() => {
+    if (!selected) return;
+
+    const suppressId = suppressOpenForIdRef.current;
+    // Always clear so it never “sticks” beyond one selection
+    suppressOpenForIdRef.current = null;
+
+    // Skip only if this exact video was LLM-opened
+    if (suppressId && suppressId === selected.id) return;
+
+    try {
+      (globalThis as any).dispatchLLMEvent?.({
+        type: "video_opened",
+        id: selected.id,
+        url: selected.url,
+      });
+    } catch {}
+  }, [selected]);
+
+  // NEW: listen to Mimsy custom events from Chat
+  useEffect(() => {
+    function onShowHamster(e: Event) {
+      const detail = (e as CustomEvent)?.detail as {
+        srcBase: string;
+        title: string;
+        client: string;
+        text: string;
+      };
+      if (!detail) return;
+      // show hamster section and clear any selected video
+      setHamster(detail);
+      setSelectedId(null);
+  
+      // ✅ advance journey only once the hamster section actually opens
       try {
-        (globalThis as any).dispatchLLMEvent?.({
-          type: "video_opened",
-          id: selected.id,
-          url: selected.url,
-        });
+        Acts.set("2");
       } catch {}
-    }, [selected]);
+      
+    }
 
+    function onStartAct3(e: Event) {
+      const detail = (e as CustomEvent)?.detail as { idea: string };
+      // Stub: we’ll build Act 3 UI later
+      setHamster(null);
+      setSelectedId(null);
+      console.log("Act3 stub — idea:", detail?.idea);
+    }
 
-  // --- Top pane: either the selected player OR a grid ---
+    window.addEventListener("mimsy-show-hamster" as any, onShowHamster as any);
+    window.addEventListener("mimsy-start-act3" as any, onStartAct3 as any);
+    return () => {
+      window.removeEventListener("mimsy-show-hamster" as any, onShowHamster as any);
+      window.removeEventListener("mimsy-start-act3" as any, onStartAct3 as any);
+    };
+  }, []);
+
+  // --- Top pane: hamster > selected player > grid ---
   const TopPane = (
     <div ref={topRef} className="space-y-6">
-      {selected ? (
+      {hamster ? (
+        <HamsterSection
+          srcBase={hamster.srcBase}
+          title={hamster.title}
+          client={hamster.client}
+          text={hamster.text}
+        />
+      ) : selected ? (
         <VideoSection video={selected} />
       ) : (
         <VideoGrid videos={visibleGrid} onSelectId={(id) => setSelectedId(id)} />
@@ -152,7 +204,7 @@ function HomeInner() {
     </div>
   );
 
-  // --- Chat (new prop; will be used after Chat.tsx update) ---
+  // --- Chat (new prop; used after Chat.tsx update) ---
   const ChatPane = <Chat onShowVideo={onShowVideo} />;
 
   return <CenterDock top={TopPane} chat={ChatPane} />;

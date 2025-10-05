@@ -252,17 +252,18 @@ useEffect(() => {
       {status === "pending" ? (
         /* Pending: spinner left-aligned, no user prompt echo */
         <div className="flex items-baseline gap-3 py-1 leading-8 text-[17px] md:text-[18px]">
-          <div
-            className="hamster-wheel shrink-0"
+          <span
+            className="inline-block hamster-wheel shrink-0 align-text-bottom"
             style={{
-              height: "2em",
-              width: "2em",
+              height: "2.2em",
+              width: "2.2em",
               transform: "scale(0.6)",
-              transformOrigin: "center left",
+              transformOrigin: "center center",
             }}
           />
           <span className="text-muted-foreground/70">Generating…</span>
         </div>
+
 
       ) : (
         <div className="whitespace-pre-wrap">{typed}</div>

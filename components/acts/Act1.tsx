@@ -144,14 +144,11 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           
             {/* if still pending and no first line yet, show placeholder */}
             {status === "pending" && shown === 0 && (
-              <div className="grid grid-cols-[32px,1fr] gap-3 items-center text-muted-foreground/90">
-                <span
-                  className="relative inline-block shrink-0 self-center"
-                  style={{ height: "2em", width: "2em", overflow: "visible" }}
-                >
+              <div className="grid grid-cols-[64px,1fr] gap-3 items-center text-muted-foreground/90">
+                <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
                   <span
-                    className="hamster-wheel absolute inset-0"
-                    style={{ transform: "scale(0.5)", transformOrigin: "center center" }}
+                    className="hamster-wheel absolute left-1/2 top-1/2"
+                    style={{ transform: "translate(-50%, -50%) scale(0.68)", transformOrigin: "center" }}
                   />
                 </span>
                 <span>{".".repeat(Math.max(dots, 1))}</span>

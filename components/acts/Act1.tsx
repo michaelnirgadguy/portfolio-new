@@ -111,16 +111,12 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
               return (
                 <div key={i} className="grid grid-cols-[32px,1fr] gap-3 items-center">
                   {isLastVisible && status !== "countdown" ? (
+                   
                     // active line → show hamster wheel, centered
-                    <span
-                      className="relative inline-block shrink-0 self-center"
-                      style={{ height: "2em", width: "2em", overflow: "visible" }}
-                    >
-                      <span
-                        className="hamster-wheel absolute inset-0"
-                        style={{ transform: "scale(0.5)", transformOrigin: "center center" }}
-                      />
+                    <span className="inline-flex items-center justify-center shrink-0 h-8 w-8">
+                      <span className="hamster-wheel" style={{ transform: "scale(0.55)", transformOrigin: "center" }} />
                     </span>
+
                   ) : (
                     // finished line → small dot, centered
                     <span className="inline-block self-center h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />

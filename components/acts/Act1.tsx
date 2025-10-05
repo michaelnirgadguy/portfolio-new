@@ -24,28 +24,24 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   }, [status, shown, lines.length]);
 
   // reveal lines with controllable cadence
-useEffect(() => {
-  if (status !== "revealing") return;
+  useEffect(() => {
+    if (status !== "revealing") return;
 
-  // nothing shown yet → show first line instantly
-  if (shown === 0 && lines.length > 0) {
-    setShown(1);
-    return;
-  }
+    if (shown === 0 && lines.length > 0) {
+      setShown(1);
+      return;
+    }
 
-  // all lines revealed → start countdown
-  if (shown >= lines.length) {
-    setStatus("countdown");
-    setCount(5); // 5 seconds total
-    return;
-  }
+    if (shown >= lines.length) {
+      setStatus("countdown");
+      setCount(5); // 5 seconds total
+      return;
+    }
 
-  // delay between lines (adjust here!)
-  const delay = 3500; // 3.5 seconds per line
-  const t = setTimeout(() => setShown((n) => n + 1), delay);
-  return () => clearTimeout(t);
-}, [status, shown, lines.length]);
-
+    const delay = 3500; // 3.5 seconds per line
+    const t = setTimeout(() => setShown((n) => n + 1), delay);
+    return () => clearTimeout(t);
+  }, [status, shown, lines.length]);
 
   // countdown then finish
   useEffect(() => {
@@ -60,7 +56,7 @@ useEffect(() => {
 
   async function run() {
     if (!idea.trim() || status !== "idle") return;
-    setStatus("pending"); // immediately show a log row (no blank)
+    setStatus("pending");
     try {
       const res = await fetch("/api/act1", {
         method: "POST",
@@ -69,7 +65,10 @@ useEffect(() => {
       });
       const data = await res.json();
       const text = (data?.text || "").toString().trim();
-      setLlmText(text || "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons).");
+      setLlmText(
+        text ||
+          "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons)."
+      );
       setShown(0);
       setStatus("revealing");
     } catch {
@@ -82,7 +81,9 @@ useEffect(() => {
   function finish() {
     const handoff =
       "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.";
-    try { sessionStorage.setItem("mimsy_intro_override", handoff); } catch {}
+    try {
+      sessionStorage.setItem("mimsy_intro_override", handoff);
+    } catch {}
     Acts.set("1");
     onDone?.();
   }
@@ -94,22 +95,31 @@ useEffect(() => {
         <section className="rounded-2xl border border-border bg-muted/40 p-5 shadow-sm">
           {status === "idle" && (
             <div className="text-[17px] leading-7">
-              Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll generate it for you…
+              Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll
+              generate it for you…
             </div>
           )}
 
           {(status === "pending" || status === "revealing" || status === "countdown") && (
-            <div className="space-y-3 font-mono text-[15px] leading-7">
+            <div className="space-y-3 font-mono text-[17px] leading-8">
               {/* revealed lines */}
               {lines.slice(0, shown).map((l, i) => {
                 const isLastVisible =
                   i === shown - 1 &&
                   (status === "pending" || status === "revealing" || status === "countdown");
-              
+
                 return (
-                  <div key={i} className="grid grid-cols-[16px,1fr] gap-3 items-start">
+                  <div key={i} className="grid grid-cols-[32px,1fr] gap-3 items-start">
                     {isLastVisible && status !== "countdown" ? (
-                      <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
+                      <span
+                        className="relative inline-block shrink-0 align-text-bottom mr-2"
+                        style={{ height: "2.2em", width: "2.2em", overflow: "visible" }}
+                      >
+                        <span
+                          className="hamster-wheel absolute inset-0"
+                          style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
+                        />
+                      </span>
                     ) : (
                       <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
                     )}
@@ -128,16 +138,21 @@ useEffect(() => {
                 );
               })}
 
-              
               {/* if still pending and no first line yet, show placeholder */}
               {status === "pending" && shown === 0 && (
-                <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">
-                  <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
+                <div className="grid grid-cols-[32px,1fr] gap-3 items-start text-muted-foreground/90">
+                  <span
+                    className="relative inline-block shrink-0 align-text-bottom mr-2"
+                    style={{ height: "2.2em", width: "2.2em", overflow: "visible" }}
+                  >
+                    <span
+                      className="hamster-wheel absolute inset-0"
+                      style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
+                    />
+                  </span>
                   <span>{".".repeat(Math.max(dots, 1))}</span>
                 </div>
               )}
-              
-          
             </div>
           )}
         </section>
@@ -146,13 +161,19 @@ useEffect(() => {
         {status === "idle" && (
           <section>
             <form
-              onSubmit={(e) => { e.preventDefault(); run(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                run();
+              }}
               className="flex items-center"
             >
               <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
                 <button
                   type="button"
-                  onClick={() => { if (!idea) setIdea("dogs on the moon"); else run(); }}
+                  onClick={() => {
+                    if (!idea) setIdea("dogs on the moon");
+                    else run();
+                  }}
                   title="Generate a prompt"
                   aria-label="Generate a prompt"
                   className="shrink-0 rounded-full h-10 px-3 border border-transparent hover:border-[hsl(var(--accent))] transition"

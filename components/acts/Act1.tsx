@@ -101,7 +101,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           )}
 
           {(status === "pending" || status === "revealing" || status === "countdown") && (
-             <div className="space-y-3 font-mono text-[18px] leading-8">
+            <div className="space-y-4 font-mono text-[18px] leading-8">
             {/* revealed lines */}
             {lines.slice(0, shown).map((l, i) => {
               const isLastVisible =
@@ -109,20 +109,22 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                 (status === "pending" || status === "revealing" || status === "countdown");
           
               return (
-                <div key={i} className="grid grid-cols-[32px,1fr] gap-3 items-center">
+                <div key={i} className="grid grid-cols-[64px,1fr] gap-3 items-center">
                   {isLastVisible && status !== "countdown" ? (
-                   
-                    // active line → show hamster wheel, centered
-
-                    <span className="inline-flex items-center justify-center shrink-0 h-8 w-8" style={{ overflow: "visible" }}>
-                      <span className="hamster-wheel" style={{ transform: "scale(0.5)", transformOrigin: "center" }} />
+                    // active line → hamster wheel (two-line height, centered)
+                    <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
+                      <span
+                        className="hamster-wheel absolute left-1/2 top-1/2"
+                        style={{ transform: "translate(-50%, -50%) scale(0.68)", transformOrigin: "center" }}
+                      />
                     </span>
-
-
                   ) : (
-                    // finished line → small dot, centered
-                    <span className="inline-block self-center h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />
+                    // finished lines → small dot centered within the 64px column
+                    <span className="inline-flex items-center justify-center h-16 w-16">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />
+                    </span>
                   )}
+          
                   <span className="whitespace-pre-wrap">
                     {(() => {
                       if (isLastVisible && status === "countdown") {
@@ -137,6 +139,8 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                 </div>
               );
             })}
+
+
           
             {/* if still pending and no first line yet, show placeholder */}
             {status === "pending" && shown === 0 && (

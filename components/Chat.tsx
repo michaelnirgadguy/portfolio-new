@@ -253,12 +253,11 @@ useEffect(() => {
   <div className="space-y-2">
     <div className="text-[16px] md:text-[17px]">{userLine}</div>
 
-    {/* Persistent typing row: fixed height so layout doesn't jump */}
-    <div className="h-5 leading-5 text-sm text-muted-foreground/70">
-      <span className={dots > 0 ? "inline-block" : "inline-block opacity-0 select-none"}>
-        {"•".repeat(Math.max(dots, 1))}
-      </span>
+    {/* Loading: Hamster wheel sprite */}
+    <div className="h-10 flex items-center">
+      <div className="hamster-wheel" />
     </div>
+
     </div>
   ) : (
     <div className="whitespace-pre-wrap">{typed}</div>

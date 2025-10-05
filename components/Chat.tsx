@@ -245,66 +245,63 @@ useEffect(() => {
 }, [log]);
 
   
-  return (
-    <section className="w-full space-y-6">
-      {/* Curator surface */}
-      <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
-    {status === "pending" ? (
-{/* Pending: left-aligned spinner, no user prompt echo */}
-<div className="flex items-start gap-3 py-1">
-  {/* Spinner column (same left margin as text since it's inside the same container) */}
-  <div className="shrink-0">
-    {/* Base frame is 100×100; scale to ~60px tall (≈ two lines) */}
-    <div
-      className="hamster-wheel"
-      style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
-    />
-  </div>
-
-  {/* Right column (optional helper). Remove this block if you want only the spinner */}
-  <div className="text-muted-foreground/70 leading-7">
-    Generating…
-  </div>
-</div>
-  ) : (
-    <div className="whitespace-pre-wrap">{typed}</div>
-  )}
-      </div>
-
-      {/* Composer */}
-      <form onSubmit={onSubmit} className="flex items-center">
-        <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
-          <Button
-            type="button"
-            variant="outlineAccent"
-            size="pill"
-            onClick={handleSparkle}
-            title="Generate a prompt"
-            aria-label="Generate a prompt"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <span className="text-xl leading-none">✨</span>
-          </Button>
-
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder='Type a request… e.g., "bold, funny tech ad"'
-            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
-          />
-
-          <Button
-            type="submit"
-            variant="outlineAccent"
-            size="icon"
-            title="Send"
-            aria-label="Send"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-          </Button>
+    return (
+  <section className="w-full space-y-6">
+    {/* Curator surface */}
+    <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
+      {status === "pending" ? (
+        /* Pending: spinner left-aligned, no user prompt echo */
+        <div className="flex items-start gap-3 py-1">
+          <div className="shrink-0">
+            <div
+              className="hamster-wheel"
+              style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
+            />
+          </div>
+          {/* Optional helper text; remove if you want only the spinner */}
+          <div className="text-muted-foreground/70 leading-7">
+            Generating…
+          </div>
         </div>
-      </form>
-    </section>
-  );
+      ) : (
+        <div className="whitespace-pre-wrap">{typed}</div>
+      )}
+    </div>
+
+    {/* Composer */}
+    <form onSubmit={onSubmit} className="flex items-center">
+      <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
+        <Button
+          type="button"
+          variant="outlineAccent"
+          size="pill"
+          onClick={handleSparkle}
+          title="Generate a prompt"
+          aria-label="Generate a prompt"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <span className="text-xl leading-none">✨</span>
+        </Button>
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder='Type a request… e.g., "bold, funny tech ad"'
+          className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground focus:ring-0"
+        />
+
+        <Button
+          type="submit"
+          variant="outlineAccent"
+          size="icon"
+          title="Send"
+          aria-label="Send"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+        </Button>
+      </div>
+    </form>
+  </section>
+);
 }

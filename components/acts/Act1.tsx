@@ -115,7 +115,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                     <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
                       <span
                         className="hamster-wheel absolute left-1/2 top-1/2"
-                        style={{ transform: "translate(-50%, -50%) scale(0.68)", transformOrigin: "center" }}
+                        style={{ transform: "translate(-50%, -50%) scale(0.60)", transformOrigin: "center" }}
                       />
                     </span>
                   ) : (
@@ -148,7 +148,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                 <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
                   <span
                     className="hamster-wheel absolute left-1/2 top-1/2"
-                    style={{ transform: "translate(-50%, -50%) scale(0.68)", transformOrigin: "center" }}
+                    style={{ transform: "translate(-50%, -50%) scale(0.60)", transformOrigin: "center" }}
                   />
                 </span>
                 <span>{".".repeat(Math.max(dots, 1))}</span>

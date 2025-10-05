@@ -113,9 +113,11 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                   {isLastVisible && status !== "countdown" ? (
                    
                     // active line → show hamster wheel, centered
-                    <span className="inline-flex items-center justify-center shrink-0 h-8 w-8">
-                      <span className="hamster-wheel" style={{ transform: "scale(0.55)", transformOrigin: "center" }} />
+
+                    <span className="inline-flex items-center justify-center shrink-0 h-8 w-8" style={{ overflow: "visible" }}>
+                      <span className="hamster-wheel" style={{ transform: "scale(0.5)", transformOrigin: "center" }} />
                     </span>
+
 
                   ) : (
                     // finished line → small dot, centered

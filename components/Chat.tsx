@@ -253,7 +253,7 @@ useEffect(() => {
         /* Pending: spinner left-aligned, no user prompt echo */
         <div className="flex items-baseline gap-3 py-1 leading-8 text-[17px] md:text-[18px]">
           <span
-            className="relative inline-block shrink-0 align-text-bottom"
+            className="relative inline-block shrink-0 align-text-bottom mr-2"
             style={{ height: "2.2em", width: "2.2em", overflow: "visible" }}
           >
             <span

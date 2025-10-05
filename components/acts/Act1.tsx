@@ -93,12 +93,19 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
       <div className="w-full max-w-2xl grid gap-6">
         {/* Log surface */}
         <section className="rounded-2xl border border-border bg-muted/40 p-5 shadow-sm">
-          {status === "idle" && (
-            <div className="text-[17px] leading-7">
-              Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll
-              generate it for you…
-            </div>
-          )}
+        {status === "idle" && (
+          <div className="text-[17px] leading-7 text-center">
+            <img
+              src="/tiny-Mimsy.png"
+              alt="Mimsy"
+              className="mx-auto mb-3 h-20 w-20"
+              /* disappears automatically once status !== "idle" */
+            />
+            Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll
+            generate it for you…
+          </div>
+        )}
+
 
           {(status === "pending" || status === "revealing" || status === "countdown") && (
             <div className="space-y-4 font-mono text-[18px] leading-8">

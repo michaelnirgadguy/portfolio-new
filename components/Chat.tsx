@@ -255,7 +255,7 @@ useEffect(() => {
 
     {/* Loading: Hamster wheel sprite */}
     <div className="h-10 flex items-center">
-      <div className="hamster-wheel" />
+      <div className="hamster-wheel hamster-wheel--small" />
     </div>
 
     </div>

@@ -250,15 +250,22 @@ useEffect(() => {
       {/* Curator surface */}
       <div className="leading-8 text-[17px] md:text-[18px] tracking-tight">
     {status === "pending" ? (
-  <div className="space-y-2">
-    <div className="text-[16px] md:text-[17px]">{userLine}</div>
+{/* Pending: left-aligned spinner, no user prompt echo */}
+<div className="flex items-start gap-3 py-1">
+  {/* Spinner column (same left margin as text since it's inside the same container) */}
+  <div className="shrink-0">
+    {/* Base frame is 100×100; scale to ~60px tall (≈ two lines) */}
+    <div
+      className="hamster-wheel"
+      style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
+    />
+  </div>
 
-    {/* Loading: Hamster wheel sprite */}
-    <div className="h-10 flex items-center">
-      <div className="hamster-wheel hamster-wheel--small" />
-    </div>
-
-    </div>
+  {/* Right column (optional helper). Remove this block if you want only the spinner */}
+  <div className="text-muted-foreground/70 leading-7">
+    Generating…
+  </div>
+</div>
   ) : (
     <div className="whitespace-pre-wrap">{typed}</div>
   )}

@@ -101,59 +101,62 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           )}
 
           {(status === "pending" || status === "revealing" || status === "countdown") && (
-            <div className="space-y-3 font-mono text-[17px] leading-8">
-              {/* revealed lines */}
-              {lines.slice(0, shown).map((l, i) => {
-                const isLastVisible =
-                  i === shown - 1 &&
-                  (status === "pending" || status === "revealing" || status === "countdown");
-
-                return (
-                  <div key={i} className="grid grid-cols-[32px,1fr] gap-3 items-start">
-                    {isLastVisible && status !== "countdown" ? (
-                      <span
-                        className="relative inline-block shrink-0 align-text-bottom mr-2"
-                        style={{ height: "2.2em", width: "2.2em", overflow: "visible" }}
-                      >
-                        <span
-                          className="hamster-wheel absolute inset-0"
-                          style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
-                        />
-                      </span>
-                    ) : (
-                      <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
-                    )}
-                    <span className="whitespace-pre-wrap">
-                      {(() => {
-                        if (isLastVisible && status === "countdown") {
-                          return `${l}  Redirecting in ${count}…`;
-                        }
-                        if (isLastVisible) {
-                          return l + " " + ".".repeat(Math.max(dots, 1));
-                        }
-                        return l;
-                      })()}
-                    </span>
-                  </div>
-                );
-              })}
-
-              {/* if still pending and no first line yet, show placeholder */}
-              {status === "pending" && shown === 0 && (
-                <div className="grid grid-cols-[32px,1fr] gap-3 items-start text-muted-foreground/90">
-                  <span
-                    className="relative inline-block shrink-0 align-text-bottom mr-2"
-                    style={{ height: "2.2em", width: "2.2em", overflow: "visible" }}
-                  >
+             <div className="space-y-3 font-mono text-[18px] leading-8">
+            {/* revealed lines */}
+            {lines.slice(0, shown).map((l, i) => {
+              const isLastVisible =
+                i === shown - 1 &&
+                (status === "pending" || status === "revealing" || status === "countdown");
+          
+              return (
+                <div key={i} className="grid grid-cols-[32px,1fr] gap-3 items-center">
+                  {isLastVisible && status !== "countdown" ? (
+                    // active line → show hamster wheel, centered
                     <span
-                      className="hamster-wheel absolute inset-0"
-                      style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
-                    />
+                      className="relative inline-block shrink-0 self-center"
+                      style={{ height: "2em", width: "2em", overflow: "visible" }}
+                    >
+                      <span
+                        className="hamster-wheel absolute inset-0"
+                        style={{ transform: "scale(0.5)", transformOrigin: "center center" }}
+                      />
+                    </span>
+                  ) : (
+                    // finished line → small dot, centered
+                    <span className="inline-block self-center h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />
+                  )}
+                  <span className="whitespace-pre-wrap">
+                    {(() => {
+                      if (isLastVisible && status === "countdown") {
+                        return `${l}  Redirecting in ${count}…`;
+                      }
+                      if (isLastVisible) {
+                        return l + " " + ".".repeat(Math.max(dots, 1));
+                      }
+                      return l;
+                    })()}
                   </span>
-                  <span>{".".repeat(Math.max(dots, 1))}</span>
                 </div>
-              )}
-            </div>
+              );
+            })}
+          
+            {/* if still pending and no first line yet, show placeholder */}
+            {status === "pending" && shown === 0 && (
+              <div className="grid grid-cols-[32px,1fr] gap-3 items-center text-muted-foreground/90">
+                <span
+                  className="relative inline-block shrink-0 self-center"
+                  style={{ height: "2em", width: "2em", overflow: "visible" }}
+                >
+                  <span
+                    className="hamster-wheel absolute inset-0"
+                    style={{ transform: "scale(0.5)", transformOrigin: "center center" }}
+                  />
+                </span>
+                <span>{".".repeat(Math.max(dots, 1))}</span>
+              </div>
+            )}
+          </div>
+
           )}
         </section>
 

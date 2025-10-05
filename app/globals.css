@@ -147,7 +147,7 @@
 .hamster-wheel {
   width: 100px;
   height: 100px;
-  background: url("/hamster-wheel-sprite.png") 0 0 no-repeat;
+  background: url("/still-shity-sprite.png") 0 0 no-repeat;
   background-size: 600px 100px; /* total sheet size = 6 × 100 */
   animation: hamsterRun6 0.6s steps(6) infinite;
   display: inline-block;

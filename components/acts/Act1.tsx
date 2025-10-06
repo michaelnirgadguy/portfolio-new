@@ -24,28 +24,24 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   }, [status, shown, lines.length]);
 
   // reveal lines with controllable cadence
-useEffect(() => {
-  if (status !== "revealing") return;
+  useEffect(() => {
+    if (status !== "revealing") return;
 
-  // nothing shown yet → show first line instantly
-  if (shown === 0 && lines.length > 0) {
-    setShown(1);
-    return;
-  }
+    if (shown === 0 && lines.length > 0) {
+      setShown(1);
+      return;
+    }
 
-  // all lines revealed → start countdown
-  if (shown >= lines.length) {
-    setStatus("countdown");
-    setCount(5); // 5 seconds total
-    return;
-  }
+    if (shown >= lines.length) {
+      setStatus("countdown");
+      setCount(5); // 5 seconds total
+      return;
+    }
 
-  // delay between lines (adjust here!)
-  const delay = 3500; // 3.5 seconds per line
-  const t = setTimeout(() => setShown((n) => n + 1), delay);
-  return () => clearTimeout(t);
-}, [status, shown, lines.length]);
-
+    const delay = 3500; // 3.5 seconds per line
+    const t = setTimeout(() => setShown((n) => n + 1), delay);
+    return () => clearTimeout(t);
+  }, [status, shown, lines.length]);
 
   // countdown then finish
   useEffect(() => {
@@ -60,7 +56,7 @@ useEffect(() => {
 
   async function run() {
     if (!idea.trim() || status !== "idle") return;
-    setStatus("pending"); // immediately show a log row (no blank)
+    setStatus("pending");
     try {
       const res = await fetch("/api/act1", {
         method: "POST",
@@ -69,7 +65,10 @@ useEffect(() => {
       });
       const data = await res.json();
       const text = (data?.text || "").toString().trim();
-      setLlmText(text || "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons).");
+      setLlmText(
+        text ||
+          "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons)."
+      );
       setShown(0);
       setStatus("revealing");
     } catch {
@@ -82,7 +81,9 @@ useEffect(() => {
   function finish() {
     const handoff =
       "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.";
-    try { sessionStorage.setItem("mimsy_intro_override", handoff); } catch {}
+    try {
+      sessionStorage.setItem("mimsy_intro_override", handoff);
+    } catch {}
     Acts.set("1");
     onDone?.();
   }
@@ -92,53 +93,76 @@ useEffect(() => {
       <div className="w-full max-w-2xl grid gap-6">
         {/* Log surface */}
         <section className="rounded-2xl border border-border bg-muted/40 p-5 shadow-sm">
-          {status === "idle" && (
-            <div className="text-[17px] leading-7">
-              Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll generate it for you…
-            </div>
-          )}
+        {status === "idle" && (
+          <div className="text-[17px] leading-7 text-center">
+            <img
+              src="/tiny-Mimsy.png"
+              alt="Mimsy"
+              className="mx-auto mb-3 h-20 w-20"
+              /* disappears automatically once status !== "idle" */
+            />
+            Hi, I’m Mimsy, a hamster, a film creator a genius! Tell me any video idea and I’ll
+            generate it for you…
+          </div>
+        )}
+
 
           {(status === "pending" || status === "revealing" || status === "countdown") && (
-            <div className="space-y-3 font-mono text-[15px] leading-7">
-              {/* revealed lines */}
-              {lines.slice(0, shown).map((l, i) => {
-                const isLastVisible =
-                  i === shown - 1 &&
-                  (status === "pending" || status === "revealing" || status === "countdown");
-              
-                return (
-                  <div key={i} className="grid grid-cols-[16px,1fr] gap-3 items-start">
-                    {isLastVisible && status !== "countdown" ? (
-                      <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
-                    ) : (
-                      <span className="mt-1 inline-block h-[6px] w-[6px] rounded-full bg-muted-foreground/70" />
-                    )}
-                    <span className="whitespace-pre-wrap">
-                      {(() => {
-                        if (isLastVisible && status === "countdown") {
-                          return `${l}  Redirecting in ${count}…`;
-                        }
-                        if (isLastVisible) {
-                          return l + " " + ".".repeat(Math.max(dots, 1));
-                        }
-                        return l;
-                      })()}
-                    </span>
-                  </div>
-                );
-              })}
-
-              
-              {/* if still pending and no first line yet, show placeholder */}
-              {status === "pending" && shown === 0 && (
-                <div className="grid grid-cols-[16px,1fr] gap-3 items-start text-muted-foreground/90">
-                  <span className="mt-0.5 inline-block h-[14px] w-[14px] rounded-full border-2 border-muted-foreground/70 border-t-transparent animate-spin" />
-                  <span>{".".repeat(Math.max(dots, 1))}</span>
-                </div>
-              )}
-              
+            <div className="space-y-4 font-mono text-[18px] leading-8">
+            {/* revealed lines */}
+            {lines.slice(0, shown).map((l, i) => {
+              const isLastVisible =
+                i === shown - 1 &&
+                (status === "pending" || status === "revealing" || status === "countdown");
           
-            </div>
+              return (
+                <div key={i} className="grid grid-cols-[64px,1fr] gap-3 items-center">
+                  {isLastVisible && status !== "countdown" ? (
+                    // active line → hamster wheel (two-line height, centered)
+                    <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
+                      <span
+                        className="hamster-wheel absolute left-1/2 top-1/2"
+                        style={{ transform: "translate(-50%, -50%) scale(0.60)", transformOrigin: "center" }}
+                      />
+                    </span>
+                  ) : (
+                    // finished lines → small dot centered within the 64px column
+                    <span className="inline-flex items-center justify-center h-16 w-16">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />
+                    </span>
+                  )}
+          
+                  <span className="whitespace-pre-wrap">
+                    {(() => {
+                      if (isLastVisible && status === "countdown") {
+                        return `${l}  Redirecting in ${count}…`;
+                      }
+                      if (isLastVisible) {
+                        return l + " " + ".".repeat(Math.max(dots, 1));
+                      }
+                      return l;
+                    })()}
+                  </span>
+                </div>
+              );
+            })}
+
+
+          
+            {/* if still pending and no first line yet, show placeholder */}
+            {status === "pending" && shown === 0 && (
+              <div className="grid grid-cols-[64px,1fr] gap-3 items-center text-muted-foreground/90">
+                <span className="relative inline-block shrink-0 h-16 w-16" style={{ overflow: "visible" }}>
+                  <span
+                    className="hamster-wheel absolute left-1/2 top-1/2"
+                    style={{ transform: "translate(-50%, -50%) scale(0.60)", transformOrigin: "center" }}
+                  />
+                </span>
+                <span>{".".repeat(Math.max(dots, 1))}</span>
+              </div>
+            )}
+          </div>
+
           )}
         </section>
 
@@ -146,13 +170,19 @@ useEffect(() => {
         {status === "idle" && (
           <section>
             <form
-              onSubmit={(e) => { e.preventDefault(); run(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                run();
+              }}
               className="flex items-center"
             >
               <div className="w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
                 <button
                   type="button"
-                  onClick={() => { if (!idea) setIdea("dogs on the moon"); else run(); }}
+                  onClick={() => {
+                    if (!idea) setIdea("dogs on the moon");
+                    else run();
+                  }}
                   title="Generate a prompt"
                   aria-label="Generate a prompt"
                   className="shrink-0 rounded-full h-10 px-3 border border-transparent hover:border-[hsl(var(--accent))] transition"

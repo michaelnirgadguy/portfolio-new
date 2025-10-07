@@ -7,14 +7,74 @@ type Selectable = { onSelect: (video: VideoItem) => void; href?: never };
 type Linkable  = { href: string; onSelect?: never };
 type Props = { video: VideoItem } & (Selectable | Linkable);
 
+// Build better YouTube thumbnails (maxres → sd → hq → mq fallback)
+function buildThumbs(thumbnail: string) {
+  try {
+    const u = new URL(thumbnail);
+    if (!u.hostname.includes("img.youtube.com")) {
+      // Non-YouTube thumb: just pass through
+      return {
+        src: thumbnail,
+        srcSet: undefined as string | undefined,
+        sizes: undefined as string | undefined,
+        fallbacks: [] as string[],
+      };
+    }
+    // Expect path like: /vi/<ID>/hqdefault.jpg
+    const m = u.pathname.match(/\/vi\/([^/]+)\//);
+    if (!m) {
+      return { src: thumbnail, srcSet: undefined, sizes: undefined, fallbacks: [] };
+    }
+    const id = m[1];
+    const base = `https://img.youtube.com/vi/${id}`;
+    const maxres = `${base}/maxresdefault.jpg`;  // 1280x720 (may 404)
+    const sd     = `${base}/sddefault.jpg`;      // 640x480
+    const hq     = `${base}/hqdefault.jpg`;      // 480x360
+    const mq     = `${base}/mqdefault.jpg`;      // 320x180
+
+    return {
+      // Start safe (hq), but advertise larger versions via srcSet
+      src: hq,
+      srcSet: `${mq} 320w, ${hq} 480w, ${sd} 640w, ${maxres} 1280w`,
+      sizes: "(min-width:1024px) 960px, (min-width:640px) 560px, 100vw",
+      // Fallback chain for 404s on chosen src/srcset candidate
+      fallbacks: [sd, hq, mq],
+    };
+  } catch {
+    return { src: thumbnail, srcSet: undefined, sizes: undefined, fallbacks: [] };
+  }
+}
+
 function CardInner({ video }: { video: VideoItem }) {
+  const thumbs = buildThumbs(video.thumbnail);
+
+  // Simple 404 downgrade: try sd → hq → mq
+  function handleImgError(e: React.SyntheticEvent<HTMLImageElement>) {
+    const el = e.currentTarget;
+    const list = (el.dataset.fallbacks || "").split("|").filter(Boolean);
+    if (list.length === 0) {
+      // no more fallbacks; stop
+      el.onerror = null;
+      return;
+    }
+    const next = list.shift()!;
+    el.src = next;
+    el.dataset.fallbacks = list.join("|");
+  }
+
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border transition-shadow group">
       {/* Thumbnail */}
       <div className="relative aspect-video overflow-hidden">
         <img
-          src={video.thumbnail}
+          src={thumbs.src}
+          srcSet={thumbs.srcSet}
+          sizes={thumbs.sizes}
+          loading="lazy"
+          decoding="async"
           alt={video.title}
+          data-fallbacks={thumbs.fallbacks.join("|")}
+          onError={handleImgError}
           className="h-full w-full object-cover transition-transform duration-300 will-change-transform group-hover:scale-[1.02]"
         />
 

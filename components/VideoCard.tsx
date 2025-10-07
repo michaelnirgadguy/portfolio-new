@@ -2,29 +2,26 @@
 import Link from "next/link";
 import type { VideoItem } from "@/types/video";
 
-// NEW: base props including optional fillHeight
-type BaseProps = { video: VideoItem; fillHeight?: boolean };
-
 // Exactly one of these must be provided:
 type Selectable = { onSelect: (video: VideoItem) => void; href?: never };
 type Linkable  = { href: string; onSelect?: never };
-type Props = BaseProps & (Selectable | Linkable);
+type Props = { video: VideoItem } & (Selectable | Linkable);
 
-function CardInner({ video, fillHeight }: { video: VideoItem; fillHeight?: boolean }) {
+function CardInner({ video }: { video: VideoItem }) {
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border transition-shadow group">
       {/* Thumbnail */}
-      <div className={fillHeight ? "relative h-full min-h-[220px] overflow-hidden" : "relative aspect-video overflow-hidden"}>
+      <div className="relative aspect-video overflow-hidden">
         <img
           src={video.thumbnail}
           alt={video.title}
           className="h-full w-full object-cover transition-transform duration-300 will-change-transform group-hover:scale-[1.02]"
         />
 
-        {/* Veil */}
+        {/* Veil (very light, theme-aware) */}
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 bg-[hsl(var(--foreground)/0.06)]" />
 
-        {/* Bottom stripe with title + client */}
+        {/* Bottom stripe with title + client (theme-aware) */}
         <div
           className={[
             "pointer-events-none absolute inset-x-0 bottom-0",
@@ -50,8 +47,8 @@ function CardInner({ video, fillHeight }: { video: VideoItem; fillHeight?: boole
   );
 }
 
-export default function VideoCard({ video, fillHeight, ...rest }: Props) {
-  // Callback mode
+export default function VideoCard({ video, ...rest }: Props) {
+  // Callback mode (one-pager inline player)
   if ("onSelect" in rest) {
     return (
       <button
@@ -59,18 +56,20 @@ export default function VideoCard({ video, fillHeight, ...rest }: Props) {
         onClick={() => rest.onSelect(video)}
         className="group block w-full text-left transition focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
       >
-        <CardInner video={video} fillHeight={fillHeight} />
+        <CardInner video={video} />
       </button>
     );
   }
 
-  // Link mode
+  // Link mode (navigates to a route)
   return (
     <Link
       href={rest.href}
       className="group block w-full transition focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
     >
-      <CardInner video={video} fillHeight={fillHeight} />
+      <CardInner video={video} />
     </Link>
   );
 }
+
+

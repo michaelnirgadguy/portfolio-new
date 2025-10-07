@@ -4,15 +4,19 @@ import { useEffect, useRef, useState } from "react";
 type Props = { idea: string };
 
 export default function Act3({ idea }: Props) {
-  // LLM email state
-  const [subject, setSubject] = useState<string>("HELP - Generating…");
-  const [body, setBody] = useState<string>("Michael HELP ME! (writing email…)");
+  // LLM email (full values once fetched)
+  const [subjectFull, setSubjectFull] = useState("HELP - Generating…");
+  const [bodyFull, setBodyFull] = useState("Michael HELP ME! (writing email…)");
 
-  // Video state
+  // Typewriter states
+  const [subjectTyped, setSubjectTyped] = useState("");
+  const [bodyTyped, setBodyTyped] = useState("");
+
+  // Video
   const vref = useRef<HTMLVideoElement | null>(null);
-  const [videoOk, setVideoOk] = useState<boolean>(true);
+  const [videoOk, setVideoOk] = useState(true);
 
-  // Fetch email from LLM
+  // Fetch email from LLM (we’ll wire /api/act3 next)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -25,25 +29,72 @@ export default function Act3({ idea }: Props) {
         if (!res.ok) throw new Error("bad status");
         const json = await res.json();
         if (!cancelled) {
-          setSubject(typeof json.subject === "string" ? json.subject : "HELP - Mimsy Meltdown!");
-          setBody(typeof json.body === "string" ? json.body : "Michael HELP ME! Could you pweeease back me up on this one?");
+          setSubjectFull(
+            typeof json.subject === "string" ? json.subject : "HELP - Mimsy Meltdown!"
+          );
+          setBodyFull(
+            typeof json.body === "string"
+              ? json.body
+              : "Michael HELP ME! Could you pweeease back me up on this one?"
+          );
         }
       } catch {
         if (!cancelled) {
-          setSubject("HELP - Mimsy Meltdown!");
-          setBody("Michael HELP ME! The email broke. Could you pweeease back me up on this one?");
+          setSubjectFull("HELP - Mimsy Meltdown!");
+          setBodyFull(
+            "Michael HELP ME! The email broke. Could you pweeease back me up on this one?"
+          );
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [idea]);
 
-  // Encourage autoplay + handle errors
+  // Typewriter for subject, then body
+  useEffect(() => {
+    let sI: number | null = null;
+    let bI: number | null = null;
+
+    // reset
+    setSubjectTyped("");
+    setBodyTyped("");
+
+    // subject first
+    let i = 0;
+    const sTick = () => {
+      i++;
+      setSubjectTyped(subjectFull.slice(0, i));
+      if (i < subjectFull.length) {
+        sI = window.setTimeout(sTick, 18) as unknown as number;
+      } else {
+        // then body
+        let j = 0;
+        const bTick = () => {
+          j++;
+          setBodyTyped(bodyFull.slice(0, j));
+          if (j < bodyFull.length) {
+            bI = window.setTimeout(bTick, 10) as unknown as number;
+          }
+        };
+        bI = window.setTimeout(bTick, 120) as unknown as number;
+      }
+    };
+    sI = window.setTimeout(sTick, 100) as unknown as number;
+
+    return () => {
+      if (sI) window.clearTimeout(sI);
+      if (bI) window.clearTimeout(bI);
+    };
+  }, [subjectFull, bodyFull]);
+
+  // Encourage autoplay
   useEffect(() => {
     const el = vref.current;
     if (!el) return;
     const tryPlay = () => {
-      el.play().catch(() => { /* some browsers need a tick; ignore */ });
+      el.play().catch(() => {});
     };
     el.addEventListener("canplay", tryPlay, { once: true });
     tryPlay();
@@ -51,33 +102,40 @@ export default function Act3({ idea }: Props) {
   }, []);
 
   return (
-    <section className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-md bg-black">
-      {/* Video */}
-      <video
-        ref={vref}
-        src="/vid/hamster-typing.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        onError={() => setVideoOk(false)}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      {!videoOk && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-sm">
-          Missing video at <code className="mx-1">public/vid/hamster-typing.mp4</code>
-        </div>
-      )}
-
-      {/* Email overlay */}
-      <div className="absolute inset-0 bg-black/35 flex items-center justify-center p-4">
+    <section className="relative w-full rounded-2xl overflow-hidden shadow-md bg-gradient-to-b from-white to-muted/60 min-h-[420px]">
+      {/* Email card, centered */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="bg-white/95 rounded-xl p-5 w-[92%] max-w-2xl font-mono text-sm shadow-lg border border-black/5">
           <div className="mb-2">
-            <p><strong>Subject:</strong> {subject}</p>
+            <p>
+              <strong>Subject:</strong>{" "}
+              <span className="align-middle">{subjectTyped || "\u00A0"}</span>
+            </p>
           </div>
           <hr className="my-3 border-muted" />
-          <div className="whitespace-pre-wrap leading-6">{body}</div>
+          <div className="whitespace-pre-wrap leading-6">{bodyTyped || ""}</div>
+        </div>
+      </div>
+
+      {/* Small video thumbnail pinned bottom-left */}
+      <div className="absolute left-3 bottom-3">
+        <div className="relative w-[300px] aspect-video rounded-xl overflow-hidden shadow-md bg-black">
+          <video
+            ref={vref}
+            src="/vid/hamster-typing.mp4"  
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onError={() => setVideoOk(false)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {!videoOk && (
+            <div className="absolute inset-0 grid place-items-center bg-black/70 text-white text-xs px-2 text-center">
+              Missing video at <code className="mx-1">public/vid/TEMP-hamster.mp4</code>
+            </div>
+          )}
         </div>
       </div>
     </section>

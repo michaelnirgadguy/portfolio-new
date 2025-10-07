@@ -27,49 +27,50 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
     );
   }
 
-// === 3 items: big left, two stacked right (heights align exactly) ===
-if (count === 3) {
-  const [big, topRight, bottomRight] = videos;
+  // === 3 items: big left, two stacked right (perfect height match) ===
+  if (count === 3) {
+    const [big, topRight, bottomRight] = videos;
 
-  // We use gap-6 (1.5rem). Derive C = (16/9) * gap for perfect height match.
-  const style = {
-    // @ts-expect-error: custom CSS vars
-    "--g": "1.5rem",
-    // C = (16/9) * gap
-    "--C": "calc(var(--g) * 16 / 9)",
-    // WidthRight  = (100% - (C + g)) / 3
-    // WidthLeft   = (2/3) * (100% - (C + g)) + C
-    gridTemplateColumns:
-      "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
-  } as React.CSSProperties;
+    // Using Tailwind gap-6 (1.5rem). We set CSS vars:
+    //   --g  = gap
+    //   --C  = (16/9) * gap  (to convert vertical gap into equivalent width so heights match)
+    //
+    // Then set columns as:
+    //   rightCol = (100% - (C + g)) / 3
+    //   leftCol  = 2 * rightCol + C
+    //
+    // This ensures: height(left) == height(topRight) + gap + height(bottomRight)
+    const style = {
+      // @ts-expect-error custom css vars
+      "--g": "1.5rem",
+      // C = (16/9) * gap
+      "--C": "calc(var(--g) * 16 / 9)",
+      gridTemplateColumns:
+        "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
+    } as React.CSSProperties;
 
-  return (
-    <div className={className}>
-      <div
-        className="
-          grid gap-6
-          md:auto-rows-auto
-        "
-        style={style}
-      >
-        {/* Left: large tile (natural 16:9 via VideoCard) */}
-        <div className="row-span-2">
-          <VideoCard video={big} onSelect={() => onSelectId(big.id)} />
-        </div>
+    return (
+      <div className={className}>
+        <div className="grid gap-6 md:auto-rows-auto" style={style}>
+          {/* Left: large tile (natural 16:9) spans both rows */}
+          <div className="row-span-2">
+            <VideoCard video={big} onSelect={() => onSelectId(big.id)} />
+          </div>
 
-        {/* Right: two stacked (natural 16:9) */}
-        <div>
-          <VideoCard video={topRight} onSelect={() => onSelectId(topRight.id)} />
-        </div>
-        <div>
-          <VideoCard video={bottomRight} onSelect={() => onSelectId(bottomRight.id)} />
+          {/* Right: two stacked (natural 16:9) */}
+          <div>
+            <VideoCard video={topRight} onSelect={() => onSelectId(topRight.id)} />
+          </div>
+          <div>
+            <VideoCard video={bottomRight} onSelect={() => onSelectId(bottomRight.id)} />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-  // Fallback: simple responsive grid (we’ll enhance next for even/odd patterns)
+  // TODO next: even/odd batching (pairs and 3-up mosaics)
+  // Fallback: simple responsive grid for now
   return (
     <div className={className}>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

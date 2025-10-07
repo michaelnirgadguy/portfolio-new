@@ -28,29 +28,26 @@ export function renderMosaic({
     );
   }
 
-// 3 items → hero left (2×2), two stacked right with exact height match
+// 3 items → hero left (2×2), two stacked right aligned to hero bottom
 if (videos.length === 3) {
   return (
     <div className={className}>
-      {/* No row gap so the left hero (row-span-2) doesn't include extra height */}
-      <div className="grid gap-x-6 gap-y-0 sm:grid-cols-3">
-        {/* HERO: spans 2 cols & 2 rows on sm+; stacks on mobile */}
+      <div className="grid gap-6 sm:grid-cols-3 auto-rows-[1fr]">
+        {/* HERO */}
         <div className="sm:col-span-2 sm:row-span-2">
           <VideoCard video={videos[0]} onSelect={() => onSelectId(videos[0].id)} />
         </div>
 
-        {/* RIGHT WRAPPER: also spans 2 rows; we control inner spacing */}
-        <div className="sm:col-span-1 sm:row-span-2">
-          {/* Use gap-0 at sm+ so the combined height equals the hero exactly */}
-          <div className="flex flex-col gap-4 sm:gap-0">
-            <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
-            <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
-          </div>
+        {/* RIGHT column: flex to push last card down */}
+        <div className="sm:col-span-1 sm:row-span-2 flex flex-col justify-between gap-6">
+          <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
+          <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
         </div>
       </div>
     </div>
   );
 }
+
 
   // Fallback (we’ll replace in next step with even/odd chunking rules)
   return (

@@ -30,8 +30,8 @@ function CardInner({ video }: { video: VideoItem }) {
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border transition-shadow group">
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden">
+      {/* Thumbnail - with debug color */}
+      <div className="relative aspect-video overflow-hidden bg-emerald-200/30">
         <img
           src={src}
           srcSet={srcSet}

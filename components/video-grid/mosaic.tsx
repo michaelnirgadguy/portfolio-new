@@ -87,58 +87,62 @@ function TrioMosaic({
   );
 }
 
-/* ---------- block planner with your rules ---------- */
 type Block =
   | { kind: "pair"; items: [VideoItem, VideoItem] }
   | { kind: "trio"; items: [VideoItem, VideoItem, VideoItem] };
 
 function planBlocks(videos: VideoItem[]): Block[] {
   const n = videos.length;
-  if (n <= 1) return videos.length ? [{ kind: "pair", items: [videos[0], videos[0]] } as any] : []; // very edge; shouldn't happen
+
+  if (n === 0) return [];
+  if (n === 1) {
+    // Fallback: just show it as a single (caller will render inside a PairGrid fine)
+    return [{ kind: "pair", items: [videos[0], videos[0]] } as any];
+  }
   if (n === 2) return [{ kind: "pair", items: [videos[0], videos[1]] }];
   if (n === 3) return [{ kind: "trio", items: [videos[0], videos[1], videos[2]] }];
-  if (n === 4) return [
-    { kind: "pair", items: [videos[0], videos[1]] },
-    { kind: "pair", items: [videos[2], videos[3]] },
-  ];
-  if (n === 5) return [
-    { kind: "pair", items: [videos[0], videos[1]] },
-    { kind: "trio", items: [videos[2], videos[3], videos[4]] },
-  ];
-  if (n === 6) return [
-    { kind: "trio", items: [videos[0], videos[1], videos[2]] },
-    { kind: "trio", items: [videos[3], videos[4], videos[5]] },
-  ];
+  if (n === 4)
+    return [
+      { kind: "pair", items: [videos[0], videos[1]] },
+      { kind: "pair", items: [videos[2], videos[3]] },
+    ];
+  if (n === 5)
+    return [
+      { kind: "pair", items: [videos[0], videos[1]] },
+      { kind: "trio", items: [videos[2], videos[3], videos[4]] },
+    ];
+  if (n === 6)
+    return [
+      { kind: "trio", items: [videos[0], videos[1], videos[2]] },
+      { kind: "trio", items: [videos[3], videos[4], videos[5]] },
+    ];
 
   // n >= 7
   const blocks: Block[] = [];
   let i = 0;
 
-  // Require at least one Pair unless n=3 → start with a pair
+  // Must have at least one Pair (since n != 3)
   blocks.push({ kind: "pair", items: [videos[i], videos[i + 1]] });
   i += 2;
 
-  let useTrioNext = true; // after the first pair, alternate 3,2,3,2...
+  let useTrioNext = true; // alternate 3,2,3,2...
 
   while (i < n) {
     const left = n - i;
 
-    // Avoid single leftovers
+    // Avoid single leftovers by converting the previous pair into a trio
     if (left === 1) {
-      // Expand previous pair to trio if possible (i.e., last block is pair and we have at least 1 spare before i)
       const last = blocks[blocks.length - 1];
       if (last?.kind === "pair") {
-        // Turn that pair into a trio by grabbing one more
-        last.kind = "trio" as const;
-        (last as any).items = [last.items[0], last.items[1], videos[i]];
+        // Replace the last pair with a trio using the next item
+        const [p0, p1] = last.items;
+        const newTrio: Block = { kind: "trio", items: [p0, p1, videos[i]] };
+        blocks[blocks.length - 1] = newTrio;
         i += 1;
         continue;
       }
-      // Fallback: if previous was trio, add an extra pair before (shouldn't usually happen)
-      if (i >= 2) {
-        blocks.push({ kind: "pair", items: [videos[i - 2], videos[i - 1]] });
-        continue;
-      }
+      // Shouldn’t normally happen; break to avoid infinite loop
+      break;
     }
 
     // Tail heuristics
@@ -172,6 +176,7 @@ function planBlocks(videos: VideoItem[]): Block[] {
 
   return blocks;
 }
+
 
 /* ---------- entry ---------- */
 export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {

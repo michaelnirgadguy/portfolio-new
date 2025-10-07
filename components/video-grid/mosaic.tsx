@@ -28,25 +28,31 @@ export function renderMosaic({
     );
   }
 
-// 3 items → hero left (2×2), two stacked right aligned to hero bottom
+// 3 items → hero left (2×2), two stacked right with bottom aligned to hero
 if (videos.length === 3) {
   return (
     <div className={className}>
-      <div className="grid gap-6 sm:grid-cols-3 auto-rows-[1fr]">
+      <div className="grid gap-6 sm:grid-cols-3">
         {/* HERO */}
         <div className="sm:col-span-2 sm:row-span-2">
           <VideoCard video={videos[0]} onSelect={() => onSelectId(videos[0].id)} />
         </div>
 
-        {/* RIGHT column: flex to push last card down */}
-        <div className="sm:col-span-1 sm:row-span-2 flex flex-col justify-between gap-6">
+        {/* RIGHT column: stretch to full grid area and use a spacer */}
+        <div className="sm:col-span-1 sm:row-span-2 h-full flex flex-col">
           <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
-          <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+          {/* flexible spacer fills whatever height is needed to align bottoms */}
+          <div className="flex-1" />
+          {/* keep a fixed visual gap using margin-top (not container gap) */}
+          <div className="mt-6">
+            <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 
   // Fallback (we’ll replace in next step with even/odd chunking rules)

@@ -124,6 +124,32 @@
     "related_ids": null
   },
   {
+  "id": "iia-quantum-computers",
+  "title": "Quantum Computers Explained",
+  "client": "Israel Innovation Authority",
+  "url": "https://youtu.be/SzfrZEI0rKw",
+  "thumbnail": "https://img.youtube.com/vi/SzfrZEI0rKw/hqdefault.jpg",
+  "description": “What makes quantum computers so powerful—and so hard to build? Through expert voices and enlightening animated scenes, this explainer unpacks the strange rules of qubits and superposition to show how quantum machines might one day transform our world.”
+  "duration_seconds": 446,
+  "priority": "standard",
+  "tags": [
+    "explainer",
+    "quantum computing",
+    "science storytelling",
+    "technology",
+    "innovation",
+    "animation"
+  ],
+  "my_roles": [
+    "writer",
+    "director",
+    "producer"
+  ],
+  "long_description": null,
+  "display_credits":  null,
+  "related_ids": ["iia-autonomous-buses"]
+},
+  {
     "id": "vaxa-microalgae",
     "title": "Microalgae Save The World",
     "client": "Vaxa",
@@ -206,6 +232,7 @@
     "display_credits": null,
     "related_ids": null
   },
+
   {
     "id": "music-of-spheres",
     "title": "Music of The Spheres",
@@ -235,5 +262,36 @@
     "long_description": null,
     "display_credits": null,
     "related_ids": null
-  }
+  },
+{
+  "id": "conway-game-of-life",
+  "title": "Conway’s Game of Life",
+  "client": "Passion Project",
+  "url": "https://youtu.be/CWKcuH6ONRk",
+  "thumbnail": "https://img.youtube.com/vi/CWKcuH6ONRk/hqdefault.jpg",
+  "description": "Order from chaos, creatures from code—this homemade explainer dives into Conway’s legendary ‘Game of Life,’ where just two simple rules give rise to infinite complexity. With lo-fi Paint-style animation and genuine curiosity, it shows how beauty can emerge from the simplest math.",
+  "language": "he",
+  "duration_seconds": 746,
+  "priority": "standard",
+  "tags": [
+    "math",
+    "science storytelling",
+    "cellular automata",
+    "DIY project",
+    "animation",
+    "playful",
+    "philosophy",
+    "passion project"
+  ],
+  "my_roles": [
+    "writer",
+    "producer",
+    "director",
+    "animator"
+  ],
+  "long_description": null,
+  "display_credits": null,
+  "related_ids": ["music-of-spheres"]
+}
+
 ]

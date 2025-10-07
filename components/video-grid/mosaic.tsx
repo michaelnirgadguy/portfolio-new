@@ -28,34 +28,33 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
   }
 
   // === 3 items: big left, two stacked right ===
-  if (count === 3) {
-    const [big, topRight, bottomRight] = videos;
-    return (
-      <div className={className}>
-        <div
-          className="
-            grid gap-6
-            md:grid-cols-[2fr_1fr]
-            md:auto-rows-auto
-          "
-        >
-          {/* Left: larger tile */}
-          <div className="md:row-span-2">
-            <VideoCard video={big} onSelect={() => onSelectId(big.id)} />
-          </div>
+if (count === 3) {
+  const [big, topRight, bottomRight] = videos;
+  return (
+    <div className={className}>
+      <div
+        className="
+          grid gap-6
+          md:grid-cols-[2fr_1fr]
+          md:grid-rows-2
+        "
+      >
+        {/* Left: larger tile fills both rows (matches right stack + gap) */}
+        <div className="md:row-span-2 md:h-full">
+          <VideoCard video={big} fillHeight onSelect={() => onSelectId(big.id)} />
+        </div>
 
-          {/* Right: two stacked */}
-          <div>
-            <VideoCard video={topRight} onSelect={() => onSelectId(topRight.id)} />
-          </div>
-          <div>
-            <VideoCard video={bottomRight} onSelect={() => onSelectId(bottomRight.id)} />
-          </div>
+        {/* Right: two stacked */}
+        <div>
+          <VideoCard video={topRight} onSelect={() => onSelectId(topRight.id)} />
+        </div>
+        <div>
+          <VideoCard video={bottomRight} onSelect={() => onSelectId(bottomRight.id)} />
         </div>
       </div>
-    );
-  }
-
+    </div>
+  );
+}
   // Fallback: simple responsive grid (we’ll enhance next for even/odd patterns)
   return (
     <div className={className}>

@@ -18,6 +18,7 @@ import CenterDock from "@/components/CenterDock";
 import Act1 from "@/components/acts/Act1";
 import { Acts } from "@/lib/acts";
 import HamsterSection from "@/components/HamsterSection";
+import Act3 from "@/components/acts/Act3"; // 👈 NEW
 
 export default function Home() {
   return (
@@ -60,16 +61,19 @@ function HomeInner() {
 
   const topRef = useRef<HTMLDivElement | null>(null);
 
-  // NEW: one-shot suppress flag for LLM-triggered opens
+  // one-shot suppress flag for LLM-triggered opens
   const suppressOpenForIdRef = useRef<string | null>(null);
 
-  // NEW: hamster pane state (set by custom events from Chat)
+  // Hamster (Act 2) pane state
   const [hamster, setHamster] = useState<{
     srcBase: string;
     title: string;
     client: string;
     text: string;
   } | null>(null);
+
+  // 👇 NEW: Act 3 state
+  const [act3, setAct3] = useState<{ idea: string } | null>(null);
 
   // --- URL helpers ---
   function replaceQuery(next: URLSearchParams) {
@@ -91,6 +95,7 @@ function HomeInner() {
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (!ordered.length) return;
     setHamster(null); // if we’re showing a grid, hide hamster gag
+    setAct3(null);    // hide act3 if any
     setSelectedId(null); // clear selection → grid
     setVisibleGrid(ordered); // LLM decides the count
   }
@@ -98,17 +103,15 @@ function HomeInner() {
   function playFirst(ids: string[]) {
     const first = ids.find((id) => byId.has(id));
     if (!first) return;
-    setHamster(null); // if we’re opening a player, hide hamster gag
+    setHamster(null);
+    setAct3(null);    // hide act3 if opening player
     setSelectedId(first);
   }
 
   // === Unified tool handler ===
   function onShowVideo(ids: string[]) {
     if (!ids?.length) return;
-
-    // This path is LLM-triggered → do NOT announce "visitor clicked" once
     suppressOpenForIdRef.current = ids.length === 1 ? ids[0] : null;
-
     if (ids.length === 1) playFirst(ids);
     else showByIds(ids);
   }
@@ -134,10 +137,7 @@ function HomeInner() {
     if (!selected) return;
 
     const suppressId = suppressOpenForIdRef.current;
-    // Always clear so it never “sticks” beyond one selection
     suppressOpenForIdRef.current = null;
-
-    // Skip only if this exact video was LLM-opened
     if (suppressId && suppressId === selected.id) return;
 
     try {
@@ -149,7 +149,7 @@ function HomeInner() {
     } catch {}
   }, [selected]);
 
-  // NEW: listen to Mimsy custom events from Chat
+  // Listen to Mimsy custom events from Chat (Act 2 + Act 3)
   useEffect(() => {
     function onShowHamster(e: Event) {
       const detail = (e as CustomEvent)?.detail as {
@@ -159,23 +159,23 @@ function HomeInner() {
         text: string;
       };
       if (!detail) return;
-      // show hamster section and clear any selected video
+      setAct3(null);     // hide act3 if showing act2
       setHamster(detail);
       setSelectedId(null);
-  
-      // ✅ advance journey only once the hamster section actually opens
+
       try {
         Acts.set("2");
       } catch {}
-      
     }
 
     function onStartAct3(e: Event) {
       const detail = (e as CustomEvent)?.detail as { idea: string };
-      // Stub: we’ll build Act 3 UI later
       setHamster(null);
       setSelectedId(null);
-      console.log("Act3 stub — idea:", detail?.idea);
+      setAct3(detail?.idea ? { idea: detail.idea } : null);
+      try {
+        Acts.set("all"); // journey completed
+      } catch {}
     }
 
     window.addEventListener("mimsy-show-hamster" as any, onShowHamster as any);
@@ -186,10 +186,12 @@ function HomeInner() {
     };
   }, []);
 
-  // --- Top pane: hamster > selected player > grid ---
+  // --- Top pane: act3 > hamster > selected player > grid ---
   const TopPane = (
     <div ref={topRef} className="space-y-6">
-      {hamster ? (
+      {act3 ? (
+        <Act3 idea={act3.idea} />
+      ) : hamster ? (
         <HamsterSection
           srcBase={hamster.srcBase}
           title={hamster.title}
@@ -204,7 +206,6 @@ function HomeInner() {
     </div>
   );
 
-  // --- Chat (new prop; used after Chat.tsx update) ---
   const ChatPane = <Chat onShowVideo={onShowVideo} />;
 
   return <CenterDock top={TopPane} chat={ChatPane} />;

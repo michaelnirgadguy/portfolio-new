@@ -27,24 +27,37 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
     );
   }
 
-  // === 3 items: big left, two stacked right ===
+// === 3 items: big left, two stacked right (heights align exactly) ===
 if (count === 3) {
   const [big, topRight, bottomRight] = videos;
+
+  // We use gap-6 (1.5rem). Derive C = (16/9) * gap for perfect height match.
+  const style = {
+    // @ts-expect-error: custom CSS vars
+    "--g": "1.5rem",
+    // C = (16/9) * gap
+    "--C": "calc(var(--g) * 16 / 9)",
+    // WidthRight  = (100% - (C + g)) / 3
+    // WidthLeft   = (2/3) * (100% - (C + g)) + C
+    gridTemplateColumns:
+      "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
+  } as React.CSSProperties;
+
   return (
     <div className={className}>
       <div
         className="
           grid gap-6
-          md:grid-cols-[2fr_1fr]
-          md:grid-rows-2
+          md:auto-rows-auto
         "
+        style={style}
       >
-        {/* Left: larger tile fills both rows (matches right stack + gap) */}
-        <div className="md:row-span-2 md:h-full">
-          <VideoCard video={big} fillHeight onSelect={() => onSelectId(big.id)} />
+        {/* Left: large tile (natural 16:9 via VideoCard) */}
+        <div className="row-span-2">
+          <VideoCard video={big} onSelect={() => onSelectId(big.id)} />
         </div>
 
-        {/* Right: two stacked */}
+        {/* Right: two stacked (natural 16:9) */}
         <div>
           <VideoCard video={topRight} onSelect={() => onSelectId(topRight.id)} />
         </div>
@@ -55,6 +68,7 @@ if (count === 3) {
     </div>
   );
 }
+
   // Fallback: simple responsive grid (we’ll enhance next for even/odd patterns)
   return (
     <div className={className}>

@@ -30,8 +30,8 @@ function CardInner({ video }: { video: VideoItem }) {
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border transition-shadow group">
-      {/* Thumbnail - with debug color */}
-      <div className="relative aspect-video overflow-hidden bg-emerald-200/30">
+      {/* Thumbnail */}
+      <div className="relative aspect-video overflow-hidden">
         <img
           src={src}
           srcSet={srcSet}
@@ -41,9 +41,7 @@ function CardInner({ video }: { video: VideoItem }) {
           loading="lazy"
           decoding="async"
         />
-{/* DEBUG overlay — shows the 16:9 box and its bottom edge */}
-<div className="pointer-events-none absolute inset-0 bg-emerald-200/25" />
-<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-red-500/70" />
+
         
         {/* Veil + stripe unchanged */}
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 bg-[hsl(var(--foreground)/0.06)]" />

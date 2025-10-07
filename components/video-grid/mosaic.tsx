@@ -29,10 +29,10 @@ export function renderMosaic({
     );
   }
 
-// 3 items → measured spacer to align bottoms exactly
+// 3 items → DEBUG: measure heights of hero vs right column
 if (videos.length === 3) {
   return (
-    <ThreeMosaic
+    <ThreeMosaicDebug
       videos={videos}
       onSelectId={onSelectId}
       className={className}
@@ -40,8 +40,9 @@ if (videos.length === 3) {
   );
 }
 
+// ---- add below in the same file (temporary debug component) ----
 
-function ThreeMosaic({
+function ThreeMosaicDebug({
   videos,
   onSelectId,
   className,
@@ -51,35 +52,51 @@ function ThreeMosaic({
   className?: string;
 }) {
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const colRef = useRef<HTMLDivElement | null>(null);
-  const GAP_Y = 24; // Tailwind gap-6
-  const [spacer, setSpacer] = useState(GAP_Y);
+  const rightRef = useRef<HTMLDivElement | null>(null);
+  const [heroH, setHeroH] = useState(0);
+  const [rightH, setRightH] = useState(0);
 
   useLayoutEffect(() => {
     const ro = new ResizeObserver(() => {
-      const h = heroRef.current?.offsetHeight ?? 0;
-      const c = colRef.current?.offsetHeight ?? 0;
-      const delta = h - c; // how much we need to push bottom card down
-      setSpacer(Math.max(GAP_Y + delta, 0));
+      setHeroH(heroRef.current?.getBoundingClientRect().height ?? 0);
+      setRightH(rightRef.current?.getBoundingClientRect().height ?? 0);
     });
     if (heroRef.current) ro.observe(heroRef.current);
-    if (colRef.current) ro.observe(colRef.current);
-    return () => ro.disconnect();
+    if (rightRef.current) ro.observe(rightRef.current);
+    // also listen to window resize for safety
+    const onWin = () => {
+      setHeroH(heroRef.current?.getBoundingClientRect().height ?? 0);
+      setRightH(rightRef.current?.getBoundingClientRect().height ?? 0);
+    };
+    window.addEventListener("resize", onWin);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onWin);
+    };
   }, []);
+
+  const delta = Math.round(heroH - rightH); // + means right is shorter, - means right is taller
 
   return (
     <div className={className}>
-      <div className="grid gap-6 sm:grid-cols-3">
-        {/* HERO */}
-        <div ref={heroRef} className="sm:col-span-2 sm:row-span-2">
-          <VideoCard video={videos[0]} onSelect={() => onSelectId(videos[0].id)} />
+      <div className="relative">
+        {/* on-screen badge */}
+        <div className="pointer-events-none absolute right-0 top-[-2rem] z-10 rounded-md border bg-white/90 px-2 py-1 text-xs shadow-sm">
+          hero: {Math.round(heroH)}px | right: {Math.round(rightH)}px | Δ: {delta}px
         </div>
 
-        {/* RIGHT column: stack with measured spacer */}
-        <div ref={colRef} className="sm:col-span-1 sm:row-span-2 flex flex-col">
-          <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
-          <div style={{ height: spacer }} aria-hidden />
-          <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+        <div className="grid gap-6 sm:grid-cols-3">
+          {/* HERO (measure this wrapper) */}
+          <div ref={heroRef} className="sm:col-span-2 sm:row-span-2 outline-1 -outline-offset-1 outline-transparent">
+            <VideoCard video={videos[0]} onSelect={() => onSelectId(videos[0].id)} />
+          </div>
+
+          {/* RIGHT COLUMN (measure this wrapper) */}
+          <div ref={rightRef} className="sm:col-span-1 sm:row-span-2 flex flex-col">
+            <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
+            <div className="mt-6" />
+            <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+          </div>
         </div>
       </div>
     </div>

@@ -40,7 +40,7 @@ if (videos.length === 3) {
   );
 }
 
-// ---- add below in the same file (temporary debug component) ----
+// ---- Enhanced DEBUG: measure inner cards + gap ----
 
 function ThreeMosaicDebug({
   videos,
@@ -53,56 +53,86 @@ function ThreeMosaicDebug({
 }) {
   const heroRef = useRef<HTMLDivElement | null>(null);
   const rightRef = useRef<HTMLDivElement | null>(null);
+  const topCardRef = useRef<HTMLDivElement | null>(null);
+  const bottomCardRef = useRef<HTMLDivElement | null>(null);
+  const gapRef = useRef<HTMLDivElement | null>(null);
+
   const [heroH, setHeroH] = useState(0);
   const [rightH, setRightH] = useState(0);
+  const [topH, setTopH] = useState(0);
+  const [bottomH, setBottomH] = useState(0);
+  const [gapH, setGapH] = useState(0);
 
   useLayoutEffect(() => {
-    const ro = new ResizeObserver(() => {
+    const update = () => {
       setHeroH(heroRef.current?.getBoundingClientRect().height ?? 0);
       setRightH(rightRef.current?.getBoundingClientRect().height ?? 0);
-    });
-    if (heroRef.current) ro.observe(heroRef.current);
-    if (rightRef.current) ro.observe(rightRef.current);
-    // also listen to window resize for safety
-    const onWin = () => {
-      setHeroH(heroRef.current?.getBoundingClientRect().height ?? 0);
-      setRightH(rightRef.current?.getBoundingClientRect().height ?? 0);
+      setTopH(topCardRef.current?.getBoundingClientRect().height ?? 0);
+      setBottomH(bottomCardRef.current?.getBoundingClientRect().height ?? 0);
+
+      // read computed margin on the spacer div (your mt-6)
+      const gapEl = gapRef.current;
+      if (gapEl) {
+        const cs = getComputedStyle(gapEl);
+        // margin-top + height (height is 0; we want the visual white space)
+        const mt = parseFloat(cs.marginTop || "0");
+        const h = gapEl.getBoundingClientRect().height || 0;
+        setGapH(mt + h);
+      } else {
+        setGapH(0);
+      }
     };
-    window.addEventListener("resize", onWin);
+
+    const ro = new ResizeObserver(update);
+    [heroRef, rightRef, topCardRef, bottomCardRef].forEach((r) => {
+      if (r.current) ro.observe(r.current);
+    });
+    window.addEventListener("resize", update);
+    // initial
+    update();
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", onWin);
+      window.removeEventListener("resize", update);
     };
   }, []);
 
-  const delta = Math.round(heroH - rightH); // + means right is shorter, - means right is taller
+  const rightSum = Math.round(topH + gapH + bottomH);
+  const delta = Math.round(heroH - rightH);
+  const deltaInner = Math.round(heroH - rightSum);
 
   return (
     <div className={className}>
       <div className="relative">
-        {/* on-screen badge */}
-        <div className="pointer-events-none absolute right-0 top-[-2rem] z-10 rounded-md border bg-white/90 px-2 py-1 text-xs shadow-sm">
-          hero: {Math.round(heroH)}px | right: {Math.round(rightH)}px | Δ: {delta}px
+        {/* on-screen badge (live numbers) */}
+        <div className="pointer-events-none absolute right-0 top-[-2.2rem] z-10 rounded-md border bg-white/95 px-2 py-1 text-xs shadow-sm">
+          hero: {Math.round(heroH)} | right: {Math.round(rightH)} | Δ: {delta}
+          {"  "}|| top: {Math.round(topH)} + gap: {Math.round(gapH)} + bot: {Math.round(bottomH)} = {rightSum} (Δinner: {deltaInner})
         </div>
 
         <div className="grid gap-6 sm:grid-cols-3">
-          {/* HERO (measure this wrapper) */}
-          <div ref={heroRef} className="sm:col-span-2 sm:row-span-2 outline-1 -outline-offset-1 outline-transparent">
+          {/* HERO */}
+          <div ref={heroRef} className="sm:col-span-2 sm:row-span-2">
             <VideoCard video={videos[0]} onSelect={() => onSelectId(videos[0].id)} />
           </div>
 
-          {/* RIGHT COLUMN (measure this wrapper) */}
+          {/* RIGHT column */}
           <div ref={rightRef} className="sm:col-span-1 sm:row-span-2 flex flex-col">
-            <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
-            <div className="mt-6" />
-            <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+            <div ref={topCardRef}>
+              <VideoCard video={videos[1]} onSelect={() => onSelectId(videos[1].id)} />
+            </div>
+
+            {/* This is the visual gap between cards (mt-6). We measure it. */}
+            <div ref={gapRef} className="mt-6" />
+
+            <div ref={bottomCardRef}>
+              <VideoCard video={videos[2]} onSelect={() => onSelectId(videos[2].id)} />
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 
 
 

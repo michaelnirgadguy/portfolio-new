@@ -40,14 +40,15 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
     //   leftCol  = 2 * rightCol + C
     //
     // This ensures: height(left) == height(topRight) + gap + height(bottomRight)
-    const style = {
-      // @ts-expect-error custom css vars
-      "--g": "1.5rem",
-      // C = (16/9) * gap
-      "--C": "calc(var(--g) * 16 / 9)",
-      gridTemplateColumns:
-        "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
-    } as React.CSSProperties;
+  // Using Tailwind gap-6 (1.5rem)…
+const style: React.CSSProperties & Record<string, string> = {
+  // CSS custom properties for calc()
+  ["--g"]: "1.5rem",
+  ["--C"]: "calc(var(--g) * 16 / 9)",
+  gridTemplateColumns:
+    "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
+};
+
 
     return (
       <div className={className}>

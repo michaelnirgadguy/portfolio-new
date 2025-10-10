@@ -25,7 +25,7 @@ export default function Act3({ idea }: Props) {
   const [videoOk, setVideoOk] = useState(true);
 
   // ----- Send animation -----
-  const [bodyDone, setBodyDone] = useState(false);
+  const [Done, setDone] = useState(false);
   const [playSend, setPlaySend] = useState(false);
   const [sent, setSent] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -38,13 +38,13 @@ export default function Act3({ idea }: Props) {
         const res = await fetch("/api/act3", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idea }),
+          : JSON.stringify({ idea }),
         });
         if (!res.ok) throw new Error("bad status");
         const json = await res.json();
         if (!cancelled) {
           setSubjectFull(typeof json.subject === "string" ? json.subject : "");
-          setBodyFull(typeof json.body === "string" ? json.body : "");
+          setFull(typeof json. === "string" ? json. : "");
           setLlmReady(true);
         }
       } catch {
@@ -90,13 +90,13 @@ export default function Act3({ idea }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subject then body (paced)
+  // Subject then  (paced)
   useEffect(() => {
-    if (!llmReady || (!subjectFull && !bodyFull)) return;
+    if (!llmReady || (!subjectFull && !Full)) return;
 
     setSubjectTyped("");
-    setBodyTyped("");
-    setBodyDone(false);
+    setTyped("");
+    setDone(false);
 
     let sI: number | null = null;
     let bI: number | null = null;
@@ -108,15 +108,15 @@ export default function Act3({ idea }: Props) {
       if (i < subjectFull.length) {
         sI = window.setTimeout(sTick, 18) as unknown as number;
       } else {
-        const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
+        const words = Full.trim().split(/\s+/).filter(Boolean).length || 1;
         const totalMs = words * 300;
-        const chars = Math.max(bodyFull.length, 1);
+        const chars = Math.max(Full.length, 1);
         const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
 
         let j = 0;
         const bTick = () => {
           j++;
-          setBodyTyped(bodyFull.slice(0, j));
+          setTyped(Full.slice(0, j));
           if (j < bodyFull.length) {
             bI = window.setTimeout(bTick, perChar) as unknown as number;
           } else {
@@ -204,9 +204,7 @@ export default function Act3({ idea }: Props) {
             aria-live="polite"
           >
             {bodyTyped}
-            {showCursor && (
-              <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
-            )}
+
           </div>
 
           {/* Footer with fake Send */}

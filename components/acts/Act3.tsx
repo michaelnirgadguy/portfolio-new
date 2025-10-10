@@ -183,7 +183,16 @@ export default function Act3({ idea }: Props) {
       } catch {}
 
       setSent(true);
-      // (no toast anymore)
+
+      // 🔔 Handoff: store chat line + notify app to return to grid
+      try {
+        const handoff =
+          "Ok, don’t worry—I’ll create your video, with my hamster power of course. Meanwhile, check the full catalogue of my human.";
+        sessionStorage.setItem("mimsy_intro_override", handoff);
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("mimsy-exit-act3"));
+      } catch {}
     });
   }
 
@@ -299,7 +308,6 @@ export default function Act3({ idea }: Props) {
         style={{ opacity: 0, left: 0, top: 0 }}
         aria-hidden="true"
       >
-        {/* Arrow pointer (like a system cursor), small drop shadow for visibility */}
         <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 2 L2 20 L6 16 L10 22 L12 21 L8 15 L14 14 Z" fill="white" stroke="black" strokeWidth="1"/>
           <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">

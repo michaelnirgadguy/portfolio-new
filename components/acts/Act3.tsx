@@ -23,6 +23,16 @@ export default function Act3({ idea }: Props) {
   const vref = useRef<HTMLVideoElement | null>(null);
   const [videoOk, setVideoOk] = useState(true);
 
+  // ----- Send animation state -----
+  const [bodyDone, setBodyDone] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  // Refs for precise cursor animation
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const sendBtnRef = useRef<HTMLButtonElement | null>(null);
+  const cursorRef = useRef<HTMLSpanElement | null>(null);
+
   // Fetch email from LLM
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +59,7 @@ export default function Act3({ idea }: Props) {
     };
   }, [idea]);
 
-  // From/To: typewriter immediately on first mount
+  // From/To typewriter on first mount
   useEffect(() => {
     setFromTyped("");
     setToTyped("");
@@ -62,13 +72,13 @@ export default function Act3({ idea }: Props) {
       i++;
       setFromTyped(fromFull.slice(0, i));
       if (i < fromFull.length) {
-        t1 = window.setTimeout(typeFrom, 14) as unknown as number;
+        t1 = window.setTimeout(typeFrom, 40) as unknown as number;
       } else {
         const typeTo = () => {
           j++;
           setToTyped(toFull.slice(0, j));
           if (j < toFull.length) {
-            t2 = window.setTimeout(typeTo, 12) as unknown as number;
+            t2 = window.setTimeout(typeTo, 40) as unknown as number;
           }
         };
         t2 = window.setTimeout(typeTo, 120) as unknown as number;
@@ -80,7 +90,6 @@ export default function Act3({ idea }: Props) {
       if (t1) window.clearTimeout(t1);
       if (t2) window.clearTimeout(t2);
     };
-    // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -90,6 +99,7 @@ export default function Act3({ idea }: Props) {
 
     setSubjectTyped("");
     setBodyTyped("");
+    setBodyDone(false);
 
     let sI: number | null = null;
     let bI: number | null = null;
@@ -113,6 +123,8 @@ export default function Act3({ idea }: Props) {
           setBodyTyped(bodyFull.slice(0, j));
           if (j < bodyFull.length) {
             bI = window.setTimeout(bTick, perChar) as unknown as number;
+          } else {
+            setBodyDone(true); // ✅ body finished
           }
         };
         bI = window.setTimeout(bTick, 120) as unknown as number;
@@ -126,26 +138,91 @@ export default function Act3({ idea }: Props) {
     };
   }, [llmReady, subjectFull, bodyFull]);
 
+  // Cursor fly-to-button animation (viewport-fixed so it can’t be misaligned)
+  function runSendAnimation() {
+    const body = bodyRef.current;
+    const btn = sendBtnRef.current;
+    const cursor = cursorRef.current;
+    if (!body || !btn || !cursor) return;
+
+    const bodyBox = body.getBoundingClientRect();
+    const btnBox = btn.getBoundingClientRect();
+
+    // Start: a readable point inside the body area (left padding + first line)
+    const startX = Math.round(bodyBox.left + 24);
+    const startY = Math.round(bodyBox.top + Math.min(40, bodyBox.height / 3));
+
+    // End: button center
+    const endX = Math.round(btnBox.left + btnBox.width / 2);
+    const endY = Math.round(btnBox.top + btnBox.height / 2);
+
+    // Prepare cursor (fixed to viewport)
+    cursor.style.opacity = "1";
+    cursor.style.left = "0px";
+    cursor.style.top = "0px";
+
+    const anim = cursor.animate(
+      [
+        { transform: `translate(${startX}px, ${startY}px)`, offset: 0 },
+        { transform: `translate(${endX}px, ${endY}px)`, offset: 1 },
+      ],
+      { duration: 1800, easing: "ease-in-out", fill: "forwards" }
+    );
+
+    anim.addEventListener("finish", () => {
+      // Visual "press" on the button
+      try {
+        btn.animate(
+          [
+            { transform: "scale(1)", boxShadow: "0 1px 0 rgba(0,0,0,0.06)" },
+            { transform: "scale(0.96)", boxShadow: "0 0 0 rgba(0,0,0,0.00)" },
+            { transform: "scale(1)", boxShadow: "0 1px 0 rgba(0,0,0,0.06)" },
+          ],
+          { duration: 220, easing: "ease-out" }
+        );
+      } catch {}
+
+      setSent(true);
+
+      // 🔔 Handoff: store chat line + notify app to return to grid
+      try {
+        const handoff =
+          "Ok, don’t worry—I’ll create your video, with my hamster power of course. Meanwhile, check the full catalogue of my human.";
+        sessionStorage.setItem("mimsy_intro_override", handoff);
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("mimsy-exit-act3"));
+      } catch {}
+    });
+  }
+
+  // Kick off send animation when body is done
+  useEffect(() => {
+    if (!bodyDone || sent) return;
+    const t = setTimeout(() => runSendAnimation(), 400); // small beat
+    return () => clearTimeout(t);
+  }, [bodyDone, sent]);
+
   // Encourage autoplay
   useEffect(() => {
     const el = vref.current;
     if (!el) return;
     const tryPlay = () => el.play().catch(() => {});
-    el.addEventListener("canplay", tryPlay, { once: true });
+    el?.addEventListener("canplay", tryPlay, { once: true });
     tryPlay();
-    return () => el.removeEventListener("canplay", tryPlay);
+    return () => el?.removeEventListener("canplay", tryPlay);
   }, []);
 
   // Blink cursor when waiting (no body yet)
-  const showCursor = !llmReady || (!bodyTyped && !bodyFull);
+  const showCursorBlink = !llmReady || (!bodyTyped && !bodyFull);
 
   return (
     <section className="relative w-full pb-[220px]">
       {/* Fake email window */}
       <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         <div
-          className="rounded-xl border border-border bg-white shadow-md overflow-hidden"
-          style={{ width: "100%", height: 304 }}
+          ref={cardRef}
+          className="relative rounded-xl border border-border bg-white shadow-md overflow-visible"
           role="group"
           aria-label="Email window"
         >
@@ -175,16 +252,29 @@ export default function Act3({ idea }: Props) {
             </div>
           </div>
 
-          {/* Body — fixed area (~8 lines), clipped, shows blinking cursor while waiting */}
+          {/* Body — fixed area (~8 lines) */}
           <div
+            ref={bodyRef}
             className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
             style={{ height: 192, overflow: "hidden" }}
             aria-live="polite"
           >
             {bodyTyped}
-            {showCursor && (
+            {showCursorBlink && (
               <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
             )}
+          </div>
+
+          {/* Footer with fake Send */}
+          <div className="flex items-center justify-end gap-2 px-5 py-2 border-t border-border/60 bg-white/80">
+            <button
+              ref={sendBtnRef}
+              type="button"
+              className="select-none rounded-full border border-input px-4 py-1.5 text-sm shadow-sm transition-transform"
+              aria-label="Send email"
+            >
+              Send
+            </button>
           </div>
         </div>
       </div>
@@ -210,6 +300,21 @@ export default function Act3({ idea }: Props) {
           )}
         </div>
       </div>
+
+      {/* 🖱️ Viewport-fixed fake cursor (arrow pointer SVG) */}
+      <span
+        ref={cursorRef}
+        className="pointer-events-none fixed z-[120]"
+        style={{ opacity: 0, left: 0, top: 0 }}
+        aria-hidden="true"
+      >
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L2 20 L6 16 L10 22 L12 21 L8 15 L14 14 Z" fill="white" stroke="black" strokeWidth="1"/>
+          <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="0.6" floodColor="rgba(0,0,0,0.35)"/>
+          </filter>
+        </svg>
+      </span>
     </section>
   );
 }

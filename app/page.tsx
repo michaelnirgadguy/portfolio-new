@@ -18,7 +18,7 @@ import CenterDock from "@/components/CenterDock";
 import Act1 from "@/components/acts/Act1";
 import { Acts } from "@/lib/acts";
 import HamsterSection from "@/components/HamsterSection";
-import Act3 from "@/components/acts/Act3"; // 👈 NEW
+import Act3 from "@/components/acts/Act3"; // 👈 Act 3
 
 export default function Home() {
   return (
@@ -72,8 +72,11 @@ function HomeInner() {
     text: string;
   } | null>(null);
 
-  // 👇 NEW: Act 3 state
+  // Act 3 state
   const [act3, setAct3] = useState<{ idea: string } | null>(null);
+
+  // Remount Chat to pick up sessionStorage handoff
+  const [chatKey, setChatKey] = useState(0);
 
   // --- URL helpers ---
   function replaceQuery(next: URLSearchParams) {
@@ -94,8 +97,8 @@ function HomeInner() {
     if (!Array.isArray(ids) || !ids.length) return;
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean) as VideoItem[];
     if (!ordered.length) return;
-    setHamster(null); // if we’re showing a grid, hide hamster gag
-    setAct3(null);    // hide act3 if any
+    setHamster(null);    // if we’re showing a grid, hide hamster gag
+    setAct3(null);       // hide act3 if any
     setSelectedId(null); // clear selection → grid
     setVisibleGrid(ordered); // LLM decides the count
   }
@@ -186,6 +189,20 @@ function HomeInner() {
     };
   }, []);
 
+  // 🔔 Act 3 exit → show full catalogue, remount Chat, scroll to top
+  useEffect(() => {
+    const onExit = () => {
+      setAct3(null);                 // hide Act 3
+      setHamster(null);              // ensure hamster gag is off
+      setSelectedId(null);           // clear player selection
+      setVisibleGrid(allVideos);     // full catalogue
+      setChatKey((k) => k + 1);      // remount Chat → reads sessionStorage handoff
+      topRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    window.addEventListener("mimsy-exit-act3", onExit as any);
+    return () => window.removeEventListener("mimsy-exit-act3", onExit as any);
+  }, [allVideos]);
+
   // --- Top pane: act3 > hamster > selected player > grid ---
   const TopPane = (
     <div ref={topRef} className="space-y-6">
@@ -206,7 +223,8 @@ function HomeInner() {
     </div>
   );
 
-  const ChatPane = <Chat onShowVideo={onShowVideo} />;
+  // Hide chat when Act 3 is active; give Chat a key so it remounts on handoff
+  const ChatPane = act3 ? null : <Chat key={chatKey} onShowVideo={onShowVideo} />;
 
   return <CenterDock top={TopPane} chat={ChatPane} />;
 }

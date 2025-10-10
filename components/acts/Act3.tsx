@@ -160,15 +160,14 @@ export default function Act3({ idea }: Props) {
       <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         {/* ✅ Toast */}
         {sent && showToast && (
-          <div className="pointer-events-none absolute -top-2 right-2 z-20 translate-y-[-100%] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
+          <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
             ✅ Sent
           </div>
         )}
 
         {/* Fake email window */}
         <div
-          className="relative rounded-xl border border-border bg-white shadow-md overflow-hidden"
-          style={{ width: "100%", height: 344 }} // +40px for footer
+          className="relative rounded-xl border border-border bg-white shadow-md overflow-visible"
           role="group"
           aria-label="Email window"
         >

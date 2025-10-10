@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 type Props = { idea: string };
 
 export default function Act3({ idea }: Props) {
-  // ----- LLM targets (start empty so no "generating" placeholders) -----
+  // ----- LLM targets -----
   const [subjectFull, setSubjectFull] = useState("");
   const [bodyFull, setBodyFull] = useState("");
   const [llmReady, setLlmReady] = useState(false);
@@ -41,58 +41,90 @@ export default function Act3({ idea }: Props) {
           setLlmReady(true);
         }
       } catch {
-        if (!cancelled) {
-          // leave subject/body empty; we’ll just keep the blinking cursor
-          setLlmReady(false);
-        }
+        if (!cancelled) setLlmReady(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [idea]);
 
-// Typewrite subject then body ONLY after LLM arrives
-useEffect(() => {
-  if (!llmReady || (!subjectFull && !bodyFull)) return;
+  // From/To: typewriter immediately on first mount
+  useEffect(() => {
+    setFromTyped("");
+    setToTyped("");
 
-  setSubjectTyped("");
-  setBodyTyped("");
+    let i = 0, j = 0;
+    let t1: number | null = null;
+    let t2: number | null = null;
 
-  // --- Subject: same speed as before ---
-  let sI: number | null = null;
-  let bI: number | null = null;
+    const typeFrom = () => {
+      i++;
+      setFromTyped(fromFull.slice(0, i));
+      if (i < fromFull.length) {
+        t1 = window.setTimeout(typeFrom, 14) as unknown as number;
+      } else {
+        const typeTo = () => {
+          j++;
+          setToTyped(toFull.slice(0, j));
+          if (j < toFull.length) {
+            t2 = window.setTimeout(typeTo, 12) as unknown as number;
+          }
+        };
+        t2 = window.setTimeout(typeTo, 120) as unknown as number;
+      }
+    };
+    t1 = window.setTimeout(typeFrom, 60) as unknown as number;
 
-  let i = 0;
-  const sTick = () => {
-    i++;
-    setSubjectTyped(subjectFull.slice(0, i));
-    if (i < subjectFull.length) {
-      sI = window.setTimeout(sTick, 18) as unknown as number;
-    } else {
-      // --- Body: pace ≈ reading time (≈200 wpm => 300ms/word) ---
-      const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
-      const totalMs = words * 300; // 0.3s per word
-      const chars = Math.max(bodyFull.length, 1);
-      // per-char delay; clamp so it never feels too fast/slow
-      const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
+    return () => {
+      if (t1) window.clearTimeout(t1);
+      if (t2) window.clearTimeout(t2);
+    };
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      let j = 0;
-      const bTick = () => {
-        j++;
-        setBodyTyped(bodyFull.slice(0, j));
-        if (j < bodyFull.length) {
-          bI = window.setTimeout(bTick, perChar) as unknown as number;
-        }
-      };
-      bI = window.setTimeout(bTick, 120) as unknown as number;
-    }
-  };
-  sI = window.setTimeout(sTick, 120) as unknown as number;
+  // Subject then body: body paced to reading time (~200 wpm ≈ 300ms/word)
+  useEffect(() => {
+    if (!llmReady || (!subjectFull && !bodyFull)) return;
 
-  return () => {
-    if (sI) window.clearTimeout(sI);
-    if (bI) window.clearTimeout(bI);
-  };
-}, [llmReady, subjectFull, bodyFull]);
+    setSubjectTyped("");
+    setBodyTyped("");
+
+    let sI: number | null = null;
+    let bI: number | null = null;
+
+    let i = 0;
+    const sTick = () => {
+      i++;
+      setSubjectTyped(subjectFull.slice(0, i));
+      if (i < subjectFull.length) {
+        sI = window.setTimeout(sTick, 18) as unknown as number;
+      } else {
+        // compute per-char delay to match reading time
+        const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
+        const totalMs = words * 300; // 0.3s per word
+        const chars = Math.max(bodyFull.length, 1);
+        const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
+
+        let j = 0;
+        const bTick = () => {
+          j++;
+          setBodyTyped(bodyFull.slice(0, j));
+          if (j < bodyFull.length) {
+            bI = window.setTimeout(bTick, perChar) as unknown as number;
+          }
+        };
+        bI = window.setTimeout(bTick, 120) as unknown as number;
+      }
+    };
+    sI = window.setTimeout(sTick, 120) as unknown as number;
+
+    return () => {
+      if (sI) window.clearTimeout(sI);
+      if (bI) window.clearTimeout(bI);
+    };
+  }, [llmReady, subjectFull, bodyFull]);
 
   // Encourage autoplay
   useEffect(() => {
@@ -109,11 +141,11 @@ useEffect(() => {
 
   return (
     <section className="relative w-full pb-[220px]">
-      {/* Fake email window (20% shorter & nudged ~80px right) */}
+      {/* Fake email window */}
       <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         <div
           className="rounded-xl border border-border bg-white shadow-md overflow-hidden"
-          style={{ width: "100%", height: 304 }} // was 380
+          style={{ width: "100%", height: 304 }}
           role="group"
           aria-label="Email window"
         >
@@ -131,11 +163,11 @@ useEffect(() => {
           <div className="px-5 py-3 text-[13px] font-mono border-b border-border/60">
             <div className="flex gap-2">
               <span className="text-muted-foreground w-16">From:</span>
-              <span>{fromTyped}</span>
+              <span>{fromTyped || "\u00A0"}</span>
             </div>
             <div className="flex gap-2">
               <span className="text-muted-foreground w-16">To:</span>
-              <span>{toTyped}</span>
+              <span>{toTyped || "\u00A0"}</span>
             </div>
             <div className="flex gap-2">
               <span className="text-muted-foreground w-16">Subject:</span>
@@ -146,7 +178,7 @@ useEffect(() => {
           {/* Body — fixed area (~8 lines), clipped, shows blinking cursor while waiting */}
           <div
             className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
-            style={{ height: 192, overflow: "hidden" }} // was 240
+            style={{ height: 192, overflow: "hidden" }}
             aria-live="polite"
           >
             {bodyTyped}

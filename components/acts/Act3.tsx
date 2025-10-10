@@ -163,7 +163,7 @@ export default function Act3({ idea }: Props) {
           <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
             ✅ Sent
           </div>
-        )}}
+        )}
 
         {/* Fake email window */}
           <div

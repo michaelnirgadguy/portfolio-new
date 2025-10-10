@@ -1,4 +1,91 @@
-return (
+"use client";
+import { useEffect, useRef, useState } from "react";
+
+type Props = { idea: string };
+
+export default function Act3({ idea }: Props) {
+  // LLM email (full text)
+  const [subjectFull, setSubjectFull] = useState("HELP - Generating…");
+  const [bodyFull, setBodyFull] = useState("Michael HELP ME! (writing email…)");
+
+  // Typewriter
+  const [subjectTyped, setSubjectTyped] = useState("");
+  const [bodyTyped, setBodyTyped] = useState("");
+
+  // Video
+  const vref = useRef<HTMLVideoElement | null>(null);
+  const [videoOk, setVideoOk] = useState(true);
+
+  // Fetch email from LLM
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/act3", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idea }),
+        });
+        if (!res.ok) throw new Error("bad status");
+        const json = await res.json();
+        if (!cancelled) {
+          setSubjectFull(typeof json.subject === "string" ? json.subject : "HELP - Mimsy Meltdown!");
+          setBodyFull(
+            typeof json.body === "string"
+              ? json.body
+              : "Michael HELP ME! Could you pweeease back me up on this one?"
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setSubjectFull("HELP - Mimsy Meltdown!");
+          setBodyFull("Michael HELP ME! The email broke. Could you pweeease back me up on this one?");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [idea]);
+
+  // Typewriter: subject, then body
+  useEffect(() => {
+    let sI: number | null = null;
+    let bI: number | null = null;
+    setSubjectTyped("");
+    setBodyTyped("");
+
+    let i = 0;
+    const sTick = () => {
+      i++;
+      setSubjectTyped(subjectFull.slice(0, i));
+      if (i < subjectFull.length) sI = window.setTimeout(sTick, 18) as unknown as number;
+      else {
+        let j = 0;
+        const bTick = () => {
+          j++;
+          setBodyTyped(bodyFull.slice(0, j));
+          if (j < bodyFull.length) bI = window.setTimeout(bTick, 10) as unknown as number;
+        };
+        bI = window.setTimeout(bTick, 120) as unknown as number;
+      }
+    };
+    sI = window.setTimeout(sTick, 100) as unknown as number;
+
+    return () => {
+      if (sI) window.clearTimeout(sI);
+      if (bI) window.clearTimeout(bI);
+    };
+  }, [subjectFull, bodyFull]);
+
+  // Encourage autoplay
+  useEffect(() => {
+    const el = vref.current;
+    if (!el) return;
+    const tryPlay = () => el.play().catch(() => {});
+    el.addEventListener("canplay", tryPlay, { once: true });
+    tryPlay();
+    return () => el.removeEventListener("canplay", tryPlay);
+  }, []);
+  return (
   <section className="relative w-full pb-[220px]"> {/* room for 300×(3:2)=200px PiP + padding */}
     {/* Fake email window (fixed size, no growth) */}
     <div className="mx-auto w-full max-w-2xl px-4 py-8">

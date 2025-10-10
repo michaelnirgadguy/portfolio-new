@@ -30,6 +30,7 @@ export default function Act3({ idea }: Props) {
 
   // Refs for precise cursor animation
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const sendBtnRef = useRef<HTMLButtonElement | null>(null);
   const cursorRef = useRef<HTMLSpanElement | null>(null);
 
@@ -138,31 +139,34 @@ export default function Act3({ idea }: Props) {
     };
   }, [llmReady, subjectFull, bodyFull]);
 
-  // Cursor fly-to-button animation via Web Animations API
+  // Cursor fly-to-button animation (viewport-fixed so it can’t be misaligned)
   function runSendAnimation() {
     const card = cardRef.current;
+    const body = bodyRef.current;
     const btn = sendBtnRef.current;
     const cursor = cursorRef.current;
-    if (!card || !btn || !cursor) return;
+    if (!card || !body || !btn || !cursor) return;
 
-    const cardBox = card.getBoundingClientRect();
+    const bodyBox = body.getBoundingClientRect();
     const btnBox = btn.getBoundingClientRect();
 
-    // Start: somewhere inside the body text area
-    const start = { x: 24, y: 120 }; // px relative to card
-    // End: button center relative to card
-    const end = {
-      x: btnBox.left - cardBox.left + btnBox.width / 2,
-      y: btnBox.top - cardBox.top + btnBox.height / 2,
-    };
+    // Start: a readable point inside the body area (left padding + first line)
+    const startX = Math.round(bodyBox.left + 24);
+    const startY = Math.round(bodyBox.top + Math.min(40, bodyBox.height / 3));
 
+    // End: button center
+    const endX = Math.round(btnBox.left + btnBox.width / 2);
+    const endY = Math.round(btnBox.top + btnBox.height / 2);
+
+    // Prepare cursor (fixed to viewport)
     cursor.style.opacity = "1";
-    cursor.style.transform = `translate(${start.x}px, ${start.y}px)`;
+    cursor.style.left = "0px";
+    cursor.style.top = "0px";
 
     const anim = cursor.animate(
       [
-        { transform: `translate(${start.x}px, ${start.y}px)`, offset: 0 },
-        { transform: `translate(${end.x}px, ${end.y}px)`, offset: 1 },
+        { transform: `translate(${startX}px, ${startY}px)`, offset: 0 },
+        { transform: `translate(${endX}px, ${endY}px)`, offset: 1 },
       ],
       { duration: 1800, easing: "ease-in-out", fill: "forwards" }
     );
@@ -192,7 +196,7 @@ export default function Act3({ idea }: Props) {
   }, []);
 
   // Blink cursor when waiting (no body yet)
-  const showCursor = !llmReady || (!bodyTyped && !bodyFull);
+  const showCursorBlink = !llmReady || (!bodyTyped && !bodyFull);
 
   return (
     <section className="relative w-full pb-[220px]">
@@ -237,14 +241,15 @@ export default function Act3({ idea }: Props) {
             </div>
           </div>
 
-          {/* Body — fixed area (~8 lines), clipped, shows blinking cursor while waiting */}
+          {/* Body — fixed area (~8 lines) */}
           <div
+            ref={bodyRef}
             className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
             style={{ height: 192, overflow: "hidden" }}
             aria-live="polite"
           >
             {bodyTyped}
-            {showCursor && (
+            {showCursorBlink && (
               <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
             )}
           </div>
@@ -260,16 +265,6 @@ export default function Act3({ idea }: Props) {
               Send
             </button>
           </div>
-
-          {/* 🖱️ Fake cursor (animated via Web Animations API) */}
-          <span
-            ref={cursorRef}
-            className="pointer-events-none absolute z-20"
-            style={{ opacity: 0 }}
-            aria-hidden="true"
-          >
-            <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
-          </span>
         </div>
       </div>
 
@@ -294,6 +289,16 @@ export default function Act3({ idea }: Props) {
           )}
         </div>
       </div>
+
+      {/* 🖱️ Viewport-fixed fake cursor (above everything) */}
+      <span
+        ref={cursorRef}
+        className="pointer-events-none fixed z-[120]"
+        style={{ opacity: 0, left: 0, top: 0 }}
+        aria-hidden="true"
+      >
+        <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
+      </span>
     </section>
   );
 }

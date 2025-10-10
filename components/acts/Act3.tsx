@@ -204,9 +204,7 @@ export default function Act3({ idea }: Props) {
             aria-live="polite"
           >
             {bodyTyped}
-            {showCursor && (
-              <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
-            )}
+
           </div>
 
           {/* Footer with fake Send */}

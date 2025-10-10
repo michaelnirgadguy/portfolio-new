@@ -50,69 +50,49 @@ export default function Act3({ idea }: Props) {
     return () => { cancelled = true; };
   }, [idea]);
 
-  // Typewrite headers immediately (From -> To). No placeholders.
-  useEffect(() => {
-    setFromTyped("");
-    setToTyped("");
+// Typewrite subject then body ONLY after LLM arrives
+useEffect(() => {
+  if (!llmReady || (!subjectFull && !bodyFull)) return;
 
-    let i = 0, j = 0;
-    let t1: number | null = null;
-    let t2: number | null = null;
+  setSubjectTyped("");
+  setBodyTyped("");
 
-    const typeFrom = () => {
-      i++;
-      setFromTyped(fromFull.slice(0, i));
-      if (i < fromFull.length) t1 = window.setTimeout(typeFrom, 14) as unknown as number;
-      else {
-        const typeTo = () => {
-          j++;
-          setToTyped(toFull.slice(0, j));
-          if (j < toFull.length) t2 = window.setTimeout(typeTo, 12) as unknown as number;
-        };
-        t2 = window.setTimeout(typeTo, 120) as unknown as number;
-      }
-    };
-    t1 = window.setTimeout(typeFrom, 60) as unknown as number;
+  // --- Subject: same speed as before ---
+  let sI: number | null = null;
+  let bI: number | null = null;
 
-    return () => {
-      if (t1) window.clearTimeout(t1);
-      if (t2) window.clearTimeout(t2);
-    };
-    // run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  let i = 0;
+  const sTick = () => {
+    i++;
+    setSubjectTyped(subjectFull.slice(0, i));
+    if (i < subjectFull.length) {
+      sI = window.setTimeout(sTick, 18) as unknown as number;
+    } else {
+      // --- Body: pace ≈ reading time (≈200 wpm => 300ms/word) ---
+      const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
+      const totalMs = words * 300; // 0.3s per word
+      const chars = Math.max(bodyFull.length, 1);
+      // per-char delay; clamp so it never feels too fast/slow
+      const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
 
-  // Typewrite subject then body ONLY after LLM arrives
-  useEffect(() => {
-    if (!llmReady || (!subjectFull && !bodyFull)) return;
+      let j = 0;
+      const bTick = () => {
+        j++;
+        setBodyTyped(bodyFull.slice(0, j));
+        if (j < bodyFull.length) {
+          bI = window.setTimeout(bTick, perChar) as unknown as number;
+        }
+      };
+      bI = window.setTimeout(bTick, 120) as unknown as number;
+    }
+  };
+  sI = window.setTimeout(sTick, 120) as unknown as number;
 
-    setSubjectTyped("");
-    setBodyTyped("");
-    let sI: number | null = null;
-    let bI: number | null = null;
-
-    let i = 0;
-    const sTick = () => {
-      i++;
-      setSubjectTyped(subjectFull.slice(0, i));
-      if (i < subjectFull.length) sI = window.setTimeout(sTick, 18) as unknown as number;
-      else {
-        let j = 0;
-        const bTick = () => {
-          j++;
-          setBodyTyped(bodyFull.slice(0, j));
-          if (j < bodyFull.length) bI = window.setTimeout(bTick, 10) as unknown as number;
-        };
-        bI = window.setTimeout(bTick, 120) as unknown as number;
-      }
-    };
-    sI = window.setTimeout(sTick, 120) as unknown as number;
-
-    return () => {
-      if (sI) window.clearTimeout(sI);
-      if (bI) window.clearTimeout(bI);
-    };
-  }, [llmReady, subjectFull, bodyFull]);
+  return () => {
+    if (sI) window.clearTimeout(sI);
+    if (bI) window.clearTimeout(bI);
+  };
+}, [llmReady, subjectFull, bodyFull]);
 
   // Encourage autoplay
   useEffect(() => {

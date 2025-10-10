@@ -26,7 +26,6 @@ export default function Act3({ idea }: Props) {
   // ----- Send animation state -----
   const [bodyDone, setBodyDone] = useState(false);
   const [sent, setSent] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   // Refs for precise cursor animation
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -141,11 +140,10 @@ export default function Act3({ idea }: Props) {
 
   // Cursor fly-to-button animation (viewport-fixed so it can’t be misaligned)
   function runSendAnimation() {
-    const card = cardRef.current;
     const body = bodyRef.current;
     const btn = sendBtnRef.current;
     const cursor = cursorRef.current;
-    if (!card || !body || !btn || !cursor) return;
+    if (!body || !btn || !cursor) return;
 
     const bodyBox = body.getBoundingClientRect();
     const btnBox = btn.getBoundingClientRect();
@@ -172,9 +170,20 @@ export default function Act3({ idea }: Props) {
     );
 
     anim.addEventListener("finish", () => {
+      // Visual "press" on the button
+      try {
+        btn.animate(
+          [
+            { transform: "scale(1)", boxShadow: "0 1px 0 rgba(0,0,0,0.06)" },
+            { transform: "scale(0.96)", boxShadow: "0 0 0 rgba(0,0,0,0.00)" },
+            { transform: "scale(1)", boxShadow: "0 1px 0 rgba(0,0,0,0.06)" },
+          ],
+          { duration: 220, easing: "ease-out" }
+        );
+      } catch {}
+
       setSent(true);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 1200);
+      // (no toast anymore)
     });
   }
 
@@ -200,13 +209,6 @@ export default function Act3({ idea }: Props) {
 
   return (
     <section className="relative w-full pb-[220px]">
-      {/* Toast (fixed so it's never clipped) */}
-      {sent && showToast && (
-        <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
-          ✅ Sent
-        </div>
-      )}
-
       {/* Fake email window */}
       <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         <div
@@ -259,7 +261,7 @@ export default function Act3({ idea }: Props) {
             <button
               ref={sendBtnRef}
               type="button"
-              className="select-none rounded-full border border-input px-4 py-1.5 text-sm hover:border-[hsl(var(--accent))] shadow-sm"
+              className="select-none rounded-full border border-input px-4 py-1.5 text-sm shadow-sm transition-transform"
               aria-label="Send email"
             >
               Send
@@ -290,14 +292,20 @@ export default function Act3({ idea }: Props) {
         </div>
       </div>
 
-      {/* 🖱️ Viewport-fixed fake cursor (above everything) */}
+      {/* 🖱️ Viewport-fixed fake cursor (arrow pointer SVG) */}
       <span
         ref={cursorRef}
         className="pointer-events-none fixed z-[120]"
         style={{ opacity: 0, left: 0, top: 0 }}
         aria-hidden="true"
       >
-        <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
+        {/* Arrow pointer (like a system cursor), small drop shadow for visibility */}
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 2 L2 20 L6 16 L10 22 L12 21 L8 15 L14 14 Z" fill="white" stroke="black" strokeWidth="1"/>
+          <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="0.6" floodColor="rgba(0,0,0,0.35)"/>
+          </filter>
+        </svg>
       </span>
     </section>
   );

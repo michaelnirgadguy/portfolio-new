@@ -25,7 +25,7 @@ export default function Act3({ idea }: Props) {
   const [videoOk, setVideoOk] = useState(true);
 
   // ----- Send animation -----
-  const [Done, setDone] = useState(false);
+  const [bodyDone, setBodyDone] = useState(false);
   const [playSend, setPlaySend] = useState(false);
   const [sent, setSent] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -38,13 +38,13 @@ export default function Act3({ idea }: Props) {
         const res = await fetch("/api/act3", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          : JSON.stringify({ idea }),
+          body: JSON.stringify({ idea }),
         });
         if (!res.ok) throw new Error("bad status");
         const json = await res.json();
         if (!cancelled) {
           setSubjectFull(typeof json.subject === "string" ? json.subject : "");
-          setFull(typeof json. === "string" ? json. : "");
+          setBodyFull(typeof json.body === "string" ? json.body : "");
           setLlmReady(true);
         }
       } catch {
@@ -90,13 +90,13 @@ export default function Act3({ idea }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subject then  (paced)
+  // Subject then body (paced)
   useEffect(() => {
-    if (!llmReady || (!subjectFull && !Full)) return;
+    if (!llmReady || (!subjectFull && !bodyFull)) return;
 
     setSubjectTyped("");
-    setTyped("");
-    setDone(false);
+    setBodyTyped("");
+    setBodyDone(false);
 
     let sI: number | null = null;
     let bI: number | null = null;
@@ -108,15 +108,15 @@ export default function Act3({ idea }: Props) {
       if (i < subjectFull.length) {
         sI = window.setTimeout(sTick, 18) as unknown as number;
       } else {
-        const words = Full.trim().split(/\s+/).filter(Boolean).length || 1;
+        const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
         const totalMs = words * 300;
-        const chars = Math.max(Full.length, 1);
+        const chars = Math.max(bodyFull.length, 1);
         const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
 
         let j = 0;
         const bTick = () => {
           j++;
-          setTyped(Full.slice(0, j));
+          setBodyTyped(bodyFull.slice(0, j));
           if (j < bodyFull.length) {
             bI = window.setTimeout(bTick, perChar) as unknown as number;
           } else {
@@ -160,17 +160,18 @@ export default function Act3({ idea }: Props) {
       <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         {/* ✅ Toast */}
         {sent && showToast && (
-          <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
+          <div className="pointer-events-none absolute -top-2 right-2 z-20 translate-y-[-100%] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
             ✅ Sent
           </div>
         )}
 
         {/* Fake email window */}
-          <div
-            className="relative rounded-xl border border-border bg-white shadow-md overflow-visible"
-            role="group"
-            aria-label="Email window"
-          >
+        <div
+          className="relative rounded-xl border border-border bg-white shadow-md overflow-hidden"
+          style={{ width: "100%", height: 344 }} // +40px for footer
+          role="group"
+          aria-label="Email window"
+        >
           {/* Window chrome */}
           <div className="flex items-center justify-between px-4 h-10 border-b border-border/70 bg-muted/30">
             <div className="flex gap-2">
@@ -223,15 +224,19 @@ export default function Act3({ idea }: Props) {
           {/* 🖱️ Fake cursor + click ring */}
           {playSend && !sent && (
             <span
-              className="absolute z-20 inline-block pointer-events-none"
+              className="absolute z-20 inline-block"
               style={{ animation: "cursorMove 1.9s ease-in-out forwards" }}
               onAnimationEnd={() => {
+                // Simulate click
                 setSent(true);
                 setShowToast(true);
+                // quick ripple then hide toast
                 setTimeout(() => setShowToast(false), 1200);
               }}
             >
+              {/* cursor shape */}
               <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
+              {/* click ring appears near the end using a delayed animation */}
               <span
                 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                 style={{ animation: "ring 0.28s ease-out 1.7s both" }}
@@ -244,9 +249,19 @@ export default function Act3({ idea }: Props) {
           {/* local styles for the animation path */}
           <style jsx>{`
             @keyframes cursorMove {
-              0%   { transform: translate(18px, 120px); opacity: 0; }
-              12%  { opacity: 1; }
-              100% { transform: translate(calc(100% - 120px), calc(100% - 54px)); opacity: 1; }
+              /* Start somewhere over the body text */
+              0% {
+                transform: translate(18px, 120px);
+                opacity: 0;
+              }
+              10% {
+                opacity: 1;
+              }
+              /* End over the Send button (bottom-right-ish inside the window) */
+              100% {
+                transform: translate(calc(100% - 110px), calc(100% - 46px));
+                opacity: 1;
+              }
             }
             @keyframes ring {
               from {

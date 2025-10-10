@@ -62,13 +62,13 @@ export default function Act3({ idea }: Props) {
       i++;
       setFromTyped(fromFull.slice(0, i));
       if (i < fromFull.length) {
-        t1 = window.setTimeout(typeFrom, 14) as unknown as number;
+        t1 = window.setTimeout(typeFrom, 40) as unknown as number;
       } else {
         const typeTo = () => {
           j++;
           setToTyped(toFull.slice(0, j));
           if (j < toFull.length) {
-            t2 = window.setTimeout(typeTo, 12) as unknown as number;
+            t2 = window.setTimeout(typeTo, 40) as unknown as number;
           }
         };
         t2 = window.setTimeout(typeTo, 120) as unknown as number;
@@ -171,7 +171,12 @@ export default function Act3({ idea }: Props) {
             </div>
             <div className="flex gap-2">
               <span className="text-muted-foreground w-16">Subject:</span>
-              <span className="align-middle">{subjectTyped || "\u00A0"}</span>
+              <span className="align-middle">
+                {subjectTyped || "\u00A0"}
+                {(!llmReady || !subjectTyped) && (
+                  <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
+                )}
+              </span>
             </div>
           </div>
 

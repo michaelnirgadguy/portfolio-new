@@ -87,40 +87,39 @@ export default function Act3({ idea }: Props) {
   }, []);
 
   return (
-    <section className="relative w-full">
-      {/* Clean email card (centered, no gray box/overlay) */}
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="rounded-xl border border-border bg-white shadow-md p-5 font-mono text-[15px] leading-6">
-          <p className="mb-2">
-            <strong>Subject:</strong>{" "}
-            <span className="align-middle">{subjectTyped || "\u00A0"}</span>
-          </p>
-          <hr className="my-3 border-border/70" />
-          <div className="whitespace-pre-wrap" aria-live="polite">{bodyTyped}</div>
-        </div>
+  <section className="relative w-full pb-60"> {/* ~240px bottom space for the PiP */}
+    {/* Clean email card (centered) */}
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="rounded-xl border border-border bg-white shadow-md p-5 font-mono text-[15px] leading-6">
+        <p className="mb-2">
+          <strong>Subject:</strong>{" "}
+          <span className="align-middle">{subjectTyped || "\u00A0"}</span>
+        </p>
+        <hr className="my-3 border-border/70" />
+        <div className="whitespace-pre-wrap" aria-live="polite">{bodyTyped}</div>
       </div>
+    </div>
 
-      {/* Picture-in-picture video (bottom-left), non-interactive so it never overlaps clicks */}
-      <div className="pointer-events-none fixed left-5 bottom-5 z-10">
-        <div className="relative w-[300px] aspect-video rounded-xl overflow-hidden shadow-md bg-black">
-          <video
-            ref={vref}
-            src="/vid/hamster-typing.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            onError={() => setVideoOk(false)}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          {!videoOk && (
-            <div className="absolute inset-0 grid place-items-center bg-black/70 text-white text-xs px-2 text-center">
-              Missing video at <code className="mx-1">public/vid/hamster-typing.mp4</code>
-            </div>
-          )}
-        </div>
+    {/* PiP video INSIDE the section (no page-level overlap) */}
+    <div className="pointer-events-none absolute left-5 bottom-5 z-10">
+      <div className="relative w-[300px] aspect-video rounded-xl overflow-hidden shadow-md bg-black">
+        <video
+          ref={vref}
+          src="/vid/hamster-typing.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          onError={() => setVideoOk(false)}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {!videoOk && (
+          <div className="absolute inset-0 grid place-items-center bg-black/70 text-white text-xs px-2 text-center">
+            Missing video at <code className="mx-1">public/vid/hamster-typing.mp4</code>
+          </div>
+        )}
       </div>
-    </section>
-  );
-}
+    </div>
+  </section>
+);

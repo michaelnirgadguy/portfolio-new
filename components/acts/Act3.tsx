@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = { idea: string };
 
@@ -15,20 +15,13 @@ export default function Act3({ idea }: Props) {
   const [subjectTyped, setSubjectTyped] = useState("");
   const [bodyTyped, setBodyTyped] = useState("");
 
+  // ----- Static "full" strings for headers -----
+  const fromFull = "mimsy@hamster.studio";
+  const toFull = "michael.nirgadguy@gmail.com";
+
   // ----- Video -----
   const vref = useRef<HTMLVideoElement | null>(null);
   const [videoOk, setVideoOk] = useState(true);
-
-  // ----- Send animation -----
-  const [sendPhase, setSendPhase] = useState<"idle" | "animating" | "sent">("idle");
-  const [cursorStyle, setCursorStyle] = useState<{ transform: string; opacity: number }>({
-    transform: "translate(24px, -6px)",
-    opacity: 0,
-  });
-
-  // Fake From/To (static targets)
-  const fromFull = useMemo(() => `Mimsy Hamster <mimsy@ham.ster>`, []);
-  const toFull = useMemo(() => `Michael <portfolio@human.work>`, []);
 
   // Fetch email from LLM
   useEffect(() => {
@@ -40,20 +33,15 @@ export default function Act3({ idea }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idea }),
         });
-        if (!res.ok) throw new Error("LLM failed");
-        const data = (await res.json()) as { subject: string; body: string };
-        if (cancelled) return;
-        setSubjectFull(data.subject ?? "About your brief");
-        setBodyFull(data.body ?? "Thanks! I’ll get to work right away.");
-        setLlmReady(true);
+        if (!res.ok) throw new Error("bad status");
+        const json = await res.json();
+        if (!cancelled) {
+          setSubjectFull(typeof json.subject === "string" ? json.subject : "");
+          setBodyFull(typeof json.body === "string" ? json.body : "");
+          setLlmReady(true);
+        }
       } catch {
-        if (cancelled) return;
-        // Fallback
-        setSubjectFull("About your brilliant brief");
-        setBodyFull(
-          `I’ll start crafting your video now—with my hamster power, of course.\nMeanwhile, enjoy the full catalogue on the next screen.`
-        );
-        setLlmReady(true);
+        if (!cancelled) setLlmReady(false);
       }
     })();
     return () => {
@@ -61,188 +49,142 @@ export default function Act3({ idea }: Props) {
     };
   }, [idea]);
 
-  // Type From then To at ~0.1s per char
+  // From/To: typewriter immediately on first mount
   useEffect(() => {
-    let t1: number | undefined;
-    let t2: number | undefined;
-    let i = 0;
-    let j = 0;
+    setFromTyped("");
+    setToTyped("");
+
+    let i = 0, j = 0;
+    let t1: number | null = null;
+    let t2: number | null = null;
 
     const typeFrom = () => {
       i++;
       setFromTyped(fromFull.slice(0, i));
       if (i < fromFull.length) {
-        t1 = window.setTimeout(typeFrom, 100);
+        t1 = window.setTimeout(typeFrom, 40) as unknown as number;
       } else {
         const typeTo = () => {
           j++;
           setToTyped(toFull.slice(0, j));
           if (j < toFull.length) {
-            t2 = window.setTimeout(typeTo, 100);
+            t2 = window.setTimeout(typeTo, 40) as unknown as number;
           }
         };
-        t2 = window.setTimeout(typeTo, 200);
+        t2 = window.setTimeout(typeTo, 120) as unknown as number;
       }
     };
+    t1 = window.setTimeout(typeFrom, 60) as unknown as number;
 
-    t1 = window.setTimeout(typeFrom, 60);
     return () => {
       if (t1) window.clearTimeout(t1);
       if (t2) window.clearTimeout(t2);
     };
-  }, [fromFull, toFull]);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Type Subject once LLM is ready (simple ~0.1s/char)
+  // Subject then body: body paced to reading time (~200 wpm ≈ 300ms/word)
   useEffect(() => {
-    if (!llmReady || !subjectFull) return;
-    let k = 0;
-    let tk: number | undefined;
-    const typeSubject = () => {
-      k++;
-      setSubjectTyped(subjectFull.slice(0, k));
-      if (k < subjectFull.length) {
-        tk = window.setTimeout(typeSubject, 100);
+    if (!llmReady || (!subjectFull && !bodyFull)) return;
+
+    setSubjectTyped("");
+    setBodyTyped("");
+
+    let sI: number | null = null;
+    let bI: number | null = null;
+
+    let i = 0;
+    const sTick = () => {
+      i++;
+      setSubjectTyped(subjectFull.slice(0, i));
+      if (i < subjectFull.length) {
+        sI = window.setTimeout(sTick, 18) as unknown as number;
+      } else {
+        // compute per-char delay to match reading time
+        const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
+        const totalMs = words * 300; // 0.3s per word
+        const chars = Math.max(bodyFull.length, 1);
+        const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
+
+        let j = 0;
+        const bTick = () => {
+          j++;
+          setBodyTyped(bodyFull.slice(0, j));
+          if (j < bodyFull.length) {
+            bI = window.setTimeout(bTick, perChar) as unknown as number;
+          }
+        };
+        bI = window.setTimeout(bTick, 120) as unknown as number;
       }
     };
-    tk = window.setTimeout(typeSubject, 150);
+    sI = window.setTimeout(sTick, 120) as unknown as number;
+
     return () => {
-      if (tk) window.clearTimeout(tk);
+      if (sI) window.clearTimeout(sI);
+      if (bI) window.clearTimeout(bI);
     };
-  }, [llmReady, subjectFull]);
+  }, [llmReady, subjectFull, bodyFull]);
 
-  // Type Body at ~0.3s per word after Subject is done
+  // Encourage autoplay
   useEffect(() => {
-    if (!llmReady || !subjectFull || subjectTyped !== subjectFull || !bodyFull) return;
+    const el = vref.current;
+    if (!el) return;
+    const tryPlay = () => el.play().catch(() => {});
+    el.addEventListener("canplay", tryPlay, { once: true });
+    tryPlay();
+    return () => el.removeEventListener("canplay", tryPlay);
+  }, []);
 
-    const words = bodyFull.split(/(\s+)/); // keep spaces to preserve formatting
-    let idx = 0;
-    let t: number | undefined;
-
-    const tick = () => {
-      // append next "token" (word or whitespace)
-      setBodyTyped((prev) => prev + (words[idx] ?? ""));
-      idx++;
-      if (idx < words.length) {
-        // ~0.3s per token; spaces feel faster (halve delay)
-        const isSpace = /^\s+$/.test(words[idx] ?? "");
-        t = window.setTimeout(tick, isSpace ? 120 : 300);
-      }
-    };
-
-    // slight delay before starting to type body
-    t = window.setTimeout(tick, 250);
-    return () => {
-      if (t) window.clearTimeout(t);
-    };
-  }, [llmReady, subjectFull, subjectTyped, bodyFull]);
-
-  // When body typing finishes -> run send animation (~2s)
-  useEffect(() => {
-    const bodyDone = llmReady && bodyFull.length > 0 && bodyTyped.length === bodyFull.length;
-    if (!bodyDone || sendPhase !== "idle") return;
-
-    const t0 = window.setTimeout(() => {
-      setSendPhase("animating");
-      setCursorStyle({ transform: "translate(24px, -6px)", opacity: 1 });
-
-      const t1 = window.setTimeout(() => {
-        // Move cursor toward bottom-right where Send sits; tweak if layout changes
-        setCursorStyle({ transform: "translate(520px, 176px)", opacity: 1 });
-
-        const t2 = window.setTimeout(() => {
-          setSendPhase("sent");
-          const t3 = window.setTimeout(() => setCursorStyle((s) => ({ ...s, opacity: 0 })), 250);
-          return () => window.clearTimeout(t3);
-        }, 1600); // ~1.6s glide then click
-        return () => window.clearTimeout(t2);
-      }, 100);
-      return () => window.clearTimeout(t1);
-    }, 250);
-
-    return () => window.clearTimeout(t0);
-  }, [llmReady, bodyFull, bodyTyped, sendPhase]);
+  // Blink cursor when waiting (no body yet)
+  const showCursor = !llmReady || (!bodyTyped && !bodyFull);
 
   return (
-    <section className="relative mx-auto max-w-4xl w-full rounded-xl border bg-background shadow-sm overflow-hidden">
-      {/* Window header */}
-      <div className="flex items-center justify-between border-b px-5 py-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400" />
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400" />
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400" />
-          <span className="ml-3 font-medium text-foreground/80">New Message</span>
-        </div>
-        <div className="text-xs text-muted-foreground">Act 3</div>
-      </div>
-
-      {/* Fields */}
-      <div className="relative">
-        {/* From */}
-        <div className="flex gap-2 px-5 pt-4">
-          <span className="text-muted-foreground w-16">From:</span>
-          <span className="font-mono">{fromTyped || "\u00A0"}</span>
-        </div>
-
-        {/* To */}
-        <div className="flex gap-2 px-5 pt-2">
-          <span className="text-muted-foreground w-16">To:</span>
-          <span className="font-mono">{toTyped || "\u00A0"}</span>
-        </div>
-
-        {/* Subject (blinking cursor ONLY while waiting) */}
-        <div className="flex gap-2 px-5 pt-2">
-          <span className="text-muted-foreground w-16">Subject:</span>
-          <span className="font-mono align-middle">
-            {subjectTyped || "\u00A0"}
-            {(!llmReady || !subjectTyped) && (
-              <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
-            )}
-          </span>
-        </div>
-
-        {/* Divider */}
-        <div className="mt-3 border-t" />
-
-        {/* Body — fixed area (~8 lines), clipped, NO cursor */}
+    <section className="relative w-full pb-[220px]">
+      {/* Fake email window */}
+      <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         <div
-          className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
-          style={{ height: 192, overflow: "hidden" }}
-          aria-live="polite"
+          className="rounded-xl border border-border bg-white shadow-md overflow-hidden"
+          style={{ width: "100%", height: 304 }}
+          role="group"
+          aria-label="Email window"
         >
-          {bodyTyped}
-        </div>
-
-        {/* Footer with fake Send */}
-        <div className="absolute right-4 bottom-3">
-          <button
-            className="px-3 py-1.5 text-sm rounded-md border border-border bg-white hover:bg-muted/50 transition"
-            aria-label="Send email"
-            // no onClick; sending is automated by the animation above
-          >
-            Send
-          </button>
-        </div>
-
-        {/* Animated cursor */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute"
-          style={{
-            transition: "transform 1.6s ease, opacity 0.2s linear",
-            transform: cursorStyle.transform,
-            opacity: cursorStyle.opacity,
-          }}
-        >
-          {/* simple triangular cursor */}
-          <div className="w-0 h-0 border-l-[10px] border-l-transparent border-t-[16px] border-t-black border-r-[6px] border-r-transparent translate-x-[-4px] translate-y-[-4px]" />
-        </div>
-
-        {/* ✅ Sent pop-up */}
-        {sendPhase === "sent" && (
-          <div className="absolute right-3 top-3 rounded-md bg-emerald-600 text-white text-xs px-2 py-1 shadow">
-            ✅ Sent
+          {/* Window chrome */}
+          <div className="flex items-center justify-between px-4 h-10 border-b border-border/70 bg-muted/30">
+            <div className="flex gap-2">
+              <span className="h-3 w-3 rounded-full bg-red-400 inline-block" />
+              <span className="h-3 w-3 rounded-full bg-yellow-400 inline-block" />
+              <span className="h-3 w-3 rounded-full bg-green-400 inline-block" />
+            </div>
+            <div className="text-xs text-muted-foreground">Mimsy Mail</div>
           </div>
-        )}
+
+          {/* Headers */}
+          <div className="px-5 py-3 text-[13px] font-mono border-b border-border/60">
+            <div className="flex gap-2">
+              <span className="text-muted-foreground w-16">From:</span>
+              <span>{fromTyped || "\u00A0"}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-muted-foreground w-16">To:</span>
+              <span>{toTyped || "\u00A0"}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-muted-foreground w-16">Subject:</span>
+              <span className="align-middle">{subjectTyped || "\u00A0"}</span>
+            </div>
+          </div>
+
+          {/* Body — fixed area (~8 lines), clipped, shows blinking cursor while waiting */}
+          <div
+            className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
+            style={{ height: 192, overflow: "hidden" }}
+            aria-live="polite"
+          >
+            {bodyTyped}
+            
+          </div>
+        </div>
       </div>
 
       {/* PiP video INSIDE the section, 3:2 aspect */}

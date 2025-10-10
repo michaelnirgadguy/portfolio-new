@@ -123,3 +123,4 @@ export default function Act3({ idea }: Props) {
     </div>
   </section>
 );
+  }

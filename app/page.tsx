@@ -187,7 +187,7 @@ function HomeInner() {
   }, []);
 
   // --- Top pane: act3 > hamster > selected player > grid ---
-  const TopPane = (
+ const TopPane = (
     <div ref={topRef} className="space-y-6">
       {act3 ? (
         <Act3 idea={act3.idea} />
@@ -206,7 +206,8 @@ function HomeInner() {
     </div>
   );
 
-  const ChatPane = <Chat onShowVideo={onShowVideo} />;
+  // hide chat when Act 3 is active
+  const ChatPane = act3 ? null : <Chat onShowVideo={onShowVideo} />;
 
   return <CenterDock top={TopPane} chat={ChatPane} />;
 }

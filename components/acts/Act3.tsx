@@ -1,4 +1,3 @@
-// components/acts/Act3.tsx
 "use client";
 import { useEffect, useRef, useState } from "react";
 
@@ -10,13 +9,13 @@ export default function Act3({ idea }: Props) {
   const [bodyFull, setBodyFull] = useState("");
   const [llmReady, setLlmReady] = useState(false);
 
-  // ----- Typed states -----
+  // ----- Typed states (typewriter outputs) -----
   const [fromTyped, setFromTyped] = useState("");
   const [toTyped, setToTyped] = useState("");
   const [subjectTyped, setSubjectTyped] = useState("");
   const [bodyTyped, setBodyTyped] = useState("");
 
-  // ----- Static -----
+  // ----- Static "full" strings for headers -----
   const fromFull = "mimsy@hamster.studio";
   const toFull = "michael.nirgadguy@gmail.com";
 
@@ -24,11 +23,15 @@ export default function Act3({ idea }: Props) {
   const vref = useRef<HTMLVideoElement | null>(null);
   const [videoOk, setVideoOk] = useState(true);
 
-  // ----- Send animation -----
+  // ----- Send animation state -----
   const [bodyDone, setBodyDone] = useState(false);
-  const [playSend, setPlaySend] = useState(false);
   const [sent, setSent] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Refs for precise cursor animation
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const sendBtnRef = useRef<HTMLButtonElement | null>(null);
+  const cursorRef = useRef<HTMLSpanElement | null>(null);
 
   // Fetch email from LLM
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function Act3({ idea }: Props) {
     };
   }, [idea]);
 
-  // From/To
+  // From/To typewriter on first mount
   useEffect(() => {
     setFromTyped("");
     setToTyped("");
@@ -90,7 +93,7 @@ export default function Act3({ idea }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subject then body (paced)
+  // Subject then body: body paced to reading time (~200 wpm ≈ 300ms/word)
   useEffect(() => {
     if (!llmReady || (!subjectFull && !bodyFull)) return;
 
@@ -108,8 +111,9 @@ export default function Act3({ idea }: Props) {
       if (i < subjectFull.length) {
         sI = window.setTimeout(sTick, 18) as unknown as number;
       } else {
+        // compute per-char delay to match reading time
         const words = bodyFull.trim().split(/\s+/).filter(Boolean).length || 1;
-        const totalMs = words * 300;
+        const totalMs = words * 300; // 0.3s per word
         const chars = Math.max(bodyFull.length, 1);
         const perChar = Math.min(45, Math.max(8, Math.round(totalMs / chars)));
 
@@ -120,8 +124,7 @@ export default function Act3({ idea }: Props) {
           if (j < bodyFull.length) {
             bI = window.setTimeout(bTick, perChar) as unknown as number;
           } else {
-            // ✅ body finished
-            setBodyDone(true);
+            setBodyDone(true); // ✅ body finished
           }
         };
         bI = window.setTimeout(bTick, 120) as unknown as number;
@@ -135,10 +138,46 @@ export default function Act3({ idea }: Props) {
     };
   }, [llmReady, subjectFull, bodyFull]);
 
-  // Kick off the send animation once body is done
+  // Cursor fly-to-button animation via Web Animations API
+  function runSendAnimation() {
+    const card = cardRef.current;
+    const btn = sendBtnRef.current;
+    const cursor = cursorRef.current;
+    if (!card || !btn || !cursor) return;
+
+    const cardBox = card.getBoundingClientRect();
+    const btnBox = btn.getBoundingClientRect();
+
+    // Start: somewhere inside the body text area
+    const start = { x: 24, y: 120 }; // px relative to card
+    // End: button center relative to card
+    const end = {
+      x: btnBox.left - cardBox.left + btnBox.width / 2,
+      y: btnBox.top - cardBox.top + btnBox.height / 2,
+    };
+
+    cursor.style.opacity = "1";
+    cursor.style.transform = `translate(${start.x}px, ${start.y}px)`;
+
+    const anim = cursor.animate(
+      [
+        { transform: `translate(${start.x}px, ${start.y}px)`, offset: 0 },
+        { transform: `translate(${end.x}px, ${end.y}px)`, offset: 1 },
+      ],
+      { duration: 1800, easing: "ease-in-out", fill: "forwards" }
+    );
+
+    anim.addEventListener("finish", () => {
+      setSent(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1200);
+    });
+  }
+
+  // Kick off send animation when body is done
   useEffect(() => {
     if (!bodyDone || sent) return;
-    const t = setTimeout(() => setPlaySend(true), 500); // small beat
+    const t = setTimeout(() => runSendAnimation(), 400); // small beat
     return () => clearTimeout(t);
   }, [bodyDone, sent]);
 
@@ -147,26 +186,27 @@ export default function Act3({ idea }: Props) {
     const el = vref.current;
     if (!el) return;
     const tryPlay = () => el.play().catch(() => {});
-    el.addEventListener("canplay", tryPlay, { once: true });
+    el?.addEventListener("canplay", tryPlay, { once: true });
     tryPlay();
-    return () => el.removeEventListener("canplay", tryPlay);
+    return () => el?.removeEventListener("canplay", tryPlay);
   }, []);
 
+  // Blink cursor when waiting (no body yet)
   const showCursor = !llmReady || (!bodyTyped && !bodyFull);
 
   return (
     <section className="relative w-full pb-[220px]">
-      {/* --- Animated overlay + toast are positioned relative to this wrapper --- */}
-      <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
-        {/* ✅ Toast */}
-        {sent && showToast && (
-          <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
-            ✅ Sent
-          </div>
-        )}
+      {/* Toast (fixed so it's never clipped) */}
+      {sent && showToast && (
+        <div className="fixed top-4 right-6 z-[100] rounded-md border bg-white px-3 py-2 text-sm shadow-md">
+          ✅ Sent
+        </div>
+      )}
 
-        {/* Fake email window */}
+      {/* Fake email window */}
+      <div className="relative left-20 w-full max-w-2xl mx-auto px-4 py-8">
         <div
+          ref={cardRef}
           className="relative rounded-xl border border-border bg-white shadow-md overflow-visible"
           role="group"
           aria-label="Email window"
@@ -197,19 +237,22 @@ export default function Act3({ idea }: Props) {
             </div>
           </div>
 
-          {/* Body */}
+          {/* Body — fixed area (~8 lines), clipped, shows blinking cursor while waiting */}
           <div
             className="px-5 py-4 font-mono text-[15px] leading-6 whitespace-pre-wrap break-words"
             style={{ height: 192, overflow: "hidden" }}
             aria-live="polite"
           >
             {bodyTyped}
-
+            {showCursor && (
+              <span className="inline-block ml-1 w-[8px] h-[1.1em] align-[-0.15em] bg-muted-foreground/80 animate-pulse" />
+            )}
           </div>
 
           {/* Footer with fake Send */}
           <div className="flex items-center justify-end gap-2 px-5 py-2 border-t border-border/60 bg-white/80">
             <button
+              ref={sendBtnRef}
               type="button"
               className="select-none rounded-full border border-input px-4 py-1.5 text-sm hover:border-[hsl(var(--accent))] shadow-sm"
               aria-label="Send email"
@@ -218,63 +261,19 @@ export default function Act3({ idea }: Props) {
             </button>
           </div>
 
-          {/* 🖱️ Fake cursor + click ring */}
-          {playSend && !sent && (
-            <span
-              className="absolute z-20 inline-block"
-              style={{ animation: "cursorMove 1.9s ease-in-out forwards" }}
-              onAnimationEnd={() => {
-                // Simulate click
-                setSent(true);
-                setShowToast(true);
-                // quick ripple then hide toast
-                setTimeout(() => setShowToast(false), 1200);
-              }}
-            >
-              {/* cursor shape */}
-              <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
-              {/* click ring appears near the end using a delayed animation */}
-              <span
-                className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                style={{ animation: "ring 0.28s ease-out 1.7s both" }}
-              >
-                <span className="block h-6 w-6 rounded-full border-2 border-foreground/60" />
-              </span>
-            </span>
-          )}
-
-          {/* local styles for the animation path */}
-          <style jsx>{`
-            @keyframes cursorMove {
-              /* Start somewhere over the body text */
-              0% {
-                transform: translate(18px, 120px);
-                opacity: 0;
-              }
-              10% {
-                opacity: 1;
-              }
-              /* End over the Send button (bottom-right-ish inside the window) */
-              100% {
-                transform: translate(calc(100% - 110px), calc(100% - 46px));
-                opacity: 1;
-              }
-            }
-            @keyframes ring {
-              from {
-                transform: translate(-50%, -50%) scale(0.6);
-                opacity: 0.0;
-              }
-              to {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-              }
-            }
-          `}</style>
+          {/* 🖱️ Fake cursor (animated via Web Animations API) */}
+          <span
+            ref={cursorRef}
+            className="pointer-events-none absolute z-20"
+            style={{ opacity: 0 }}
+            aria-hidden="true"
+          >
+            <span className="block h-4 w-2 rounded-[2px] bg-foreground" />
+          </span>
         </div>
       </div>
 
-      {/* PiP video */}
+      {/* PiP video INSIDE the section, 3:2 aspect */}
       <div className="pointer-events-none absolute left-5 bottom-5 z-10">
         <div className="relative w-[300px] aspect-[3/2] rounded-xl overflow-hidden shadow-md bg-black">
           <video

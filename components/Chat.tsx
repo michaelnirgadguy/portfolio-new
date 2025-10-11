@@ -273,7 +273,7 @@ useEffect(() => {
         {before}
         <span className="font-semibold">
           {parts[0]}
-          <strong className="text-[hsl(var(--accent))]">mimsy:</strong>
+          <span className="text-[hsl(var(--accent))]">mimsy:</span>
           {parts[1] ?? ""}
         </span>
         {after}

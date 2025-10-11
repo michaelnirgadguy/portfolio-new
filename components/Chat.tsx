@@ -304,7 +304,7 @@ useEffect(() => {
 
 
       ) : (
-        <div className="whitespace-pre-wrap">{renderTypedWithNudge(typed)}</div> {/* ✅ CHANGED */}
+       <div className="whitespace-pre-wrap">{renderTypedWithNudge(typed)}</div>
       )}
     </div>
 

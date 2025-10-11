@@ -104,7 +104,7 @@ export function recordAction(source: Source): NudgeDecision {
   if (stage !== "act2_done" && count >= NUDGE_THRESHOLDS.ACT2_FIRST) {
     setStage("act2_done");
     setCount(0);
-    return { templateKey: source === "message" ? "act2_nudge_after_message" : "act2_nudge-after_video" };
+    return { templateKey: source === "message" ? "act2_nudge_after_message" : "act2_nudge_after_video" };
   }
   return null;
 }

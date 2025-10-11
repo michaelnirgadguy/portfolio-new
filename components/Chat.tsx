@@ -101,6 +101,12 @@ export default function Chat({
     setTyped(""); // reset typewriter
     setStatus("pending"); // show dots
   }
+  // ✨ Prompt generator
+  function handleSparkle() {
+    if (!SuggestedPrompts.length) return;
+    const idx = Math.floor(Math.random() * SuggestedPrompts.length);
+    setInput(SuggestedPrompts[idx]);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -8,6 +8,10 @@ import { ArrowUp } from "lucide-react";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
+import { recordAction } from "@/lib/nudges";
+import { getNudgeText } from "@/lib/nudge-templates";
+
+
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -108,14 +112,14 @@ async function onSubmit(e: React.FormEvent) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
-  // ✅ NEW: Mimsy command path
+  // ✅ Mimsy command path (user typed "mimsy:")
   const maybeIdea = extractMimsyIdea(trimmed);
   if (maybeIdea !== null) {
     // show user line then clear input
     push("user", trimmed);
     setInput("");
 
-    // empty idea → quick nudge
+    // empty idea → quick hint
     if (maybeIdea === "") {
       const msg = "Type “Mimsy:” followed by your video idea.";
       push("assistant", msg);
@@ -124,7 +128,7 @@ async function onSubmit(e: React.FormEvent) {
       return;
     }
 
-    // run router
+    // route to act 2/3
     setUserLine("");
     setAssistantFull("");
     setTyped("");
@@ -134,16 +138,11 @@ async function onSubmit(e: React.FormEvent) {
       const action = await routeMimsy(maybeIdea);
 
       if (action.kind === "act2") {
-        // fire event so the top pane renders HamsterSection
-        try {
-          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
-        } catch {}
+        try { window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail })); } catch {}
         push("assistant", action.followup);
         setAssistantFull(action.followup);
       } else if (action.kind === "act3") {
-        try {
-          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
-        } catch {}
+        try { window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail })); } catch {}
         push("assistant", action.line);
         setAssistantFull(action.line);
       } else if (action.kind === "handoff") {
@@ -164,18 +163,24 @@ async function onSubmit(e: React.FormEvent) {
     return;
   }
 
-  // 🔁 Normal chat path (unchanged)
-  push("user", trimmed);
+  // 🔁 Normal chat path
+  push("user", trimmed); // show user's line immediately
   setInput("");
   setUserLine(trimmed);
   setAssistantFull("");
   setTyped("");
   setStatus("pending");
 
+  // ✅ Nudge decision for a *chat* action, injected AFTER the user's message
+  const nudge = recordAction("message");
+  const syntheticAfterUser = nudge ? getNudgeText(nudge.templateKey) : undefined;
+
   try {
     const { text, nextLog } = await sendTurn({
       log,
       userText: trimmed,
+      // NEW: let sendTurn append a second user message after the real one
+      syntheticAfterUser,
       onShowVideo: (ids: string[]) => {
         toolPending();
         onShowVideo?.(ids);
@@ -196,7 +201,6 @@ async function onSubmit(e: React.FormEvent) {
 }
 
 
-
   // ✨ Prompt generator
   function handleSparkle() {
     if (!SuggestedPrompts.length) return;
@@ -204,13 +208,20 @@ async function onSubmit(e: React.FormEvent) {
     setInput(SuggestedPrompts[idx]);
   }
 
-//  Register global `dispatchLLMEvent` (called from page.tsx) to handle `video_opened` → send chat-only screen event (no tools) and display the assistant reply.
+//  Register global `dispatchLLMEvent` (called from page.tsx) to handle `video_opened`
+//  → send chat-only screen event (no tools) and display the assistant reply.
 useEffect(() => {
   (globalThis as any).dispatchLLMEvent = async (evt: { type: string; id?: string; url?: string }) => {
     if (evt?.type === "video_opened") {
-      const msg = `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+      // ✅ NEW: decide if this click triggers a nudge
+      const nudge = recordAction("video");
 
-      // NEW: show loading dots for this event path
+      // If nudge → replace message entirely with the template; else keep original default
+      const msg = nudge
+        ? getNudgeText(nudge.templateKey)
+        : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+
+      // Show loading dots while waiting for LLM reply
       setUserLine("");        // hide the user's last line
       setAssistantFull("");   // clear any previous answer
       setTyped("");           // reset typewriter
@@ -218,17 +229,18 @@ useEffect(() => {
 
       try {
         const { text, nextLog } = await sendScreenEvent({ log, message: msg });
+
         if (text) {
           push("assistant", text);
           setAssistantFull(text);
-          setStatus("answer"); // back to normal once we have the reply
+          setStatus("answer");
         } else {
-          // fall back gracefully
           const err = "Got it — opening the video. Want thoughts on it?";
           push("assistant", err);
           setAssistantFull(err);
           setStatus("answer");
         }
+
         setLog(nextLog);
       } catch (e) {
         console.error("sendScreenEvent error:", e);
@@ -239,10 +251,12 @@ useEffect(() => {
       }
     }
   };
+
   return () => {
     delete (globalThis as any).dispatchLLMEvent;
   };
 }, [log]);
+
 
   
     return (

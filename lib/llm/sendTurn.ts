@@ -7,12 +7,17 @@ type ShowVideos = (ids: string[]) => void;
 export async function sendTurn(opts: {
   log: any[];
   userText: string;
+  syntheticAfterUser?: string; // ✅ NEW
   onShowVideo?: ShowVideos;
 }): Promise<SendTurnResult> {
-  const { log, userText, onShowVideo } = opts;
+  const { log, userText, syntheticAfterUser, onShowVideo } = opts;
 
-  // 1) Start log
-  const turnStartLog = [...log, { role: "user", content: userText }];
+  // 1) Start log (real user message, then optional synthetic user message)
+  const turnStartLog = [
+    ...log,
+    { role: "user", content: userText },
+    ...(syntheticAfterUser ? [{ role: "user", content: syntheticAfterUser }] : []),
+  ];
 
   // 2) Primary call
   const res1 = await fetch("/api/route", {

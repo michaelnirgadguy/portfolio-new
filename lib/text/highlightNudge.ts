@@ -55,7 +55,8 @@ export function findNudgeSpan(full: string): NudgeSpan | null {
   // Ensure EXACTLY one space after the colon in the rendered output.
   const rendered = text.replace(
     /["'“”‘’]?\bmimsy\b["'“”‘’]?\s*:\s*["'“”‘’]?/i,
-    "**mimsy**: "
+     "**mimsy:** "
+
   );
 
   return { start, end, text, rendered };

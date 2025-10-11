@@ -8,6 +8,8 @@ import { ArrowUp } from "lucide-react";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
+import { recordAction } from "@/lib/nudges";
+
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -134,7 +136,6 @@ async function onSubmit(e: React.FormEvent) {
       const action = await routeMimsy(maybeIdea);
 
       if (action.kind === "act2") {
-        // fire event so the top pane renders HamsterSection
         try {
           window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
         } catch {}
@@ -164,18 +165,26 @@ async function onSubmit(e: React.FormEvent) {
     return;
   }
 
-  // 🔁 Normal chat path (unchanged)
-  push("user", trimmed);
+  // 🔁 Normal chat path
+  push("user", trimmed);           // show user's line immediately
   setInput("");
   setUserLine(trimmed);
   setAssistantFull("");
   setTyped("");
   setStatus("pending");
 
+  // ✅ NEW: check if we should add a synthetic "AUTO-REQUEST" user message AFTER the real one
+  const nudge = recordAction("message");
+  const syntheticAfterUser = nudge
+    ? `AUTO-REQUEST: Please answer the user's last message normally, and also add one friendly line that they can type "mimsy:" followed by their idea to have Mimsy generate a custom video for them.`
+    : undefined;
+
   try {
     const { text, nextLog } = await sendTurn({
       log,
       userText: trimmed,
+      // ✅ NEW: let sendTurn append the synthetic user message after the real one
+      syntheticAfterUser,
       onShowVideo: (ids: string[]) => {
         toolPending();
         onShowVideo?.(ids);

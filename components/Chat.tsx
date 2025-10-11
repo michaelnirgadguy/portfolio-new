@@ -13,7 +13,6 @@ import { getNudgeText } from "@/lib/nudge-templates";
 import { findNudgeSpan } from "@/lib/text/highlightNudge"; // ✅ NEW
 
 
-
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
 type SurfaceStatus = "idle" | "pending" | "answer";
@@ -50,9 +49,6 @@ export default function Chat({
   const [userLine, setUserLine] = useState<string>("");
   const [assistantFull, setAssistantFull] = useState<string>("");
   const [typed, setTyped] = useState<string>("");
-
-  // ✅ NEW: whether to highlight the nudge sentence in the next assistant reply
-  const [highlightNudge, setHighlightNudge] = useState(false);
 
   // Dots animation
   const [dots, setDots] = useState<number>(0);
@@ -178,7 +174,6 @@ async function onSubmit(e: React.FormEvent) {
   // ✅ Nudge decision for a *chat* action, injected AFTER the user's message
   const nudge = recordAction("message");
   const syntheticAfterUser = nudge ? getNudgeText(nudge.templateKey) : undefined;
-  setHighlightNudge(!!nudge); // ✅ NEW: mark that next assistant reply should be highlighted if nudged
 
   try {
     const { text, nextLog } = await sendTurn({
@@ -220,7 +215,6 @@ useEffect(() => {
     if (evt?.type === "video_opened") {
       // ✅ NEW: decide if this click triggers a nudge
       const nudge = recordAction("video");
-      setHighlightNudge(!!nudge); // ✅ NEW: mark highlight for the upcoming reply
 
       // If nudge → replace message entirely with the template; else keep original default
       const msg = nudge
@@ -263,6 +257,29 @@ useEffect(() => {
   };
 }, [log]);
 
+  // ✅ NEW: render helper that accents the nudge sentence and bolds **mimsy**
+  function renderTypedWithNudge(text: string) {
+    const span = findNudgeSpan(text);
+    if (!span) return <>{text}</>;
+
+    const before = text.slice(0, span.start);
+    const after = text.slice(span.end);
+
+    // Convert "**mimsy**" (already quotes-stripped by helper) into <strong>mimsy</strong>
+    const parts = span.rendered.split(/\*\*mimsy\*\*/i);
+
+    return (
+      <>
+        {before}
+        <span className="text-[hsl(var(--accent))]">
+          {parts[0]}
+          <strong>mimsy</strong>
+          {parts[1] ?? ""}
+        </span>
+        {after}
+      </>
+    );
+  }
 
   
     return (
@@ -287,43 +304,7 @@ useEffect(() => {
 
 
       ) : (
-        <div className="whitespace-pre-wrap">
-          {(() => {
-            if (highlightNudge && typed) {
-              const span = findNudgeSpan(typed);
-              if (span) {
-                // Split inside the highlighted sentence to bold **mimsy** and keep the colon
-                const slice = span.text;
-                const cueMatch = /["']?\bmimsy\b["']?\s*:/i.exec(slice);
-                if (cueMatch) {
-                  const cueStart = cueMatch.index;
-                  const cueEnd = cueMatch.index + cueMatch[0].length;
-                  const pre = slice.slice(0, cueStart);
-                  const post = slice.slice(cueEnd);
-                  return (
-                    <>
-                      {typed.slice(0, span.start)}
-                      <span className="text-accent font-medium">
-                        {pre}
-                        <strong>mimsy</strong>:{post}
-                      </span>
-                      {typed.slice(span.end)}
-                    </>
-                  );
-                }
-                // Fallback: accent whole sentence with precomputed rendered text
-                return (
-                  <>
-                    {typed.slice(0, span.start)}
-                    <span className="text-accent font-medium">{span.rendered}</span>
-                    {typed.slice(span.end)}
-                  </>
-                );
-              }
-            }
-            return typed;
-          })()}
-        </div>
+        <div className="whitespace-pre-wrap">{renderTypedWithNudge(typed)}</div> {/* ✅ CHANGED */}
       )}
     </div>
 

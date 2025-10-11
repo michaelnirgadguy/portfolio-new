@@ -9,6 +9,8 @@ import { sendTurn } from "@/lib/llm/sendTurn";
 import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
+import { getNudgeText } from "@/lib/nudge-templates";
+
 
 
 type Role = "user" | "assistant";
@@ -110,14 +112,14 @@ async function onSubmit(e: React.FormEvent) {
   const trimmed = input.trim();
   if (!trimmed) return;
 
-  // ✅ NEW: Mimsy command path
+  // ✅ Mimsy command path (user typed "mimsy:")
   const maybeIdea = extractMimsyIdea(trimmed);
   if (maybeIdea !== null) {
     // show user line then clear input
     push("user", trimmed);
     setInput("");
 
-    // empty idea → quick nudge
+    // empty idea → quick hint
     if (maybeIdea === "") {
       const msg = "Type “Mimsy:” followed by your video idea.";
       push("assistant", msg);
@@ -126,7 +128,7 @@ async function onSubmit(e: React.FormEvent) {
       return;
     }
 
-    // run router
+    // route to act 2/3
     setUserLine("");
     setAssistantFull("");
     setTyped("");
@@ -136,15 +138,11 @@ async function onSubmit(e: React.FormEvent) {
       const action = await routeMimsy(maybeIdea);
 
       if (action.kind === "act2") {
-        try {
-          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
-        } catch {}
+        try { window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail })); } catch {}
         push("assistant", action.followup);
         setAssistantFull(action.followup);
       } else if (action.kind === "act3") {
-        try {
-          window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail }));
-        } catch {}
+        try { window.dispatchEvent(new CustomEvent(action.event.name, { detail: action.event.detail })); } catch {}
         push("assistant", action.line);
         setAssistantFull(action.line);
       } else if (action.kind === "handoff") {
@@ -166,24 +164,22 @@ async function onSubmit(e: React.FormEvent) {
   }
 
   // 🔁 Normal chat path
-  push("user", trimmed);           // show user's line immediately
+  push("user", trimmed); // show user's line immediately
   setInput("");
   setUserLine(trimmed);
   setAssistantFull("");
   setTyped("");
   setStatus("pending");
 
-  // ✅ NEW: check if we should add a synthetic "AUTO-REQUEST" user message AFTER the real one
+  // ✅ Nudge decision for a *chat* action, injected AFTER the user's message
   const nudge = recordAction("message");
-  const syntheticAfterUser = nudge
-    ? `AUTO-REQUEST: Please answer the user's last message normally, and also add one friendly line that they can type "mimsy:" followed by their idea to have Mimsy generate a custom video for them.`
-    : undefined;
+  const syntheticAfterUser = nudge ? getNudgeText(nudge.templateKey) : undefined;
 
   try {
     const { text, nextLog } = await sendTurn({
       log,
       userText: trimmed,
-      // ✅ NEW: let sendTurn append the synthetic user message after the real one
+      // NEW: let sendTurn append a second user message after the real one
       syntheticAfterUser,
       onShowVideo: (ids: string[]) => {
         toolPending();
@@ -203,7 +199,6 @@ async function onSubmit(e: React.FormEvent) {
     setStatus("answer");
   }
 }
-
 
 
   // ✨ Prompt generator

@@ -14,7 +14,7 @@ import { getNudgeText } from "@/lib/nudge-templates";
 
 
 type Role = "user" | "assistant";
-type Message = { id: string; role: Role; text: string };
+type Message = { id: string; role: Role; text: string; isNudge?: boolean };
 type SurfaceStatus = "idle" | "pending" | "answer";
 
 export default function Chat({
@@ -95,9 +95,10 @@ export default function Chat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function push(role: Role, text: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
-  }
+function push(role: Role, text: string, isNudge = false) {
+  setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text, isNudge }]);
+}
+}
 
 
 function toolPending() {
@@ -231,7 +232,7 @@ useEffect(() => {
         const { text, nextLog } = await sendScreenEvent({ log, message: msg });
 
         if (text) {
-          push("assistant", text);
+          push("assistant", text, true);
           setAssistantFull(text);
           setStatus("answer");
         } else {
@@ -281,7 +282,27 @@ useEffect(() => {
 
 
       ) : (
-        <div className="whitespace-pre-wrap">{typed}</div>
+         <div className="whitespace-pre-wrap">
+    {(() => {
+      const last = messages[messages.length - 1];
+      if (last?.isNudge) {
+        const { findNudgeSpan } = require("@/lib/text/highlightNudge");
+        const span = findNudgeSpan(typed);
+        if (span) {
+          return (
+            <>
+              {typed.slice(0, span.start)}
+              <span className="text-accent font-medium">
+                {span.rendered}
+              </span>
+              {typed.slice(span.end)}
+            </>
+          );
+        }
+      }
+      return typed;
+    })()}
+  </div>
       )}
     </div>
 

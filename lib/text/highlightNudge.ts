@@ -53,11 +53,11 @@ export function findNudgeSpan(full: string): NudgeSpan | null {
 
   // Bold "mimsy" and strip any quotes around it and any quote right after the colon.
   // Ensure EXACTLY one space after the colon in the rendered output.
-  const rendered = text.replace(
-    /["'“”‘’]?\bmimsy\b["'“”‘’]?\s*:\s*["'“”‘’]?/i,
-     "**mimsy:** "
-
-  );
-
+let rendered = text.replace(
+  /["'“”‘’]?\bmimsy\b["'“”‘’]?\s*:\s*["'“”‘’]?/i,
+  "**mimsy:** "
+);
+// normalize any accidental double+ spaces after the colon to a single space
+rendered = rendered.replace(/\*\*mimsy:\*\*\s+/, "**mimsy:** ");
   return { start, end, text, rendered };
 }

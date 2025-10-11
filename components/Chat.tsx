@@ -266,14 +266,14 @@ useEffect(() => {
     const after = text.slice(span.end);
 
     // Convert "**mimsy**" (already quotes-stripped by helper) into <strong>mimsy</strong>
-    const parts = span.rendered.split(/\*\*mimsy\*\*/i);
+    const parts = span.rendered.split(/\*\*mimsy:\*\*/i);
 
     return (
       <>
         {before}
         <span className="font-semibold">
           {parts[0]}
-          <strong className="text-[hsl(var(--accent))]">mimsy</strong>
+          <strong className="text-[hsl(var(--accent))]">mimsy:</strong>
           {parts[1] ?? ""}
         </span>
         {after}

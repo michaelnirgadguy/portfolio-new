@@ -1,0 +1,45 @@
+name: Apply Patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to apply the patch to (must already exist)'
+        required: true
+        default: 'test/diff-patch'
+      patch_path:
+        description: 'Path to the .patch file in the repo'
+        required: true
+        default: 'patches/test.patch'
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Apply patch
+        run: |
+          git apply --whitespace=fix "${{ github.event.inputs.patch_path }}" || { echo "Patch failed to apply"; exit 1; }
+
+      - name: Commit changes (if any)
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit (patch may be already applied)."
+            exit 0
+          fi
+          git add -A
+          git commit -m "Apply patch ${{ github.event.inputs.patch_path }}"
+
+      - name: Push
+        run: |
+          git push origin HEAD:${{ github.event.inputs.target_branch }}

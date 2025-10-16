@@ -52,3 +52,18 @@ export function useIntroMessage() {
   return intro;
 }
 
+
+/** Simple 0–3 dot cycling for "pending" animation */
+export function usePendingDots(active: boolean, intervalMs = 400) {
+  const [dots, setDots] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+    setDots(0);
+    const timer = setInterval(() => setDots((d) => (d + 1) % 4), intervalMs);
+    return () => clearInterval(timer);
+  }, [active, intervalMs]);
+
+  return dots;
+}
+

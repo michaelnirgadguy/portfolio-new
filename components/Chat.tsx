@@ -36,7 +36,6 @@ export default function Chat({
   const [input, setInput] = useState("");
 
   const [status, setStatus] = useState<SurfaceStatus>("idle");
-  const [userLine, setUserLine] = useState<string>("");
   const [assistantFull, setAssistantFull] = useState<string>("");
   const { submitUserText, handleScreenEvent } = useChatFlow({
   log,
@@ -67,7 +66,6 @@ export default function Chat({
   }
 
   function toolPending() {
-    setUserLine("");      // hide the user's line
     setAssistantFull(""); // clear previous answer
     setStatus("pending"); 
   }
@@ -77,7 +75,6 @@ async function onSubmit(e: React.FormEvent) {
   const trimmed = input.trim();
   if (!trimmed) return;
   setInput("");           // clear input immediately
-  setUserLine("");        // optional: you were only using this to "hide"
   await submitUserText(trimmed);
 }
 
@@ -103,7 +100,6 @@ async function onSubmit(e: React.FormEvent) {
           : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
 
         // Show loading dots while waiting for LLM reply
-        setUserLine("");        // hide the user's last line
         setAssistantFull("");   // clear any previous answer
         setStatus("pending");   // show dot indicator
 

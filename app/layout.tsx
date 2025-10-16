@@ -8,10 +8,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
+      <body className="min-h-screen overflow-x-clip">
         <Header />
         {/* on desktop: Fill viewport minus 64px header; prevent page scrolling. on mobile: 100svh and no overflow-hidden. */}
-        <main className="min-h-[calc(100svh-64px)] md:h-[calc(100vh-64px)] md:overflow-hidden">
+         <main className="h-auto md:h-[calc(100vh-64px)] md:overflow-hidden">
           {children}
         </main>
       </body>

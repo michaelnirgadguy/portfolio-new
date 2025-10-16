@@ -8,7 +8,8 @@ import { ArrowUp } from "lucide-react";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
 import { findNudgeSpan } from "@/lib/text/highlightNudge";
-import { useTypewriter, useIntroMessage, useChatFlow} from "@/hooks/useChatHooks";
+import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
+
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -46,6 +47,14 @@ export default function Chat({
   onShowVideo,
 });
 
+  useLLMEventBridge({
+  handleScreenEvent,
+  push,
+  setAssistantFull,
+  setStatus,
+});
+
+
 
   // ⬇️ Typewriter now handled by hook (no manual resize or timers here)
   const typed = useTypewriter(assistantFull, 16);
@@ -79,39 +88,8 @@ async function onSubmit(e: React.FormEvent) {
     setInput(SuggestedPrompts[idx]);
   }
 
-  //  Register global `dispatchLLMEvent` (called from page.tsx) to handle `video_opened`
-  //  → send chat-only screen event (no tools) and display the assistant reply.
-  useEffect(() => {
-    (globalThis as any).dispatchLLMEvent = async (evt: { type: string; id?: string; url?: string }) => {
-      if (evt?.type === "video_opened") {
-        // ✅ NEW: decide if this click triggers a nudge
-        const nudge = recordAction("video");
-
-        // If nudge → replace message entirely with the template; else keep original default
-        const msg = nudge
-          ? getNudgeText(nudge.templateKey)
-          : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
-
-        // Show hamster-wheel animation while waiting for LLM reply
-        setAssistantFull("");   // clear any previous answer
-        setStatus("pending");   // show hamster-wheel
-
-        try {
-          await handleScreenEvent(msg);
-        } catch (e) {
-          console.error("sendScreenEvent error:", e);
-          const err = "Hmm, something went wrong. Try again?";
-          push("assistant", err);
-          setAssistantFull(err);
-          setStatus("answer");
-        }
-      }
-    };
-
-    return () => {
-      delete (globalThis as any).dispatchLLMEvent;
-    };
-  }, [log]);
+  //  Regis
+ 
 
 // Accents the nudge sentence and bolds/paints **mimsy:**
 function renderTypedWithNudge(text: string) {

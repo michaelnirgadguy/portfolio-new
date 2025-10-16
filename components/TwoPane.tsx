@@ -9,29 +9,28 @@ export default function TwoPane({
   bottom,
   className,
 }: {
-  top: ReactNode;     // video OR grid
-  bottom: ReactNode;  // pinned chat dock
+  top: ReactNode;
+  bottom: ReactNode;
   className?: string;
 }) {
   return (
     <div
       className={cn(
-        // 2-row page: content scrolls, chat stays visible
-        "min-h-[100svh] grid grid-rows-[1fr_auto] bg-white",
+        // Full viewport, vertical split, clip horizontal overflow
+        "min-h-[100svh] grid grid-rows-[1fr_auto] bg-white overflow-x-hidden",
         className
       )}
     >
-      {/* Scrollable content area */}
-      <div className="overflow-y-auto">
-        <div className="max-w-full px-4 overflow-x-hidden">{top}</div>
+      {/* Scrollable top area */}
+      <div className="overflow-y-auto overflow-x-hidden">
+        <div className="max-w-full px-4">{top}</div>
       </div>
 
-      {/* Pinned bottom dock with safe-area + height cap */}
+      {/* Pinned chat dock */}
       <div
         className="border-t bg-white sticky bottom-0"
         style={{
-          // Respect iOS home indicator
-          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingBottom: "env(safe-area-inset-bottom)", // safe area for iOS
         }}
       >
         <div className="max-w-full px-4">

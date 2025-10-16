@@ -265,7 +265,7 @@ useEffect(() => {
     const before = text.slice(0, span.start);
     const after = text.slice(span.end);
 
-    // Convert "**mimsy**" (already quotes-stripped by helper) into <strong>mimsy</strong>
+    // Convert "**mimsy**" (already quotes-stripped by helper) into color
     const parts = span.rendered.split(/\*\*mimsy:\*\*/i);
 
     return (

@@ -15,6 +15,7 @@ import VideoSection from "@/components/VideoSection";
 import VideoGrid from "@/components/VideoGrid";
 import Chat from "@/components/Chat";
 import CenterDock from "@/components/CenterDock";
+import TwoPane from "@/components/TwoPane";
 import Act1 from "@/components/acts/Act1";
 import { Acts } from "@/lib/acts";
 import HamsterSection from "@/components/HamsterSection";
@@ -226,5 +227,18 @@ function HomeInner() {
   // Hide chat when Act 3 is active; give Chat a key so it remounts on handoff
   const ChatPane = act3 ? null : <Chat key={chatKey} onShowVideo={onShowVideo} />;
 
-  return <CenterDock top={TopPane} chat={ChatPane} />;
+  return (
+  <>
+    {/* Mobile: stacked scrollable top + pinned bottom chat */}
+    <div className="md:hidden">
+      <TwoPane top={TopPane} bottom={ChatPane} />
+    </div>
+
+    {/* Desktop: keep existing centered dock */}
+    <div className="hidden md:block">
+      <CenterDock top={TopPane} chat={ChatPane} />
+    </div>
+  </>
+);
+
 }

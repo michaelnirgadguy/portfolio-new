@@ -229,17 +229,18 @@ function HomeInner() {
 
 
 return (
-  <>
+  <div className="h-full">
     {/* Mobile stacked layout */}
-    <div className="md:hidden">
+    <div className="md:hidden h-full">
       <TwoPane top={TopPane} bottom={ChatPane} />
     </div>
 
-    {/* Desktop original layout */}
-    <div className="hidden md:block">
+    {/* Desktop original layout (needs h-full to measure correctly) */}
+    <div className="hidden md:block h-full">
       <CenterDock top={TopPane} chat={ChatPane} />
     </div>
-  </>
+  </div>
 );
+
 
 }

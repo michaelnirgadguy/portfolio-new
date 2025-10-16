@@ -34,10 +34,13 @@ export default function Chat({
 
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [assistantFull, setAssistantFull] = useState<string>("");
+  function push(role: Role, text: string) {
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
+  }
   const { submitUserText, handleScreenEvent } = useChatFlow({
   log,
   setLog,
-  push: (role, text) => setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]),
+  push,
   setAssistantFull,
   setStatus,
   onShowVideo,
@@ -58,9 +61,6 @@ export default function Chat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function push(role: Role, text: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
-  }
 
 
 async function onSubmit(e: React.FormEvent) {

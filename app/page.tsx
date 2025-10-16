@@ -227,18 +227,23 @@ function HomeInner() {
   // Hide chat when Act 3 is active; give Chat a key so it remounts on handoff
   const ChatPane = act3 ? null : <Chat key={chatKey} onShowVideo={onShowVideo} />;
 
-  return (
+// app/page.tsx
+import TwoPane from "@/components/TwoPane";
+import CenterDock from "@/components/CenterDock";
+
+return (
   <>
-    {/* Mobile: stacked scrollable top + pinned bottom chat */}
+    {/* Mobile stacked layout */}
     <div className="md:hidden">
       <TwoPane top={TopPane} bottom={ChatPane} />
     </div>
 
-    {/* Desktop: keep existing centered dock */}
+    {/* Desktop original layout */}
     <div className="hidden md:block">
       <CenterDock top={TopPane} chat={ChatPane} />
     </div>
   </>
 );
+
 
 }

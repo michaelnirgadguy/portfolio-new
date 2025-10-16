@@ -62,10 +62,6 @@ export default function Chat({
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
-  function toolPending() {
-    setAssistantFull(""); // clear previous answer
-    setStatus("pending"); 
-  }
 
 async function onSubmit(e: React.FormEvent) {
   e.preventDefault();

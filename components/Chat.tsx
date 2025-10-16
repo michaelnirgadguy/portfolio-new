@@ -21,7 +21,7 @@ export default function Chat({
 }: {
   onShowVideo?: (videoIds: string[]) => void;
 }) {
-  //  intro message if no override
+  // Get Mimsy's opening line (uses sessionStorage override if Act1 set one)
  const intro = useIntroMessage();
 
   // Visible messages (simple surface)

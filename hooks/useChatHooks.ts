@@ -67,3 +67,131 @@ export function usePendingDots(active: boolean, intervalMs = 400) {
   return dots;
 }
 
+/**
+ * Light refactor: core chat logic (LLM, nudges, Mimsy routing) lives here.
+ * UI state (input/messages/layout) stays in Chat.tsx.
+ */
+
+import { sendTurn } from "@/lib/llm/sendTurn";
+import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
+import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
+import { recordAction } from "@/lib/nudges";
+import { getNudgeText } from "@/lib/nudge-templates";
+
+type Role = "user" | "assistant";
+type Message = { id: string; role: Role; text: string };
+
+
+export function useChatFlow(params: {
+  log: any[];
+  setLog: (next: any[]) => void;
+  push: (role: Role, text: string) => void;
+  setAssistantFull: (t: string) => void;
+  setStatus: (s: "idle" | "pending" | "answer") => void;
+  onShowVideo?: (ids: string[]) => void;
+}) {
+  const { log, setLog, push, setAssistantFull, setStatus, onShowVideo } = params;
+
+  function toolPending() {
+    setAssistantFull("");
+    setStatus("pending");
+  }
+
+  async function submitUserText(trimmed: string) {
+    if (!trimmed) return;
+
+    // ✅ Special "Mimsy:" path
+    const maybeIdea = extractMimsyIdea(trimmed);
+    if (maybeIdea !== null) {
+      push("user", trimmed);
+
+      if (maybeIdea === "") {
+        const msg = "Type “Mimsy:” followed by your video idea.";
+        push("assistant", msg);
+        setAssistantFull(msg);
+        setStatus("answer");
+        return;
+      }
+
+      toolPending();
+
+      try {
+        const action = await routeMimsy(maybeIdea);
+
+        if (action.kind === "act2" || action.kind === "act3") {
+          try {
+            window.dispatchEvent(
+              new CustomEvent(action.event.name, { detail: action.event.detail })
+            );
+          } catch {}
+          const line = action.kind === "act2" ? action.followup : action.line;
+          push("assistant", line);
+          setAssistantFull(line);
+        } else {
+          push("assistant", action.text);
+          setAssistantFull(action.text);
+        }
+
+        setStatus("answer");
+      } catch {
+        const err = "hmm… hamster wheels jammed. try again?";
+        push("assistant", err);
+        setAssistantFull(err);
+        setStatus("answer");
+      }
+      return;
+    }
+
+    // 🔁 Normal chat path
+    push("user", trimmed);
+    toolPending();
+
+    // Nudge decision (optional synthetic after-user message)
+    const nudge = recordAction("message");
+    const syntheticAfterUser = nudge ? getNudgeText(nudge.templateKey) : undefined;
+
+    try {
+      const { text, nextLog } = await sendTurn({
+        log,
+        userText: trimmed,
+        syntheticAfterUser,
+        onShowVideo: (ids: string[]) => {
+          toolPending();
+          onShowVideo?.(ids);
+        },
+      });
+
+      const reply = text || "Done.";
+      push("assistant", reply);
+      setAssistantFull(reply);
+      setStatus("answer");
+      setLog(nextLog);
+    } catch {
+      const errMsg = "Hmm, something went wrong. Try again?";
+      push("assistant", errMsg);
+      setAssistantFull(errMsg);
+      setStatus("answer");
+    }
+  }
+
+  // Also expose a helper for screen events (used by dispatchLLMEvent in Chat.tsx)
+  async function handleScreenEvent(message: string) {
+    toolPending();
+    try {
+      const { text, nextLog } = await sendScreenEvent({ log, message });
+      const reply = text || "Got it — opening the video. Want thoughts on it?";
+      push("assistant", reply);
+      setAssistantFull(reply);
+      setStatus("answer");
+      setLog(nextLog);
+    } catch {
+      const err = "Hmm, something went wrong. Try again?";
+      push("assistant", err);
+      setAssistantFull(err);
+      setStatus("answer");
+    }
+  }
+
+  return { submitUserText, handleScreenEvent };
+}
+

@@ -10,7 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
-import { useTypewriter, useIntroMessage} from "@/hooks/useChatHooks";
+import { useTypewriter, useIntroMessage, useChatFlow} from "@/hooks/useChatHooks";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -37,6 +37,15 @@ export default function Chat({
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [userLine, setUserLine] = useState<string>("");
   const [assistantFull, setAssistantFull] = useState<string>("");
+  const { submitUserText, handleScreenEvent } = useChatFlow({
+  log,
+  setLog,
+  push: (role, text) => setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]),
+  setAssistantFull,
+  setStatus,
+  onShowVideo,
+});
+
 
   // ⬇️ Typewriter now handled by hook (no manual resize or timers here)
   const typed = useTypewriter(assistantFull, 16);
@@ -62,104 +71,15 @@ export default function Chat({
     setStatus("pending"); 
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
+async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  const trimmed = input.trim();
+  if (!trimmed) return;
+  setInput("");           // clear input immediately
+  setUserLine("");        // optional: you were only using this to "hide"
+  await submitUserText(trimmed);
+}
 
-    // ✅ Mimsy command path (user typed "mimsy:")
-    const maybeIdea = extractMimsyIdea(trimmed);
-    if (maybeIdea !== null) {
-      // show user line then clear input
-      push("user", trimmed);
-      setInput("");
-
-      // empty idea → quick hint
-      if (maybeIdea === "") {
-        const msg = "Type “Mimsy:” followed by your video idea.";
-        push("assistant", msg);
-        setAssistantFull(msg);
-        setStatus("answer");
-        return;
-      }
-
-      // route to act 2/3
-      setUserLine("");
-      setAssistantFull("");
-      setStatus("pending");
-
-      try {
-        const action = await routeMimsy(maybeIdea);
-
-        if (action.kind === "act2") {
-          try {
-            window.dispatchEvent(
-              new CustomEvent(action.event.name, { detail: action.event.detail })
-            );
-          } catch {}
-          push("assistant", action.followup);
-          setAssistantFull(action.followup);
-        } else if (action.kind === "act3") {
-          try {
-            window.dispatchEvent(
-              new CustomEvent(action.event.name, { detail: action.event.detail })
-            );
-          } catch {}
-          push("assistant", action.line);
-          setAssistantFull(action.line);
-        } else if (action.kind === "handoff") {
-          push("assistant", action.text);
-          setAssistantFull(action.text);
-        } else {
-          push("assistant", action.text);
-          setAssistantFull(action.text);
-        }
-
-        setStatus("answer");
-      } catch {
-        const err = "hmm… hamster wheels jammed. try again?";
-        push("assistant", err);
-        setAssistantFull(err);
-        setStatus("answer");
-      }
-      return;
-    }
-
-    // 🔁 Normal chat path
-    push("user", trimmed); // show user's line immediately
-    setInput("");
-    setUserLine(trimmed);
-    setAssistantFull("");
-    setStatus("pending");
-
-    // ✅ Nudge decision for a *chat* action, injected AFTER the user's message
-    const nudge = recordAction("message");
-    const syntheticAfterUser = nudge ? getNudgeText(nudge.templateKey) : undefined;
-
-    try {
-      const { text, nextLog } = await sendTurn({
-        log,
-        userText: trimmed,
-        // NEW: let sendTurn append a second user message after the real one
-        syntheticAfterUser,
-        onShowVideo: (ids: string[]) => {
-          toolPending();
-          onShowVideo?.(ids);
-        },
-      });
-
-      const reply = text || "Done.";
-      push("assistant", reply);
-      setAssistantFull(reply);
-      setStatus("answer");
-      setLog(nextLog);
-    } catch {
-      const errMsg = "Hmm, something went wrong. Try again?";
-      push("assistant", errMsg);
-      setAssistantFull(errMsg);
-      setStatus("answer");
-    }
-  }
 
   // ✨ Prompt generator
   function handleSparkle() {
@@ -187,20 +107,7 @@ export default function Chat({
         setStatus("pending");   // show dot indicator
 
         try {
-          const { text, nextLog } = await sendScreenEvent({ log, message: msg });
-
-          if (text) {
-            push("assistant", text);
-            setAssistantFull(text);
-            setStatus("answer");
-          } else {
-            const err = "Got it — opening the video. Want thoughts on it?";
-            push("assistant", err);
-            setAssistantFull(err);
-            setStatus("answer");
-          }
-
-          setLog(nextLog);
+          await handleScreenEvent(msg);
         } catch (e) {
           console.error("sendScreenEvent error:", e);
           const err = "Hmm, something went wrong. Try again?";

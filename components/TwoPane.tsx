@@ -23,17 +23,43 @@ export default function TwoPane({
     >
       {/* Scrollable top area */}
       <div className="overflow-y-auto overflow-x-hidden">
-        <div className="max-w-full px-4">{top}</div>
+        <div
+          // Safe-area aware inline padding and clamps for rogue w-screen children
+          className={cn(
+            "w-full max-w-full",
+            "[&_.w-screen]:w-full [&_.max-w-none]:max-w-full [&_img]:max-w-full [&_video]:max-w-full"
+          )}
+          style={{
+            paddingLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
+            paddingRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
+            paddingTop: "16px",
+            paddingBottom: "16px",
+          }}
+        >
+          {top}
+        </div>
       </div>
 
       {/* Pinned chat dock */}
       <div
         className="border-t bg-white sticky bottom-0"
         style={{
-          paddingBottom: "env(safe-area-inset-bottom)", // safe area for iOS
+          // safe areas for iOS home indicator + side insets
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <div className="max-w-full px-4">
+        <div
+          className={cn(
+            "w-full max-w-full",
+            "[&_.w-screen]:w-full [&_.max-w-none]:max-w-full [&_img]:max-w-full [&_video]:max-w-full"
+          )}
+          style={{
+            paddingLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
+            paddingRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
+            paddingTop: "12px",
+            paddingBottom: "12px",
+          }}
+        >
           <div className="max-h-[45svh] overflow-y-auto overflow-x-hidden">
             {bottom}
           </div>

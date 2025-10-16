@@ -10,7 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
-import { useTypewriter } from "@/hooks/useChatHooks"; // ⬅️ NEW
+import { useTypewriter, useIntroMessage } from "@/hooks/useChatHooks";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -21,16 +21,8 @@ export default function Chat({
 }: {
   onShowVideo?: (videoIds: string[]) => void;
 }) {
-  // check if Act1 set an intro override
-  let intro =
-    "Hi! I’m Mimsy. a hamster, a genius, and your guide to Michael’s video portfolio. Tell me what would you like to watch?";
-  try {
-    const override = sessionStorage.getItem("mimsy_intro_override");
-    if (override) {
-      intro = override;
-      sessionStorage.removeItem("mimsy_intro_override"); // clear after using
-    }
-  } catch {}
+  //  intro message if no override
+ const intro = useIntroMessage();
 
   // Visible messages (simple surface)
   const [messages, setMessages] = useState<Message[]>([

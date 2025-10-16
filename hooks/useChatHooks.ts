@@ -28,3 +28,27 @@ export function useTypewriter(fullText: string, speedMs = 16) {
 
   return typed;
 }
+
+
+
+/** One-time intro message with optional sessionStorage override */
+export function useIntroMessage() {
+  const [intro] = useState(() => {
+    // Default line lives here now
+    let val =
+      "Hi! I’m Mimsy. a hamster, a genius, and your guide to Michael’s video portfolio. Tell me what would you like to watch?";
+
+    try {
+      const key = "mimsy_intro_override";
+      const override = sessionStorage.getItem(key);
+      if (override) {
+        val = override;
+        sessionStorage.removeItem(key); // clear after using
+      }
+    } catch {}
+
+    return val;
+  });
+  return intro;
+}
+

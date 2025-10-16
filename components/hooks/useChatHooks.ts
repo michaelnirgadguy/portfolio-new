@@ -1,3 +1,4 @@
+// /hooks/useChatHooks.ts
 import { useEffect, useRef, useState } from "react";
 
 /** Typewriter for assistant text */

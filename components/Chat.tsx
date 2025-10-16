@@ -10,7 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
-import { useTypewriter, useIntroMessage } from "@/hooks/useChatHooks";
+import { useTypewriter, useIntroMessage, usePendingDots } from "@/hooks/useChatHooks";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -42,13 +42,7 @@ export default function Chat({
   const typed = useTypewriter(assistantFull, 16);
 
   // Dots animation
-  const [dots, setDots] = useState<number>(0);
-  useEffect(() => {
-    if (status !== "pending") return;
-    setDots(0);
-    const t = setInterval(() => setDots((d) => (d + 1) % 4), 400);
-    return () => clearInterval(t);
-  }, [status]);
+const dots = usePendingDots(status === "pending", 400);
 
   // Show greeting as the first visible surface
   useEffect(() => {
@@ -241,7 +235,10 @@ export default function Chat({
               />
             </span>
             {/* Optional placeholder for future loading text (e.g., "Generating…") */}
-            <span className="text-muted-foreground/70"></span>
+            <span className="text-muted-foreground/70">
+              {".".repeat(dots)}
+            </span>
+
           </div>
         ) : (
           <div className="whitespace-pre-wrap">{typed}</div>

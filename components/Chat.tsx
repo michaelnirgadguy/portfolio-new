@@ -113,31 +113,6 @@ function renderTypedWithNudge(text: string) {
   );
 }
 
-  // ✅ NEW: render helper that accents the nudge sentence and bolds **mimsy**
-  function renderTypedWithNudge(text: string) {
-    const span = findNudgeSpan(text);
-    if (!span) return <>{text}</>;
-
-    const before = text.slice(0, span.start);
-    const after = text.slice(span.end);
-
-    // Convert "**mimsy**" (already quotes-stripped by helper) into color
-    const parts = span.rendered.split(/\*\*mimsy:\*\*/i);
-
-    return (
-      <>
-        {before}
-        <span className="font-semibold">
-          {parts[0]}
-          <span className="text-[hsl(var(--accent))]">mimsy:</span>
-          {parts[1] ?? ""}
-        </span>
-        {after}
-      </>
-    );
-
-  }
-
   
   return (
     <section className="w-full space-y-6">

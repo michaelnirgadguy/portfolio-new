@@ -227,9 +227,6 @@ function HomeInner() {
   // Hide chat when Act 3 is active; give Chat a key so it remounts on handoff
   const ChatPane = act3 ? null : <Chat key={chatKey} onShowVideo={onShowVideo} />;
 
-// app/page.tsx
-import TwoPane from "@/components/TwoPane";
-import CenterDock from "@/components/CenterDock";
 
 return (
   <>
@@ -244,6 +241,5 @@ return (
     </div>
   </>
 );
-
 
 }

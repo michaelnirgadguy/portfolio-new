@@ -99,9 +99,9 @@ async function onSubmit(e: React.FormEvent) {
           ? getNudgeText(nudge.templateKey)
           : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
 
-        // Show loading dots while waiting for LLM reply
+        // Show hamster-wheel animation while waiting for LLM reply
         setAssistantFull("");   // clear any previous answer
-        setStatus("pending");   // show dot indicator
+        setStatus("pending");   // show hamster-wheel
 
         try {
           await handleScreenEvent(msg);

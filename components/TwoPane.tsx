@@ -20,15 +20,15 @@ export default function TwoPane({
   return (
     <div
       className={cn(
-        // 2 rows: top grows & scrolls, bottom stays visible
-        "min-h-[100svh] grid grid-rows-[minmax(0,1fr)_auto] bg-white overflow-x-hidden",
+        // 💡 Match CenterDock container: full height + min-h-0 so child overflow works
+        "h-full w-full min-h-0 grid grid-rows-[minmax(0,1fr)_auto] overflow-x-hidden bg-white",
         className
       )}
     >
-      {/* Top: the ONLY scrolling area */}
-      <div className="overflow-y-auto overflow-x-hidden">
+      {/* TOP = the ONLY scrolling area */}
+      <div className="min-h-0 overflow-y-auto overflow-x-hidden">
+        {/* use margins (not padding) and clamp inner width to avoid right-edge shave */}
         <div
-          // Margins create gutters; inner width is clamped (prevents right-edge shave)
           style={{
             marginLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
             marginRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
@@ -36,22 +36,17 @@ export default function TwoPane({
         >
           <div
             className="w-full"
-            style={{
-              maxWidth: `calc(100svw - ${sideClamp})`,
-              overflowX: "hidden",
-            }}
+            style={{ maxWidth: `calc(100svw - ${sideClamp})`, overflowX: "hidden" }}
           >
             {top}
           </div>
         </div>
       </div>
 
-      {/* Bottom: pinned chat; no internal scroll so it never “fights” the page */}
+      {/* BOTTOM = pinned row (no scroll); width clamped & safe-area respected */}
       <div
-        className="border-t bg-white sticky bottom-0"
-        style={{
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
+        className="bg-white border-t"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div
           style={{
@@ -62,8 +57,8 @@ export default function TwoPane({
           <div
             className="w-full"
             style={{
-              // clamp width like the top, but allow overflow visible so icons aren’t clipped
               maxWidth: `calc(100svw - ${sideClamp})`,
+              // allow composer icons to render outside without being cut
               overflow: "visible",
             }}
           >

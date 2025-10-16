@@ -195,3 +195,44 @@ export function useChatFlow(params: {
   return { submitUserText, handleScreenEvent };
 }
 
+// Bridge global UI events (e.g., video clicks) to the LLM, with nudge handling.
+export function useLLMEventBridge(params: {
+  handleScreenEvent: (message: string) => Promise<void>;
+  push: (role: "user" | "assistant", text: string) => void;
+  setAssistantFull: (t: string) => void;
+  setStatus: (s: "idle" | "pending" | "answer") => void;
+}) {
+  const { handleScreenEvent, push, setAssistantFull, setStatus } = params;
+
+  useEffect(() => {
+    (globalThis as any).dispatchLLMEvent = async (evt: {
+      type: string;
+      id?: string;
+      url?: string;
+    }) => {
+      if (evt?.type !== "video_opened") return;
+
+      // Decide if this click triggers a nudge
+      const nudge = recordAction("video");
+
+      // If nudge → replace message entirely with the template; else keep original default
+      const msg = nudge
+        ? getNudgeText(nudge.templateKey)
+        : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+
+      try {
+        await handleScreenEvent(msg);
+      } catch (e) {
+        console.error("sendScreenEvent error:", e);
+        const err = "Hmm, something went wrong. Try again?";
+        push("assistant", err);
+        setAssistantFull(err);
+        setStatus("answer");
+      }
+    };
+
+    return () => {
+      delete (globalThis as any).dispatchLLMEvent;
+    };
+  }, [handleScreenEvent, push, setAssistantFull, setStatus]);
+}

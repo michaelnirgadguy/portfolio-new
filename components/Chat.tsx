@@ -167,7 +167,9 @@ function renderTypedWithNudge(text: string) {
         
           </div>
         ) : (
-          <div className="whitespace-pre-wrap">{typed}</div>
+          <div className="whitespace-pre-wrap">
+            {renderTypedWithNudge(typed)}
+          </div>
         )}
       </div>
 

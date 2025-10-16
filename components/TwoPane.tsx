@@ -23,7 +23,7 @@ export default function TwoPane({
     >
       {/* Scrollable content area */}
       <div className="overflow-y-auto">
-        <div className="mx-auto max-w-5xl p-6">{top}</div>
+        <div className="max-w-full px-4 overflow-x-hidden">{top}</div>
       </div>
 
       {/* Pinned bottom dock with safe-area + height cap */}
@@ -34,8 +34,8 @@ export default function TwoPane({
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        <div className="mx-auto max-w-5xl p-4">
-          <div className="max-h-[45svh] overflow-y-auto">
+        <div className="max-w-full px-4">
+          <div className="max-h-[45svh] overflow-y-auto overflow-x-hidden">
             {bottom}
           </div>
         </div>

@@ -10,7 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
-import { useTypewriter, useIntroMessage, usePendingDots } from "@/hooks/useChatHooks";
+import { useTypewriter, useIntroMessage} from "@/hooks/useChatHooks";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -41,8 +41,6 @@ export default function Chat({
   // ⬇️ Typewriter now handled by hook (no manual resize or timers here)
   const typed = useTypewriter(assistantFull, 16);
 
-  // Dots animation
-const dots = usePendingDots(status === "pending", 400);
 
   // Show greeting as the first visible surface
   useEffect(() => {
@@ -61,7 +59,7 @@ const dots = usePendingDots(status === "pending", 400);
   function toolPending() {
     setUserLine("");      // hide the user's line
     setAssistantFull(""); // clear previous answer
-    setStatus("pending"); // show dots
+    setStatus("pending"); 
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -234,11 +232,7 @@ const dots = usePendingDots(status === "pending", 400);
                 style={{ transform: "scale(0.6)", transformOrigin: "top left" }}
               />
             </span>
-            {/* Optional placeholder for future loading text (e.g., "Generating…") */}
-            <span className="text-muted-foreground/70">
-              {".".repeat(dots)}
-            </span>
-
+        
           </div>
         ) : (
           <div className="whitespace-pre-wrap">{typed}</div>

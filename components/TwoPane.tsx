@@ -13,30 +13,37 @@ export default function TwoPane({
   bottom: ReactNode;
   className?: string;
 }) {
+  // Side gutters (16px each) + safe areas. We use them to clamp widths explicitly.
+  const sideClamp =
+    "calc(env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 32px)";
+
   return (
     <div
       className={cn(
-        // Full viewport, vertical split, clip horizontal overflow
         "min-h-[100svh] grid grid-rows-[1fr_auto] bg-white overflow-x-hidden",
         className
       )}
     >
       {/* Scrollable top area */}
       <div className="overflow-y-auto overflow-x-hidden">
+        {/* Use margins (not padding) around a width-clamped inner container */}
         <div
-          // Safe-area aware inline padding and clamps for rogue w-screen children
-          className={cn(
-            "w-full max-w-full",
-            "[&_.w-screen]:w-full [&_.max-w-none]:max-w-full [&_img]:max-w-full [&_video]:max-w-full"
-          )}
           style={{
-            paddingLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
-            paddingRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
-            paddingTop: "16px",
-            paddingBottom: "16px",
+            marginLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
+            marginRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
           }}
         >
-          {top}
+          <div
+            // Anything sized as 100vw/w-screen inside here gets clamped to viewport minus gutters
+            className="w-full"
+            style={{
+              maxWidth: `calc(100svw - ${sideClamp})`,
+              // If a child forces wider, keep it centered and clipped
+              overflowX: "hidden",
+            }}
+          >
+            {top}
+          </div>
         </div>
       </div>
 
@@ -44,23 +51,21 @@ export default function TwoPane({
       <div
         className="border-t bg-white sticky bottom-0"
         style={{
-          // safe areas for iOS home indicator + side insets
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px))",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
         <div
-          className={cn(
-            "w-full max-w-full",
-            "[&_.w-screen]:w-full [&_.max-w-none]:max-w-full [&_img]:max-w-full [&_video]:max-w-full"
-          )}
           style={{
-            paddingLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
-            paddingRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
-            paddingTop: "12px",
-            paddingBottom: "12px",
+            marginLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
+            marginRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
           }}
         >
-          <div className="max-h-[45svh] overflow-y-auto overflow-x-hidden">
+          <div
+            className="max-h-[45svh] overflow-y-auto overflow-x-hidden w-full"
+            style={{
+              maxWidth: `calc(100svw - ${sideClamp})`,
+            }}
+          >
             {bottom}
           </div>
         </div>

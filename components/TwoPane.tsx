@@ -13,32 +13,31 @@ export default function TwoPane({
   bottom: ReactNode;
   className?: string;
 }) {
-  // Side gutters (16px each) + safe areas. We use them to clamp widths explicitly.
+  // Side gutters (16px each) + safe areas → used to clamp widths
   const sideClamp =
     "calc(env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 32px)";
 
   return (
     <div
       className={cn(
-        "min-h-[100svh] grid grid-rows-[1fr_auto] bg-white overflow-x-hidden",
+        // 2 rows: top grows & scrolls, bottom stays visible
+        "min-h-[100svh] grid grid-rows-[minmax(0,1fr)_auto] bg-white overflow-x-hidden",
         className
       )}
     >
-      {/* Scrollable top area */}
+      {/* Top: the ONLY scrolling area */}
       <div className="overflow-y-auto overflow-x-hidden">
-        {/* Use margins (not padding) around a width-clamped inner container */}
         <div
+          // Margins create gutters; inner width is clamped (prevents right-edge shave)
           style={{
             marginLeft: "calc(env(safe-area-inset-left, 0px) + 16px)",
             marginRight: "calc(env(safe-area-inset-right, 0px) + 16px)",
           }}
         >
           <div
-            // Anything sized as 100vw/w-screen inside here gets clamped to viewport minus gutters
             className="w-full"
             style={{
               maxWidth: `calc(100svw - ${sideClamp})`,
-              // If a child forces wider, keep it centered and clipped
               overflowX: "hidden",
             }}
           >
@@ -47,7 +46,7 @@ export default function TwoPane({
         </div>
       </div>
 
-      {/* Pinned chat dock */}
+      {/* Bottom: pinned chat; no internal scroll so it never “fights” the page */}
       <div
         className="border-t bg-white sticky bottom-0"
         style={{
@@ -61,9 +60,11 @@ export default function TwoPane({
           }}
         >
           <div
-            className="max-h-[45svh] overflow-y-auto overflow-x-hidden w-full"
+            className="w-full"
             style={{
+              // clamp width like the top, but allow overflow visible so icons aren’t clipped
               maxWidth: `calc(100svw - ${sideClamp})`,
+              overflow: "visible",
             }}
           >
             {bottom}

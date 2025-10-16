@@ -10,6 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
+import { findNudgeSpan } from "@/lib/text/highlightNudge";
 import { useTypewriter, useIntroMessage, useChatFlow} from "@/hooks/useChatHooks";
 
 type Role = "user" | "assistant";
@@ -123,6 +124,30 @@ async function onSubmit(e: React.FormEvent) {
     };
   }, [log]);
 
+// Accents the nudge sentence and bolds/paints **mimsy:**
+function renderTypedWithNudge(text: string) {
+  const span = findNudgeSpan(text);
+  if (!span) return <>{text}</>;
+
+  const before = text.slice(0, span.start);
+  const after = text.slice(span.end);
+  const parts = span.rendered.split(/\*\*mimsy:\*\*/i);
+
+  return (
+    <>
+      {before}
+      <span className="font-semibold">
+        {parts[0]}
+        <span className="text-[hsl(var(--accent))]">mimsy:</span>
+        {parts[1] ?? ""}
+      </span>
+      {after}
+    </>
+  );
+}
+
+
+  
   return (
     <section className="w-full space-y-6">
       {/* Curator surface */}

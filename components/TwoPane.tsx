@@ -17,8 +17,7 @@ export default function TwoPane({
     <div
       className={cn(
         // 2-row page: content scrolls, chat stays visible
-        "min-h-screen grid",
-        "grid-rows-[1fr_auto] bg-white",
+        "min-h-[100svh] grid grid-rows-[1fr_auto] bg-white",
         className
       )}
     >
@@ -27,9 +26,19 @@ export default function TwoPane({
         <div className="mx-auto max-w-5xl p-6">{top}</div>
       </div>
 
-      {/* Pinned bottom dock */}
-      <div className="border-t bg-white sticky bottom-0">
-        <div className="mx-auto max-w-5xl p-4">{bottom}</div>
+      {/* Pinned bottom dock with safe-area + height cap */}
+      <div
+        className="border-t bg-white sticky bottom-0"
+        style={{
+          // Respect iOS home indicator
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
+        <div className="mx-auto max-w-5xl p-4">
+          <div className="max-h-[45svh] overflow-y-auto">
+            {bottom}
+          </div>
+        </div>
       </div>
     </div>
   );

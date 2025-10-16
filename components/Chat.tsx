@@ -10,7 +10,7 @@ import { sendScreenEvent } from "@/lib/llm/sendScreenEvent";
 import { extractMimsyIdea, routeMimsy } from "@/lib/chat/mimsy";
 import { recordAction } from "@/lib/nudges";
 import { getNudgeText } from "@/lib/nudge-templates";
-
+import { findNudgeSpan } from "@/lib/text/highlightNudge"; // ✅ NEW
 
 
 type Role = "user" | "assistant";
@@ -257,6 +257,30 @@ useEffect(() => {
   };
 }, [log]);
 
+  // ✅ NEW: render helper that accents the nudge sentence and bolds **mimsy**
+  function renderTypedWithNudge(text: string) {
+    const span = findNudgeSpan(text);
+    if (!span) return <>{text}</>;
+
+    const before = text.slice(0, span.start);
+    const after = text.slice(span.end);
+
+    // Convert "**mimsy**" (already quotes-stripped by helper) into <strong>mimsy</strong>
+    const parts = span.rendered.split(/\*\*mimsy:\*\*/i);
+
+    return (
+      <>
+        {before}
+        <span className="font-semibold">
+          {parts[0]}
+          <span className="text-[hsl(var(--accent))]">mimsy:</span>
+          {parts[1] ?? ""}
+        </span>
+        {after}
+      </>
+    );
+
+  }
 
   
     return (
@@ -281,7 +305,7 @@ useEffect(() => {
 
 
       ) : (
-        <div className="whitespace-pre-wrap">{typed}</div>
+       <div className="whitespace-pre-wrap">{renderTypedWithNudge(typed)}</div>
       )}
     </div>
 

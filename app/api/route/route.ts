@@ -14,6 +14,12 @@ async function loadSystemPrompt(): Promise<string> {
   return fs.readFile(p, "utf8");
 }
 
+// Load examples prompt
+async function loadExamplesPrompt(): Promise<string> {
+  const p = path.join(process.cwd(), "lib", "llm", "prompts", "examples.txt");
+  return fs.readFile(p, "utf8");
+}
+
 /**
  * POST body shapes supported:
  *  A) { text: string }                                   // first turn from user
@@ -30,11 +36,25 @@ export async function POST(req: NextRequest) {
     };
 
     const system = await loadSystemPrompt();
-    const catalogBlock = `
+    const examples = await loadExamplesPrompt();
 
+    const catalogBlock = `
 # Full video catalog (use ONLY these ids)
 ${JSON.stringify(videos)}
 `;
+
+    // Build final instructions:
+    // 1. system role + rules
+    // 2. catalog of valid videos
+    // 3. examples of how to behave
+    const fullInstructions = `
+${system}
+
+${catalogBlock}
+
+# Examples / style guidance
+${examples}
+`.trim();
 
     // Build the input list the model expects
     let input_list: any[] | null = null;
@@ -45,7 +65,9 @@ ${JSON.stringify(videos)}
     } else {
       // First user turn (simple case)
       const userText = (body?.text ?? "").toString().trim();
-      input_list = [{ role: "user", content: userText || "Show me a cool video." }];
+      input_list = [
+        { role: "user", content: userText || "Show me a cool video." },
+      ];
     }
 
     // Call the model using the running log + tools
@@ -54,7 +76,7 @@ ${JSON.stringify(videos)}
       tools: TOOLS,
       tool_choice: "auto",
       parallel_tool_calls: false,
-      instructions: system + catalogBlock,
+      instructions: fullInstructions,
       input: input_list,
     });
 
@@ -63,14 +85,16 @@ ${JSON.stringify(videos)}
     const output = (resp as any)?.output ?? [];
 
     // Helpful server logs while you iterate
-    console.log(">>> INPUT (preview):", JSON.stringify(input_list).slice(0, 4000));
+    console.log(
+      ">>> INPUT (preview):",
+      JSON.stringify(input_list).slice(0, 4000)
+    );
     console.log(">>> OUTPUT_TEXT:", text);
     console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 
-    return new Response(
-      JSON.stringify({ text, output }),
-      { headers: { "content-type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ text, output }), {
+      headers: { "content-type": "application/json" },
+    });
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
     return new Response(

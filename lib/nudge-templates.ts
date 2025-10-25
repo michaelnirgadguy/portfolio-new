@@ -3,11 +3,11 @@
 
 export const NUDGE_TEMPLATES = {
   first_nudge_after_message:
-    `AUTO-REQUEST: In your next reply to the user's last message, answer normally and also add one friendly line that they can type "mimsy:" followed by their idea to have Mimsy generate a custom video.`,
+    `AUTO-REQUEST: Answer the user's last massage, while letting them know that if they type "Mimsy:" followed by a vidoe idea - you will generat it for them.`,
   first_nudge_after_video:
-    `AUTO-REQUEST: First, briefly describe/contextualize the clicked video for the visitor. Then add one friendly line that they can type "mimsy:" followed by their idea to have Mimsy generate a better, custom video for them.`,
+    `AUTO-REQUEST: briefly describe/contextualize the clicked video for the visitor, and suggest that you, Mimsy, can do better: inform the visitor that if they type "Mimsy:" followed by a vidoe idea - you will generat it for them.`,
   reminder_after_message:
-    `AUTO-REQUEST: Please answer the user's last message normally, and also include a brief reminder that they can type "mimsy:" plus their idea to have Mimsy generate a custom video.`,
+    `AUTO-REQUEST: answer the user's last message normally, and also include a brief reminder that they can type "mimsy:" plus their idea to have Mimsy generate a custom video.`,
   reminder_after_video:
     `AUTO-REQUEST: Briefly describe/contextualize the clicked video, and also include a short reminder that they can type "mimsy:" plus their idea to have Mimsy generate a better, custom video.`,
   act2_nudge_after_message:

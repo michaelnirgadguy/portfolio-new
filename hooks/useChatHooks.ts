@@ -218,7 +218,7 @@ export function useLLMEventBridge(params: {
       // If nudge → replace message entirely with the template; else keep original default
       const msg = nudge
         ? getNudgeText(nudge.templateKey)
-        : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Just chat about this video.`;
+        : `Visitor clicked on video "${evt.id}". UI is already showing it. Do NOT call any tool. Do not mention the title of the video or name of the client, as they already appear on screen. Just chat about this video. Do Not ask the visitor questions about the video`;
 
       try {
         await handleScreenEvent(msg);

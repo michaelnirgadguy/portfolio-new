@@ -96,8 +96,7 @@ export function useAct1Driver({
 
         // Final invitation line – sets up Act 1's punchline
         const invite =
-          "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.\n\nIf you want, just say something like: “yes, show me the real videos.”";
-
+          "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?"
         push("assistant", invite);
         setAssistantFull(invite);
         setStatus("answer");

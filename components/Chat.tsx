@@ -15,10 +15,13 @@ type ChatMode = "main" | "act1";
 export default function Chat({
   onShowVideo,
   mode = "main",
+  onAct1Complete,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
   mode?: ChatMode;
+  onAct1Complete?: () => void;
 }) {
+
   // Intro line (session-aware)
   const intro = useIntroMessage();
 
@@ -51,7 +54,7 @@ export default function Chat({
           setAssistantFull,
           setStatus,
           onShowVideo,
-          onAct1Complete: undefined, // we wire this later when Act1 uses Chat
+          onAct1Complete,
         })
       : useChatFlow({
           log,

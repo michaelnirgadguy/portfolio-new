@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Acts } from "@/lib/acts";
+import CenterDock from "@/components/CenterDock";
+import Chat from "@/components/Chat";
+import FakeVideoCard from "@/components/FakeVideoCard";
+
 
 export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");
@@ -92,6 +96,19 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
     Acts.set("1");
     onDone?.();
   }
+
+  // NEW: once we leave the landing screen, show the real layout:
+  // chat on the left (in Act 1 mode) and a fake video card on the right.
+  if (phase === "fakeRun") {
+    return (
+      <CenterDock
+        chat={<Chat mode="act1" />}
+        top={<FakeVideoCard />}
+      />
+    );
+  }
+
+  // Default: landing screen (old Act 1 UI)
 
   return (
     <div className="min-h-[100svh] w-full bg-white grid place-items-center px-6">

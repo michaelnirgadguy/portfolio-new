@@ -118,31 +118,31 @@ return (
       Chat with Mimsy to explore Michael’s portfolio.
     </div>
 
-    {/* Scrollable messages area */}
     <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
-      {messages.map((m) => {
-        if (m.role === "assistant") return null; // assistant text is rendered via typed bubble
+      {messages.map((m, index) => {
+        const lastMessageId = messages[messages.length - 1]?.id;
+        const isLastAssistantActive =
+          m.role === "assistant" && m.id === lastMessageId && status === "answer";
+    
+        const textToShow = isLastAssistantActive && typed ? typed : m.text;
+    
         return (
           <Bubble key={m.id} role={m.role}>
-            {m.text}
+            {textToShow}
           </Bubble>
         );
       })}
-
+    
       {/* Assistant pending indicator */}
       {status === "pending" && (
         <Bubble role="assistant">
           <span className="opacity-70">…</span>
         </Bubble>
       )}
-
-      {/* Assistant typewriter bubble */}
-      {status === "answer" && typed && (
-        <Bubble role="assistant">{typed}</Bubble>
-      )}
-
+    
       <div ref={scrollRef} />
     </div>
+
 
     {/* Composer */}
     <form

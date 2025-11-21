@@ -29,9 +29,11 @@ export default function Chat({
   const intro = useIntroMessage();
 
   // Visible messages
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "m0", role: "assistant", text: intro },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    mode === "act1"
+      ? [] // Act 1: no intro bubble, we start from the user idea
+      : [{ id: "m0", role: "assistant", text: intro }]
+  );
 
   // API log
   const [log, setLog] = useState<any[]>([]);

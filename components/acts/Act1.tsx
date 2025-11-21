@@ -70,7 +70,7 @@ async function run() {
 
   function finish() {
     const handoff =
-      "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.";
+      "Okay… so these are Michaels video. they are not as good as mine but... whatever. just click on them. or ask me anything you want!";
     try {
       sessionStorage.setItem("mimsy_intro_override", handoff);
     } catch {}

@@ -9,11 +9,14 @@ import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
 type SurfaceStatus = "idle" | "pending" | "answer";
+type ChatMode = "main" | "act1";
 
 export default function Chat({
   onShowVideo,
+  mode = "main",
 }: {
   onShowVideo?: (videoIds: string[]) => void;
+  mode?: ChatMode;
 }) {
   // Intro line (session-aware)
   const intro = useIntroMessage();

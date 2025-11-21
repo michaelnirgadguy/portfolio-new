@@ -14,6 +14,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   const [shown, setShown] = useState(0);
   const [dots, setDots] = useState(0);
   const [count, setCount] = useState(3);
+  const [phase, setPhase] = useState<"landing" | "fakeRun">("landing");
 
   // animate thinking dots while pending/revealing
   useEffect(() => {
@@ -55,7 +56,11 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   }, [status, count]);
 
   async function run() {
-    if (!idea.trim() || status !== "idle") return;
+     if (!idea.trim() || status !== "idle") return;
+  
+    // NEW: user submitted first idea → move to fakeRun phase
+    setPhase("fakeRun");
+  
     setStatus("pending");
     try {
       const res = await fetch("/api/act1", {

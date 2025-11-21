@@ -164,11 +164,13 @@ return (
         const lastMessageId = messages[messages.length - 1]?.id;
         const isLastAssistantActive =
           m.role === "assistant" && m.id === lastMessageId && status === "answer";
-    
-       const textToShow =
-  isLastAssistantActive && status === "answer"
-    ? typed
-    : m.text;
+        
+        // Only use typewriter in main mode; Act 1 just shows full text
+        const useTyping = mode === "main";
+        
+        const textToShow =
+          useTyping && isLastAssistantActive ? typed : m.text;
+
 
     
         return (

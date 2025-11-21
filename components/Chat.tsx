@@ -162,7 +162,11 @@ return (
         const isLastAssistantActive =
           m.role === "assistant" && m.id === lastMessageId && status === "answer";
     
-        const textToShow = isLastAssistantActive && typed ? typed : m.text;
+       const textToShow =
+  isLastAssistantActive && status === "answer"
+    ? typed
+    : m.text;
+
     
         return (
           <Bubble key={m.id} role={m.role}>

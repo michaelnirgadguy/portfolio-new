@@ -1,6 +1,7 @@
 // /hooks/useAct1Driver.ts
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+
 
 type Role = "user" | "assistant";
 type SurfaceStatus = "idle" | "pending" | "answer";
@@ -30,30 +31,62 @@ export function useAct1Driver({
   onShowVideo,
   onAct1Complete,
 }: Act1DriverParams) {
+  const [hasRun, setHasRun] = useState(false);
   const submitUserText = useCallback(
     async (trimmed: string) => {
       if (!trimmed) return;
 
-      // For now: simple echo-style behavior.
-      // We'll replace this with:
-      //  - fake generation lines
-      //  - failure line + invitation
-      //  - triggering onAct1Complete()
+      // First message is the "idea" for Act 1.
+      // After that, for now, we just acknowledge and will later trigger onAct1Complete.
       push("user", trimmed);
 
-      const reply =
-        "Act 1 placeholder: next steps will show Mimsy trying (and failing) to generate your video, then inviting you to see Michael’s real work.";
+      // If we've already run the LLM once, don't call it again yet.
+      if (hasRun) {
+        const followup =
+          "Got it. Soon this will switch over to Michael’s real portfolio. (Act 1 followup placeholder.)";
+        setStatus("pending");
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        push("assistant", followup);
+        setAssistantFull(followup);
+        setStatus("answer");
+        return;
+      }
+
       setStatus("pending");
 
-      // Simulate a short delay so the UI behaves like the main chat.
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      try {
+        const res = await fetch("/api/act1", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idea: trimmed }),
+        });
 
-      push("assistant", reply);
-      setAssistantFull(reply);
-      setStatus("answer");
+        const data = await res.json();
+        const text = (data?.text || "").toString().trim();
+
+        const reply =
+          text ||
+          "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons).";
+
+        setHasRun(true);
+
+        // For now: show the full LLM text in a single bubble.
+        // Later we’ll split into lines + timing to mimic the original act.
+        push("assistant", reply);
+        setAssistantFull(reply);
+        setStatus("answer");
+      } catch (e) {
+        const err =
+          "Spinning up…\nTrying again…\nFAIL: wheel slipped; render canceled.";
+        push("assistant", err);
+        setAssistantFull(err);
+        setStatus("answer");
+      }
     },
-    [push, setAssistantFull, setStatus]
+    [hasRun, push, setAssistantFull, setStatus]
   );
+
+
 
   // Act 1 doesn't really care about screen events;
   // we'll just ignore them for now.

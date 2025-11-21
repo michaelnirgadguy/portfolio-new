@@ -110,71 +110,77 @@ export default function Chat({
     );
   }
 
-  return (
-    <section className="w-full h-full flex flex-col">
-      <div className="px-4 pt-3 pb-1 text-sm text-muted-foreground">
-        Chat with Mimsy to explore Michael’s portfolio.
-      </div>
+return (
+  <section className="w-full h-full flex flex-col overflow-hidden">
+    
+    {/* Small instruction text */}
+    <div className="px-4 pt-3 pb-1 text-sm text-muted-foreground">
+      Chat with Mimsy to explore Michael’s portfolio.
+    </div>
 
-      {/* Scrollable messages area */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-        {messages.map((m) => {
-          if (m.role === "assistant") return null; // assistant lines are typed later
-          return (
-            <Bubble key={m.id} role={m.role}>
-              {m.text}
-            </Bubble>
-          );
-        })}
-
-
-        {/* Assistant typing animation bubble */}
-        {status === "pending" && (
-          <Bubble role="assistant">
-            <span className="opacity-70">…</span>
+    {/* Scrollable messages area */}
+    <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
+      {messages.map((m) => {
+        if (m.role === "assistant") return null; // assistant text is rendered via typed bubble
+        return (
+          <Bubble key={m.id} role={m.role}>
+            {m.text}
           </Bubble>
-        )}
+        );
+      })}
 
-        {/* Typewriter bubble (assistant final output) */}
-        {status === "answer" && typed && (
-          <Bubble role="assistant">{typed}</Bubble>
-        )}
+      {/* Assistant pending indicator */}
+      {status === "pending" && (
+        <Bubble role="assistant">
+          <span className="opacity-70">…</span>
+        </Bubble>
+      )}
 
-        <div ref={scrollRef} />
+      {/* Assistant typewriter bubble */}
+      {status === "answer" && typed && (
+        <Bubble role="assistant">{typed}</Bubble>
+      )}
+
+      <div ref={scrollRef} />
+    </div>
+
+    {/* Composer */}
+    <form
+      onSubmit={onSubmit}
+      className="px-2 pb-3 pt-2 border-t border-[hsl(var(--border))] bg-[hsl(var(--background))]"
+    >
+      <div className="w-full flex items-center gap-2 rounded-full border bg-[hsl(var(--card))] px-3 py-2 shadow-sm">
+        <Button
+          type="button"
+          variant="outlineAccent"
+          size="pill"
+          onClick={handleSparkle}
+          aria-label="Generate a prompt"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <span className="text-xl leading-none">✨</span>
+        </Button>
+
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder='Type a request… e.g. "bold, funny tech ad"'
+          className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+        />
+
+        <Button
+          type="submit"
+          variant="outlineAccent"
+          size="icon"
+          aria-label="Send"
+          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+        >
+          <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+        </Button>
       </div>
+    </form>
 
-      {/* Composer */}
-      <form onSubmit={onSubmit} className="mt-2 px-2 pb-2">
-        <div className="w-full flex items-center gap-2 rounded-full border bg-[hsl(var(--card))] px-3 py-2 shadow-sm">
-          <Button
-            type="button"
-            variant="outlineAccent"
-            size="pill"
-            onClick={handleSparkle}
-            aria-label="Generate a prompt"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <span className="text-xl leading-none">✨</span>
-          </Button>
+  </section>
+);
 
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder='Type a request… e.g. "bold, funny tech ad"'
-            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-          />
-
-          <Button
-            type="submit"
-            variant="outlineAccent"
-            size="icon"
-            aria-label="Send"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-          </Button>
-        </div>
-      </form>
-    </section>
-  );
 }

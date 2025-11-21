@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
+import { useAct1Driver } from "@/hooks/useAct1Driver";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -40,14 +41,29 @@ export default function Chat({
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
-  const { submitUserText, handleScreenEvent } = useChatFlow({
-    log,
-    setLog,
-    push,
-    setAssistantFull,
-    setStatus,
-    onShowVideo,
-  });
+// Which driver should Chat use?
+  const driver =
+    mode === "act1"
+      ? useAct1Driver({
+          log,
+          setLog,
+          push,
+          setAssistantFull,
+          setStatus,
+          onShowVideo,
+          onAct1Complete: undefined, // we wire this later when Act1 uses Chat
+        })
+      : useChatFlow({
+          log,
+          setLog,
+          push,
+          setAssistantFull,
+          setStatus,
+          onShowVideo,
+        });
+  
+  const { submitUserText, handleScreenEvent } = driver;
+
 
   useLLMEventBridge({
     handleScreenEvent,

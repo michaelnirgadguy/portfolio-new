@@ -70,6 +70,16 @@ export default function Chat({
         });
   
   const { submitUserText, handleScreenEvent } = driver;
+  
+  // If Act 1 passes an initial user idea, submit it automatically once
+  useEffect(() => {
+    if (!initialUserText || initialSubmitted) return;
+    if (mode !== "act1") return;
+
+    setInitialSubmitted(true);
+    // Fire the driver as if the user had typed this in the composer
+    submitUserText(initialUserText);
+  }, [initialUserText, initialSubmitted, mode, submitUserText]);
 
 
   useLLMEventBridge({

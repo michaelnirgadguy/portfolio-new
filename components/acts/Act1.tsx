@@ -102,7 +102,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   if (phase === "fakeRun") {
     return (
       <CenterDock
-        chat={<Chat mode="act1" />}
+        chat={<Chat mode="act1" onAct1Complete={finish} />}
         top={<FakeVideoCard />}
       />
     );

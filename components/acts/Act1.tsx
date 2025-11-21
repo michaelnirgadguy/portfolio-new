@@ -59,33 +59,14 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
     return () => clearTimeout(t);
   }, [status, count]);
 
-  async function run() {
-     if (!idea.trim() || status !== "idle") return;
-  
-    // NEW: user submitted first idea → move to fakeRun phase
-    setPhase("fakeRun");
-  
-    setStatus("pending");
-    try {
-      const res = await fetch("/api/act1", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea }),
-      });
-      const data = await res.json();
-      const text = (data?.text || "").toString().trim();
-      setLlmText(
-        text ||
-          "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons)."
-      );
-      setShown(0);
-      setStatus("revealing");
-    } catch {
-      setLlmText("Spinning up…\nTrying again…\nFAIL: wheel slipped; render canceled.");
-      setShown(0);
-      setStatus("revealing");
-    }
-  }
+async function run() {
+  if (!idea.trim()) return;
+
+  // Just switch Act 1 into the main layout with chat + fake video.
+  // All the LLM / multi-line script is now handled by the chat driver.
+  setPhase("fakeRun");
+}
+
 
   function finish() {
     const handoff =

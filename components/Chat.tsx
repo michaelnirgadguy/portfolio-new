@@ -16,11 +16,14 @@ export default function Chat({
   onShowVideo,
   mode = "main",
   onAct1Complete,
+  initialUserText,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
   mode?: ChatMode;
   onAct1Complete?: () => void;
+  initialUserText?: string;
 }) {
+
 
   // Intro line (session-aware)
   const intro = useIntroMessage();

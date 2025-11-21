@@ -32,59 +32,91 @@ export function useAct1Driver({
   onAct1Complete,
 }: Act1DriverParams) {
   const [hasRun, setHasRun] = useState(false);
-  const submitUserText = useCallback(
+  const [stage, setStage] = useState<"idle" | "scriptFinished">("idle");
+   const submitUserText = useCallback(
     async (trimmed: string) => {
       if (!trimmed) return;
 
-      // First message is the "idea" for Act 1.
-      // After that, for now, we just acknowledge and will later trigger onAct1Complete.
+      // Always show the user message in the chat
       push("user", trimmed);
 
-      // If we've already run the LLM once, don't call it again yet.
-      if (hasRun) {
-        const followup =
-          "Got it. Soon this will switch over to Michael’s real portfolio. (Act 1 followup placeholder.)";
-        setStatus("pending");
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        push("assistant", followup);
-        setAssistantFull(followup);
-        setStatus("answer");
+      // If the script already finished, the NEXT user message should jump to the real portfolio.
+      if (stage === "scriptFinished") {
+        onAct1Complete?.();
         return;
       }
 
-      setStatus("pending");
+      // First time: run the Act 1 LLM and play its lines.
+      if (!hasRun) {
+        setStatus("pending");
 
-      try {
-        const res = await fetch("/api/act1", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idea: trimmed }),
-        });
+        let text = "";
+        try {
+          const res = await fetch("/api/act1", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idea: trimmed }),
+          });
+          const data = await res.json();
+          text = (data?.text || "").toString().trim();
+        } catch {
+          text = "";
+        }
 
-        const data = await res.json();
-        const text = (data?.text || "").toString().trim();
+        let lines = text
+          ? text.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+          : [];
 
-        const reply =
-          text ||
-          "Initializing shrinking process...\nCalculating size reduction ratios...\nFAIL: video didn’t generate (mysterious reasons).";
+        if (!lines.length) {
+          // Fallback: same style as your original Act 1
+          lines = [
+            "Initializing shrinking process...",
+            "Calculating size reduction ratios...",
+            "FAIL: video didn’t generate (mysterious reasons).",
+          ];
+        }
 
         setHasRun(true);
 
-        // For now: show the full LLM text in a single bubble.
-        // Later we’ll split into lines + timing to mimic the original act.
-        push("assistant", reply);
-        setAssistantFull(reply);
+        // Play lines one by one with a short pause in between
+        for (const line of lines) {
+          const clean = line.trim();
+          if (!clean) continue;
+
+          // Show this line as Mimsy's current message
+          push("assistant", clean);
+          setAssistantFull(clean);
+          setStatus("answer");
+
+          // Wait ~2.5s before the next line
+          // (roughly matching your old timing)
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 2500));
+        }
+
+        // Final invitation line – sets up Act 1's punchline
+        const invite =
+          "Okay… my movie-making magic isn’t working. Meanwhile I can show you real videos this weird human Michael actually made.\n\nIf you want, just say something like: “yes, show me the real videos.”";
+
+        push("assistant", invite);
+        setAssistantFull(invite);
         setStatus("answer");
-      } catch (e) {
-        const err =
-          "Spinning up…\nTrying again…\nFAIL: wheel slipped; render canceled.";
-        push("assistant", err);
-        setAssistantFull(err);
-        setStatus("answer");
+        setStage("scriptFinished");
+
+        return;
       }
+
+      // If we get here, we've run the LLM but stage is not yet "scriptFinished".
+      // This is a weird edge case (user types mid-script). Just reassure them.
+      const fallback =
+        "Hang on a second, tiny hamster brain is still finishing this attempt…";
+      push("assistant", fallback);
+      setAssistantFull(fallback);
+      setStatus("answer");
     },
-    [hasRun, push, setAssistantFull, setStatus]
+    [hasRun, stage, onAct1Complete, push, setAssistantFull, setStatus]
   );
+
 
 
 

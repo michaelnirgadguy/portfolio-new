@@ -112,13 +112,21 @@ export default function Chat({
 
   return (
     <section className="w-full h-full flex flex-col">
+      <div className="px-4 pt-3 pb-1 text-sm text-muted-foreground">
+        Chat with Mimsy to explore Michael’s portfolio.
+      </div>
+
       {/* Scrollable messages area */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-        {messages.map((m) => (
-          <Bubble key={m.id} role={m.role}>
-            {m.text}
-          </Bubble>
-        ))}
+        {messages.map((m) => {
+          if (m.role === "assistant") return null; // assistant lines are typed later
+          return (
+            <Bubble key={m.id} role={m.role}>
+              {m.text}
+            </Bubble>
+          );
+        })}
+
 
         {/* Assistant typing animation bubble */}
         {status === "pending" && (

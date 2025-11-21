@@ -32,7 +32,7 @@ export default function CenterDock({ top, chat, className }: Props) {
         </div>
 
         {/* CHAT – left column on desktop, bottom on mobile */}
-        <aside className="order-2 h-1/2 min-h-0 border-t border-white/10 bg-[#050509] md:order-1 md:h-full md:w-1/3 md:border-t-0 md:border-r">
+        <aside className="order-2 h-1/2 min-h-0 border-t border-gray-200 bg-white md:order-1 md:h-full md:w-1/3 md:border-t-0 md:border-r">
           <div
             className="flex h-full flex-col overflow-hidden"
             style={{

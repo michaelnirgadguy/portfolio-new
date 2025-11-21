@@ -20,11 +20,12 @@ export default function CenterDock({ top, chat, className }: Props) {
   return (
     <div
       className={cn(
-        "h-[100svh] w-full bg-white text-black",
+        "min-h-[100svh] w-full bg-white text-black pt-12",
         "flex",
         className
       )}
     >
+
       <div className="flex h-full w-full flex-col md:flex-row">
         {/* CONTENT – right on desktop, top on mobile */}
         <div className="order-1 h-1/2 min-h-0 overflow-y-auto px-4 py-4 md:order-2 md:h-full md:flex-1 md:px-6 md:py-6">

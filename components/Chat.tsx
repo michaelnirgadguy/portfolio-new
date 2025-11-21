@@ -42,6 +42,7 @@ export default function Chat({
   // Assistant typing pipeline
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [assistantFull, setAssistantFull] = useState<string>("");
+  const [initialSubmitted, setInitialSubmitted] = useState(false);
 
   function push(role: Role, text: string) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);

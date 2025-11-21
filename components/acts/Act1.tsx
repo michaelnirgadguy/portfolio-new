@@ -80,14 +80,21 @@ async function run() {
 
   // NEW: once we leave the landing screen, show the real layout:
   // chat on the left (in Act 1 mode) and a fake video card on the right.
-  if (phase === "fakeRun") {
-    return (
-      <CenterDock
-        chat={<Chat mode="act1" onAct1Complete={finish} />}
-        top={<FakeVideoCard />}
-      />
-    );
-  }
+if (phase === "fakeRun") {
+  return (
+    <CenterDock
+      chat={
+        <Chat
+          mode="act1"
+          onAct1Complete={finish}
+          initialUserText={idea}
+        />
+      }
+      top={<FakeVideoCard />}
+    />
+  );
+}
+
 
   // Default: landing screen (old Act 1 UI)
 

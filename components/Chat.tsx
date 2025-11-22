@@ -155,88 +155,80 @@ export default function Chat({
     );
   }
 
-
-return (
-  <section className="w-full h-full flex flex-col overflow-hidden">
-    
-  {/* Small instruction text – only in main mode */}
-  {mode === "main" && (
-    <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground border-b border-[hsl(var(--border))]">
-      Chat with Mimsy to explore Michael’s portfolio.
-    </div>
-  )}
-
-
-
-    <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
-      {messages.map((m, index) => {
-        const lastMessageId = messages[messages.length - 1]?.id;
-        const isLastAssistantActive =
-          m.role === "assistant" && m.id === lastMessageId && status === "answer";
-        
-        // Only use typewriter in main mode; Act 1 just shows full text
-        const useTyping = mode === "main";
-        
-        const textToShow =
-          useTyping && isLastAssistantActive ? typed : m.text;
-
-
-    
-        return (
-          <Bubble key={m.id} role={m.role}>
-            {textToShow}
-          </Bubble>
-        );
-      })}
-    
-      {/* Assistant pending indicator */}
-      {status === "pending" && (
-        <Bubble role="assistant">
-          <span className="opacity-70">…</span>
-        </Bubble>
+  return (
+    <section className="w-full h-full flex flex-col overflow-hidden">
+      {/* Small instruction text – only in main mode */}
+      {mode === "main" && (
+        <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground border-b border-[hsl(var(--border))]">
+          Chat with Mimsy to explore Michael’s portfolio.
+        </div>
       )}
-    
-      <div ref={scrollRef} />
-    </div>
 
+      {/* Messages surface */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
+        {messages.map((m) => {
+          const lastMessageId = messages[messages.length - 1]?.id;
+          const isLastAssistantActive =
+            m.role === "assistant" && m.id === lastMessageId && status === "answer";
 
-    {/* Composer */}
-    <form
-      onSubmit={onSubmit}
-      className="px-2 pb-3 pt-2 border-t border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-    >
-      <div className="w-full flex items-center gap-2 rounded-full border bg-[hsl(var(--card))] px-3 py-2 shadow-sm">
-        <Button
-          type="button"
-          variant="outlineAccent"
-          size="pill"
-          onClick={handleSparkle}
-          aria-label="Generate a prompt"
-          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-        >
-          <span className="text-xl leading-none">✨</span>
-        </Button>
+          // Only use typewriter in main mode; Act 1 just shows full text
+          const useTyping = mode === "main";
 
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder='Type a request… e.g. "bold, funny tech ad"'
-          className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-        />
+          const textToShow =
+            useTyping && isLastAssistantActive ? typed : m.text;
 
-        <Button
-          type="submit"
-          variant="outlineAccent"
-          size="icon"
-          aria-label="Send"
-          className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-        >
-          <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-        </Button>
+          return (
+            <Bubble key={m.id} role={m.role}>
+              {textToShow}
+            </Bubble>
+          );
+        })}
+
+        {/* Assistant pending indicator */}
+        {status === "pending" && (
+          <Bubble role="assistant">
+            <span className="opacity-70">…</span>
+          </Bubble>
+        )}
+
+        <div ref={scrollRef} />
       </div>
-    </form>
 
-  </section>
-);
+      {/* Composer */}
+      <form
+        onSubmit={onSubmit}
+        className="px-2 pb-3 pt-2"
+      >
+        <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+          <Button
+            type="button"
+            variant="outlineAccent"
+            size="pill"
+            onClick={handleSparkle}
+            aria-label="Generate a prompt"
+            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+          >
+            <span className="text-xl leading-none">✨</span>
+          </Button>
 
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder='Type a request… e.g. "bold, funny tech ad"'
+            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+          />
+
+          <Button
+            type="submit"
+            variant="outlineAccent"
+            size="icon"
+            aria-label="Send"
+            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+          >
+            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+          </Button>
+        </div>
+      </form>
+    </section>
+  );
 }

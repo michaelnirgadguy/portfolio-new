@@ -17,14 +17,15 @@ export default function Chat({
   mode = "main",
   onAct1Complete,
   initialUserText,
-  onAct1Oopsie,
+  onAct1Title,         // ← ADD THIS
 }: {
   onShowVideo?: (videoIds: string[]) => void;
   mode?: ChatMode;
   onAct1Complete?: () => void;
   initialUserText?: string;
-  onAct1Oopsie?: () => void;
+  onAct1Title?: (title: string) => void;   // ← ADD THIS
 }) {
+
 
 
   // Intro line (session-aware)
@@ -64,6 +65,7 @@ export default function Chat({
           onShowVideo,
           onAct1Complete,
           onAct1Oopsie,
+          onAct1Title, 
         })
       : useChatFlow({
           log,

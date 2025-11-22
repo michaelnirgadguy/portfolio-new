@@ -17,11 +17,13 @@ export default function Chat({
   mode = "main",
   onAct1Complete,
   initialUserText,
+  onAct1Oopsie,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
   mode?: ChatMode;
   onAct1Complete?: () => void;
   initialUserText?: string;
+  onAct1Oopsie?: () => void;
 }) {
 
 
@@ -61,6 +63,7 @@ export default function Chat({
           setStatus,
           onShowVideo,
           onAct1Complete,
+          onAct1Oopsie,
         })
       : useChatFlow({
           log,

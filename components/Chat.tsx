@@ -17,14 +17,17 @@ export default function Chat({
   mode = "main",
   onAct1Complete,
   initialUserText,
-  onAct1Title,         // ← ADD THIS
+  onAct1Oopsie,
+  onAct1Title,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
   mode?: ChatMode;
   onAct1Complete?: () => void;
   initialUserText?: string;
-  onAct1Title?: (title: string) => void;   // ← ADD THIS
+  onAct1Oopsie?: () => void;
+  onAct1Title?: (title: string) => void;
 }) {
+
 
 
 

@@ -20,7 +20,7 @@ export default function CenterDock({ top, chat, className }: Props) {
   return (
     <div
       className={cn(
-        "h-[100svh] w-full bg-background pt-12",
+        "h-[100svh] w-full bg-background",
         "flex",
         className
       )}

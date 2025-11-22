@@ -29,44 +29,98 @@ export async function sendTurn(opts: {
   const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
   let afterModelLog = [...turnStartLog, ...output];
 
-  // 3) Handle tool calls (ui_show_videos)
+  // 3) Handle tool calls (ui_show_videos, ui_show_all_videos, ui_set_dark_mode)
   const toolOutputs: any[] = [];
   for (const item of output) {
     if (item?.type !== "function_call") continue;
-    if (item?.name !== "ui_show_videos") continue;
 
-    // Parse videoIds
-    let ids: string[] = [];
-    try {
-      const parsed = JSON.parse(item.arguments || "{}");
-      const arr = Array.isArray(parsed?.videoIds) ? parsed.videoIds : [];
-      ids = arr.filter((x: any) => typeof x === "string");
-    } catch {}
+    // ui_show_videos(videoIds: string[])
+    if (item.name === "ui_show_videos") {
+      let ids: string[] = [];
+      try {
+        const parsed = JSON.parse(item.arguments || "{}");
+        const arr = Array.isArray(parsed?.videoIds) ? parsed.videoIds : [];
+        ids = arr.filter((x: any) => typeof x === "string");
+      } catch {}
 
-    // Execute UI side-effect
-    if (ids.length) {
-      if (onShowVideo) onShowVideo(ids);
-      else (globalThis as any).uiTool?.show_videos?.(ids);
+      // Execute UI side-effect
+      if (ids.length) {
+        if (onShowVideo) onShowVideo(ids);
+        else (globalThis as any).uiTool?.show_videos?.(ids);
+      }
+
+      toolOutputs.push({
+        type: "function_call_output",
+        call_id: item.call_id,
+        output: JSON.stringify(
+          ids.length
+            ? {
+                ok: true,
+                kind: ids.length === 1 ? "player" : "grid",
+                videoIds: ids,
+                message:
+                  ids.length === 1
+                    ? `UI launched player for ${ids[0]}`
+                    : `UI showing grid for ${ids.join(", ")}`,
+              }
+            : {
+                ok: false,
+                kind: "error",
+                videoIds: [],
+                message: "No valid video IDs.",
+              }
+        ),
+      });
+
+      continue;
     }
 
-    toolOutputs.push({
-      type: "function_call_output",
-      call_id: item.call_id,
-      output: JSON.stringify(
-        ids.length
-          ? {
-              ok: true,
-              kind: ids.length === 1 ? "player" : "grid",
-              videoIds: ids,
-              message:
-                ids.length === 1
-                  ? `UI launched player for ${ids[0]}`
-                  : `UI showing grid for ${ids.join(", ")}`,
-            }
-          : { ok: false, kind: "error", videoIds: [], message: "No valid video IDs." }
-      ),
-    });
+    // ui_show_all_videos()
+    if (item.name === "ui_show_all_videos") {
+      try {
+        (globalThis as any).uiTool?.show_all_videos?.();
+      } catch {}
+
+      toolOutputs.push({
+        type: "function_call_output",
+        call_id: item.call_id,
+        output: JSON.stringify({
+          ok: true,
+          kind: "all_videos",
+          message: "UI showing full catalogue.",
+        }),
+      });
+
+      continue;
+    }
+
+    // ui_set_dark_mode({ enabled: boolean })
+    if (item.name === "ui_set_dark_mode") {
+      let enabled = true;
+      try {
+        const parsed = JSON.parse(item.arguments || "{}");
+        if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
+      } catch {}
+
+      try {
+        (globalThis as any).uiTool?.set_dark_mode?.(enabled);
+      } catch {}
+
+      toolOutputs.push({
+        type: "function_call_output",
+        call_id: item.call_id,
+        output: JSON.stringify({
+          ok: true,
+          kind: "dark_mode",
+          enabled,
+          message: enabled ? "Dark mode enabled." : "Dark mode disabled.",
+        }),
+      });
+
+      continue;
+    }
   }
+
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {

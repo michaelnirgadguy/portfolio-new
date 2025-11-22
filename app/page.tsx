@@ -42,13 +42,13 @@ function ActGate() {
     return <Act1 onDone={() => setAct("1")} />;
   }
 
-return (
-  <div className="flex min-h-screen flex-col">
+ return (
+  <>
     <Header />
-    <div className="flex-1 overflow-hidden">
+    <div className="h-[calc(100vh-64px)] overflow-hidden">
       <HomeInner />
     </div>
-  </div>
+  </>
 );
 }
 

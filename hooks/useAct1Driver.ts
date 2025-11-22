@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 
-
 type Role = "user" | "assistant";
 type SurfaceStatus = "idle" | "pending" | "answer";
 
@@ -14,6 +13,8 @@ type Act1DriverParams = {
   setStatus: (s: SurfaceStatus) => void;
   onShowVideo?: (ids: string[]) => void;
   onAct1Complete?: () => void;
+  /** Called exactly when the 5th scripted line appears */
+  onAct1Oopsie?: () => void;
 };
 
 /**
@@ -30,10 +31,12 @@ export function useAct1Driver({
   setStatus,
   onShowVideo,
   onAct1Complete,
+  onAct1Oopsie,
 }: Act1DriverParams) {
   const [hasRun, setHasRun] = useState(false);
   const [stage, setStage] = useState<"idle" | "scriptFinished">("idle");
-   const submitUserText = useCallback(
+
+  const submitUserText = useCallback(
     async (trimmed: string) => {
       if (!trimmed) return;
 
@@ -64,7 +67,10 @@ export function useAct1Driver({
         }
 
         let lines = text
-          ? text.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+          ? text
+              .split(/\r?\n/)
+              .map((s: string) => s.trim())
+              .filter(Boolean)
           : [];
 
         if (!lines.length) {
@@ -78,15 +84,24 @@ export function useAct1Driver({
 
         setHasRun(true);
 
+        let lineIndex = 0;
+
         // Play lines one by one with a short pause in between
         for (const line of lines) {
           const clean = line.trim();
           if (!clean) continue;
 
+          lineIndex += 1;
+
           // Show this line as Mimsy's current message
           push("assistant", clean);
           setAssistantFull(clean);
           setStatus("answer");
+
+          // When the 5th line appears, trigger the Oopsie state
+          if (lineIndex === 5) {
+            onAct1Oopsie?.();
+          }
 
           // Wait ~2.5s before the next line
           // (roughly matching your old timing)
@@ -96,7 +111,7 @@ export function useAct1Driver({
 
         // Final invitation line – sets up Act 1's punchline
         const invite =
-          "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?"
+          "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
         push("assistant", invite);
         setAssistantFull(invite);
         setStatus("answer");
@@ -113,21 +128,15 @@ export function useAct1Driver({
       setAssistantFull(fallback);
       setStatus("answer");
     },
-    [hasRun, stage, onAct1Complete, push, setAssistantFull, setStatus]
+    [hasRun, stage, onAct1Complete, onAct1Oopsie, push, setAssistantFull, setStatus]
   );
-
-
-
 
   // Act 1 doesn't really care about screen events;
   // we'll just ignore them for now.
-  const handleScreenEvent = useCallback(
-    async (_message: string) => {
-      // no-op for Act 1 in this skeleton
-      return;
-    },
-    []
-  );
+  const handleScreenEvent = useCallback(async (_message: string) => {
+    // no-op for Act 1 in this skeleton
+    return;
+  }, []);
 
   return { submitUserText, handleScreenEvent };
 }

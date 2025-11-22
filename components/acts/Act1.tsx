@@ -11,6 +11,8 @@ import FakeVideoCard from "@/components/FakeVideoCard";
 export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");
   const [phase, setPhase] = useState<"landing" | "fakeRun">("landing");
+  const [title, setTitle] = useState("");
+
 
   // Oopsie blackout state
   const [oopsie, setOopsie] = useState(false);
@@ -40,13 +42,16 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
             initialUserText={idea}
             onAct1Complete={finish}
             onAct1Oopsie={() => setOopsie(true)}
+            onAct1Title={(t) => setTitle(t)}
           />
         }
        top={
         <FakeVideoCard
+          title={title}
           oopsie={oopsie}
           onShowHumanVideos={finish}
         />
+
         }
       />
     );

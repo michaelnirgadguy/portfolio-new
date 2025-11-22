@@ -17,12 +17,14 @@ export default function FakeVideoCard({
 }: Props) {
   return (
     <section className="w-full h-full flex flex-col gap-3">
-      {/* Title */}
+    {/* Title muted — toggle `false` back to `true` if you want it again */}
+    {false && (
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">
-          {title || "Generating your hamster masterpiece..."}
+          {title || "Generating..."}
         </h2>
       </div>
+    )}
 
       {/* Fake “video” frame */}
       <div className="relative aspect-video w-full rounded-xl border bg-muted/60 overflow-hidden group">

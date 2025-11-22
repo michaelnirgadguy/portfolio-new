@@ -14,9 +14,6 @@ export default function FakeVideoCard({ title }: Props) {
         <h2 className="text-lg font-semibold">
           {title || "Generating your hamster masterpiece..."}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          (This is a fake generator. Real human-made videos are coming next.)
-        </p>
       </div>
 
 {/* Fake “video” frame */}

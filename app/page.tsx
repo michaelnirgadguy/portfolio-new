@@ -65,7 +65,7 @@ function HomeInner() {
   const selected: VideoItem | null = selectedId ? byId.get(selectedId) ?? null : null;
 
   // Grid list
-  const [visibleGrid, setVisibleGrid] = useState<VideoItem[]>(() => allVideos.slice(0, 3));
+  const [visibleGrid, setVisibleGrid] = useState<VideoItem[]>(() => allVideos);
 
   const topRef = useRef<HTMLDivElement | null>(null);
 

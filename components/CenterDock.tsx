@@ -20,7 +20,7 @@ export default function CenterDock({ top, chat, className }: Props) {
   return (
     <div
       className={cn(
-        "h-[100svh] w-full bg-background pt-12",
+        "h-full w-full bg-background",
         "flex",
         className
       )}
@@ -33,7 +33,7 @@ export default function CenterDock({ top, chat, className }: Props) {
 
         {/* CHAT – left column on desktop, bottom on mobile */}
         <aside className="order-2 h-1/2 min-h-0 border-t border-border bg-background dark:bg-muted md:order-1 md:h-full md:w-1/3 md:border-t-0 md:border-r">
-          <div className="h-full px-3 py-3">
+          <div className="h-full px-3 pt-3 pb-0">
             {chat}
           </div>
         </aside>

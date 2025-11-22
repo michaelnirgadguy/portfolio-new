@@ -19,10 +19,19 @@ export default function FakeVideoCard({ title }: Props) {
         </p>
       </div>
 
-      {/* Fake “video” frame */}
-      <div className="relative aspect-video w-full rounded-xl border bg-muted/60 overflow-hidden">
-        <div className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,#e5e5e5,45%,#f8f8f8,55%,#e5e5e5)] bg-[length:200%_100%]" />
-      </div>
+{/* Fake “video” frame */}
+<div className="relative aspect-video w-full rounded-xl border bg-muted/60 overflow-hidden">
+  <video
+    className="h-full w-full object-cover"
+    autoPlay
+    loop
+    muted
+    playsInline
+  >
+    <source src="/vid/diffusion.mp4" type="video/mp4" />
+  </video>
+</div>
+
 
     </section>
   );

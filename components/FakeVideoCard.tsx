@@ -42,8 +42,8 @@ export default function FakeVideoCard({
           </video>
         )}
       
-      {/* Bottom stripe – only after Oopsie */}
-      {oopsie && (
+{/* Bottom stripe – muted for now, easy to restore by changing `false` to `true` */}
+{false && oopsie && (
         <button
           type="button"
           onClick={onShowHumanVideos}

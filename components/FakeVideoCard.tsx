@@ -41,30 +41,31 @@ export default function FakeVideoCard({
             <source src="/vid/diffusion.mp4" type="video/mp4" />
           </video>
         )}
-
-        {/* Bottom stripe – only after Oopsie */}
-        {oopsie && (
-          <button
-            type="button"
-            onClick={onShowHumanVideos}
-            className={[
-              "pointer-events-auto absolute inset-x-0 bottom-0",
-              "translate-y-2 opacity-0 transition duration-200",
-              "group-hover:translate-y-0 group-hover:opacity-100",
-              "focus-visible:translate-y-0 focus-visible:opacity-100",
-              "bg-[hsl(var(--foreground)/0.72)] text-left",
-            ].join(" ")}
-          >
-            <div className="p-3">
-              <div className="text-sm font-medium leading-tight line-clamp-1 text-[hsl(var(--background))]">
-                click for videos made by a Human being
-              </div>
-              <div className="text-xs/5 line-clamp-1 text-[hsl(var(--accent))]">
-                specifically the one called Michael Nirgad Guy
-              </div>
+      
+      {/* Bottom stripe – only after Oopsie */}
+      {oopsie && (
+        <button
+          type="button"
+          onClick={onShowHumanVideos}
+          className={[
+            "pointer-events-auto absolute inset-x-0 bottom-0",
+            "translate-y-2 opacity-0 transition duration-200",
+            "group-hover:translate-y-0 group-hover:opacity-100",
+            "focus-visible:translate-y-0 focus-visible:opacity-100",
+            "bg-[hsl(var(--foreground)/0.80)] text-left",
+          ].join(" ")}
+        >
+          <div className="p-4">
+            <div className="text-base font-semibold leading-tight text-[hsl(var(--background))]">
+              click for videos made by a Human being
             </div>
-          </button>
-        )}
+            <div className="text-sm mt-0.5 text-[hsl(var(--accent))]">
+              specifically the one called Michael Nirgad Guy
+            </div>
+          </div>
+        </button>
+      )}
+
       </div>
     </section>
   );

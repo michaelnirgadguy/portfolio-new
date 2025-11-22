@@ -15,13 +15,14 @@ type Act1DriverParams = {
   onAct1Complete?: () => void;
   /** Called exactly when the 5th scripted line appears */
   onAct1Oopsie?: () => void;
+  /** Called once when we receive a title from the LLM */
+  onAct1Title?: (title: string) => void;
 };
 
 /**
  * Act 1 driver:
  * - Same API shape as useChatFlow ({ submitUserText, handleScreenEvent }).
- * - For now it's a simple placeholder; we'll plug in the real fake-generator
- *   + completion logic in later steps.
+ * - Uses /api/act1 which should return JSON: { title, script: string[] }.
  */
 export function useAct1Driver({
   log,
@@ -32,6 +33,7 @@ export function useAct1Driver({
   onShowVideo,
   onAct1Complete,
   onAct1Oopsie,
+  onAct1Title,
 }: Act1DriverParams) {
   const [hasRun, setHasRun] = useState(false);
   const [stage, setStage] = useState<"idle" | "scriptFinished">("idle");
@@ -53,25 +55,41 @@ export function useAct1Driver({
       if (!hasRun) {
         setStatus("pending");
 
-        let text = "";
+        let lines: string[] = [];
+        let titleFromApi = "";
+
         try {
           const res = await fetch("/api/act1", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ idea: trimmed }),
           });
-          const data = await res.json();
-          text = (data?.text || "").toString().trim();
-        } catch {
-          text = "";
-        }
 
-        let lines = text
-          ? text
-              .split(/\r?\n/)
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : [];
+          const data = await res.json();
+
+          // Preferred path: structured JSON { title, script }
+          if (data) {
+            if (typeof data.title === "string" && data.title.trim()) {
+              titleFromApi = data.title.trim();
+            }
+
+            if (Array.isArray(data.script)) {
+              lines = data.script
+                .map((s: any) => String(s).trim())
+                .filter(Boolean);
+            }
+
+            // Legacy fallback if the model ever returns { text }
+            if (!lines.length && typeof data.text === "string") {
+              lines = data.text
+                .split(/\r?\n/)
+                .map((s: string) => s.trim())
+                .filter(Boolean);
+            }
+          }
+        } catch {
+          // ignore; we'll fall back to hardcoded lines below
+        }
 
         if (!lines.length) {
           // Fallback: same style as your original Act 1
@@ -80,6 +98,11 @@ export function useAct1Driver({
             "Calculating size reduction ratios...",
             "FAIL: video didn’t generate (mysterious reasons).",
           ];
+        }
+
+        // Notify parent about the title (if we got one)
+        if (titleFromApi) {
+          onAct1Title?.(titleFromApi);
         }
 
         setHasRun(true);
@@ -104,7 +127,6 @@ export function useAct1Driver({
           }
 
           // Wait ~2.5s before the next line
-          // (roughly matching your old timing)
           // eslint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 2500));
         }
@@ -128,7 +150,16 @@ export function useAct1Driver({
       setAssistantFull(fallback);
       setStatus("answer");
     },
-    [hasRun, stage, onAct1Complete, onAct1Oopsie, push, setAssistantFull, setStatus]
+    [
+      hasRun,
+      stage,
+      onAct1Complete,
+      onAct1Oopsie,
+      onAct1Title,
+      push,
+      setAssistantFull,
+      setStatus,
+    ]
   );
 
   // Act 1 doesn't really care about screen events;

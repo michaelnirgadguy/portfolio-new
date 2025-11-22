@@ -138,15 +138,14 @@ export default function Chat({
   function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
     const isUser = role === "user";
     return (
-      <div
-        className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
-      >
+      <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
         <div
           className={`
             max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-            ${isUser
-              ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
-              : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]"
+            ${
+              isUser
+                ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
+                : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
             }
           `}
         >
@@ -156,15 +155,17 @@ export default function Chat({
     );
   }
 
+
 return (
   <section className="w-full h-full flex flex-col overflow-hidden">
     
   {/* Small instruction text – only in main mode */}
   {mode === "main" && (
-    <div className="px-4 pt-3 pb-1 text-sm text-muted-foreground">
+    <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground border-b border-[hsl(var(--border))]">
       Chat with Mimsy to explore Michael’s portfolio.
     </div>
   )}
+
 
 
     <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">

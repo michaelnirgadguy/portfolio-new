@@ -42,7 +42,12 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
             onAct1Oopsie={() => setOopsie(true)}
           />
         }
-        top={<FakeVideoCard oopsie={oopsie} />}
+       top={
+        <FakeVideoCard
+          oopsie={oopsie}
+          onShowHumanVideos={finish}
+        />
+        }
       />
     );
   }

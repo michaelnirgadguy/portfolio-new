@@ -21,11 +21,9 @@ export default function FakeVideoCard({ title }: Props) {
 
       {/* Fake “video” frame */}
       <div className="relative aspect-video w-full rounded-xl border bg-muted/60 overflow-hidden">
-        {/* Placeholder for diffusion-style animation */}
-        <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
-          Fake diffusion animation goes here
-        </div>
+        <div className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,#e5e5e5,45%,#f8f8f8,55%,#e5e5e5)] bg-[length:200%_100%]" />
       </div>
+
     </section>
   );
 }

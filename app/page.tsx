@@ -137,6 +137,27 @@ function HomeInner() {
           console.error("uiTool.show_videos error:", e);
         }
       },
+   //  full catalogue
+      show_all_videos: () => {
+        try {
+          setHamster(null);
+          setAct3(null);
+          setSelectedId(null);
+          setVisibleGrid(allVideos);
+        } catch (e) {
+          console.error("uiTool.show_all_videos error:", e);
+        }
+      },
+  
+      //  dark mode
+      set_dark_mode: (enabled: boolean) => {
+        try {
+          document.documentElement.classList.toggle("dark", enabled);
+        } catch (e) {
+          console.error("uiTool.set_dark_mode error:", e);
+        }
+      } 
+      
     };
     return () => {
       if ((globalThis as any).uiTool) (globalThis as any).uiTool = undefined;

@@ -12,7 +12,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");
   const [phase, setPhase] = useState<"landing" | "fakeRun">("landing");
 
-  // NEW — oopsie state
+  // Oopsie blackout state
   const [oopsie, setOopsie] = useState(false);
 
   function run() {
@@ -30,7 +30,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
     onDone?.();
   }
 
-  // Fake-run mode
+  // Phase B — Fake-run screen
   if (phase === "fakeRun") {
     return (
       <CenterDock
@@ -39,19 +39,15 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
             mode="act1"
             initialUserText={idea}
             onAct1Complete={finish}
-            // NEW — tell Chat how to trigger the blackout
             onAct1Oopsie={() => setOopsie(true)}
           />
         }
-        top={
-          // NEW — pass the oopsie flag into the card
-          <FakeVideoCard oopsie={oopsie} />
-        }
+        top={<FakeVideoCard oopsie={oopsie} />}
       />
     );
   }
 
-   // Landing screen: fullscreen Mimsy + idea input
+  // Phase A — Landing screen
   return (
     <div className="min-h-[100svh] w-full bg-white grid place-items-center px-6">
       <div className="w-full max-w-2xl grid gap-6">

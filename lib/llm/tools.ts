@@ -23,4 +23,37 @@ export const TOOLS = [
       required: ["videoIds"],
     },
   },
+
+  // show full catalogue
+  {
+    type: "function" as const,
+    name: "ui_show_all_videos",
+    description: "Show the full video catalogue grid.",
+    strict: true,
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+      required: [],
+    },
+  },
+
+  // toggle dark mode
+  {
+    type: "function" as const,
+    name: "ui_set_dark_mode",
+    description: "Switch the site into dark mode.",
+    strict: true,
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        enabled: {
+          type: "boolean",
+          description: "True = dark mode on, false = light mode.",
+        },
+      },
+      required: ["enabled"],
+    },
+  },
 ];

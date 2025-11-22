@@ -19,6 +19,7 @@ import Act1 from "@/components/acts/Act1";
 import { Acts } from "@/lib/acts";
 import HamsterSection from "@/components/HamsterSection";
 import Act3 from "@/components/acts/Act3"; // 👈 Act 3
+import Header from "@/components/Header";
 
 export default function Home() {
   return (
@@ -41,7 +42,14 @@ function ActGate() {
     return <Act1 onDone={() => setAct("1")} />;
   }
 
-  return <HomeInner />;
+ return (
+  <>
+    <Header />
+    <div className="h-[calc(100vh-64px)] overflow-hidden">
+      <HomeInner />
+    </div>
+  </>
+);
 }
 
 function HomeInner() {

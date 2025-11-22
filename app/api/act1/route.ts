@@ -24,10 +24,38 @@ export async function POST(req: Request) {
       max_tokens: 200,
     });
 
-    const text = completion.choices[0]?.message?.content?.trim() || "";
-    return NextResponse.json({ text });
+    const raw = completion.choices[0]?.message?.content?.trim() || "";
+
+    // Try parsing strict JSON
+    let parsed: any = null;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Fallback: extract JSON substring if the model wrapped it
+      const m = raw.match(/\{[\s\S]*\}$/);
+      if (m) {
+        parsed = JSON.parse(m[0]);
+      }
+    }
+
+    const title =
+      (typeof parsed?.title === "string" && parsed.title.trim()) ||
+      "Hamster Render Attempt";
+
+    const scriptArray = Array.isArray(parsed?.script)
+      ? parsed.script.map((s: any) => String(s).trim()).filter(Boolean)
+      : [];
+
+    return NextResponse.json({
+      title,
+      script: scriptArray,
+    });
   } catch (err: any) {
     console.error("Act1 API error", err);
-    return NextResponse.json({ error: "Failed to generate Act1 output" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate Act1 output" },
+      { status: 500 }
+    );
   }
 }

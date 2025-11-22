@@ -1,5 +1,4 @@
-import "./globals.css"
-import Header from "@/components/Header"
+import "./globals.css";
 
 export default function RootLayout({
   children,
@@ -9,11 +8,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
-        <Header />
-        {/* Fill viewport minus 64px header; prevent page scrolling */}
-        <main className="h-[calc(100vh-64px)] overflow-hidden">
-          {children}
-        </main>
+        {/* Let pages decide about headers / chrome */}
+        <main className="min-h-screen overflow-hidden">{children}</main>
       </body>
     </html>
   );

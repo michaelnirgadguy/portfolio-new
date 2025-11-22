@@ -5,23 +5,41 @@ import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
+import { useAct1Driver } from "@/hooks/useAct1Driver";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
 type SurfaceStatus = "idle" | "pending" | "answer";
+type ChatMode = "main" | "act1";
 
 export default function Chat({
   onShowVideo,
+  mode = "main",
+  onAct1Complete,
+  initialUserText,
+  onAct1Oopsie,
+  onAct1Title,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
+  mode?: ChatMode;
+  onAct1Complete?: () => void;
+  initialUserText?: string;
+  onAct1Oopsie?: () => void;
+  onAct1Title?: (title: string) => void;
 }) {
+
+
+
+
   // Intro line (session-aware)
   const intro = useIntroMessage();
 
   // Visible messages
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "m0", role: "assistant", text: intro },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    mode === "act1"
+      ? [] // Act 1: no intro bubble, we start from the user idea
+      : [{ id: "m0", role: "assistant", text: intro }]
+  );
 
   // API log
   const [log, setLog] = useState<any[]>([]);
@@ -32,19 +50,47 @@ export default function Chat({
   // Assistant typing pipeline
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [assistantFull, setAssistantFull] = useState<string>("");
+  const [initialSubmitted, setInitialSubmitted] = useState(false);
 
   function push(role: Role, text: string) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
 
-  const { submitUserText, handleScreenEvent } = useChatFlow({
-    log,
-    setLog,
-    push,
-    setAssistantFull,
-    setStatus,
-    onShowVideo,
-  });
+// Which driver should Chat use?
+  const driver =
+    mode === "act1"
+      ? useAct1Driver({
+          log,
+          setLog,
+          push,
+          setAssistantFull,
+          setStatus,
+          onShowVideo,
+          onAct1Complete,
+          onAct1Oopsie,
+          onAct1Title, 
+        })
+      : useChatFlow({
+          log,
+          setLog,
+          push,
+          setAssistantFull,
+          setStatus,
+          onShowVideo,
+        });
+  
+  const { submitUserText, handleScreenEvent } = driver;
+  
+  // If Act 1 passes an initial user idea, submit it automatically once
+  useEffect(() => {
+    if (!initialUserText || initialSubmitted) return;
+    if (mode !== "act1") return;
+
+    setInitialSubmitted(true);
+    // Fire the driver as if the user had typed this in the composer
+    submitUserText(initialUserText);
+  }, [initialUserText, initialSubmitted, mode, submitUserText]);
+
 
   useLLMEventBridge({
     handleScreenEvent,
@@ -113,18 +159,27 @@ export default function Chat({
 return (
   <section className="w-full h-full flex flex-col overflow-hidden">
     
-    {/* Small instruction text */}
+  {/* Small instruction text – only in main mode */}
+  {mode === "main" && (
     <div className="px-4 pt-3 pb-1 text-sm text-muted-foreground">
       Chat with Mimsy to explore Michael’s portfolio.
     </div>
+  )}
+
 
     <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
       {messages.map((m, index) => {
         const lastMessageId = messages[messages.length - 1]?.id;
         const isLastAssistantActive =
           m.role === "assistant" && m.id === lastMessageId && status === "answer";
-    
-        const textToShow = isLastAssistantActive && typed ? typed : m.text;
+        
+        // Only use typewriter in main mode; Act 1 just shows full text
+        const useTyping = mode === "main";
+        
+        const textToShow =
+          useTyping && isLastAssistantActive ? typed : m.text;
+
+
     
         return (
           <Bubble key={m.id} role={m.role}>

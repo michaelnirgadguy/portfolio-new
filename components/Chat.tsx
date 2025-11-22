@@ -159,7 +159,7 @@ export default function Chat({
     <section className="w-full h-full flex flex-col overflow-hidden">
       {/* Small instruction text – only in main mode */}
       {mode === "main" && (
-        <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground border-b border-[hsl(var(--border))]">
+          <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground">
           Chat with Mimsy to explore Michael’s portfolio.
         </div>
       )}

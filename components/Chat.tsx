@@ -211,19 +211,21 @@ export default function Chat({
         })}
 
       {/* Assistant pending indicator – Mimsy on the wheel */}
-          {status === "pending" && (
-            <div className="flex w-full justify-start">
-              <div className="flex items-start gap-2 max-w-[80%]">
-                {/* Hamster wheel in place of avatar */}
-                <div className="mt-1">
-                  <span
-                    className="hamster-wheel"
-                    aria-label="Mimsy is thinking"
-                  />
-                </div>
-              </div>
+      {status === "pending" && (
+        <div className="flex w-full justify-start">
+          <div className="flex items-start gap-2 max-w-[80%]">
+      
+            {/* Hamster wheel in place of avatar */}
+            <div className="mt-1 h-10 w-10 flex items-center justify-center">
+              <span
+                className="hamster-wheel scale-[0.65] origin-top-left block"
+                aria-label="Mimsy is thinking"
+              />
             </div>
-          )}
+      
+          </div>
+        </div>
+      )}
 
         <div ref={scrollRef} />
       </div>

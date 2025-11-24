@@ -243,16 +243,16 @@ export default function Chat({
         <div ref={scrollRef} />
       </div>
 
-{/* Composer */}
+/* Composer */}
 <form
   onSubmit={onSubmit}
   className="px-2 pb-1 pt-2"
 >
-  {/* Animated border wrapper */}
-  <div className={`rounded-full p-[2px] ${inputGlow ? "border-sweep" : ""}`}>
+  {/* Wrapper that gets the animated border sweep */}
+  <div className={`${inputGlow ? "chat-pill-glow" : ""} rounded-full`}>
 
     <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-      
+
       <Button
         type="button"
         variant="outlineAccent"
@@ -268,8 +268,8 @@ export default function Chat({
         ref={inputRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onFocus={() => setInputGlow(true)}
-        onBlur={() => setInputGlow(false)}
+        onFocus={() => setInputGlow(true)}     // ✔ manual-focus glow
+        onBlur={() => setInputGlow(false)}      // ✔ remove glow when leaving
         placeholder='Try "Show me a geeky video"'
         className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
       />

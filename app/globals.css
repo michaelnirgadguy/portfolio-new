@@ -162,3 +162,38 @@
   transform: scale(0.4);      /* makes it appear ~40×40 */
   transform-origin: top left; /* keeps it aligned correctly */
 }
+
+/* BORDER SWEEP ANIMATION */
+.border-sweep {
+  position: relative;
+}
+
+/* The animated border layer */
+.border-sweep::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px; /* match the wrapper padding */
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 250deg,
+    hsl(var(--accent)) 300deg,
+    hsl(var(--accent)) 340deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: sweep 2s linear infinite;
+}
+
+/* The rotation animation */
+@keyframes sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}

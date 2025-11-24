@@ -161,9 +161,9 @@ export default function Chat({
 
           {/* Mimsy avatar */}
           <img
-            src="/mimsyavatar.png"
+            src="/bigger-avatar.png"
             alt="Mimsy"
-            className="mt-1 h-8 w-8 rounded-full shrink-0"
+            className="mt-1 h-10 w-10 rounded-full shrink-0"
           />
 
           {/* Assistant bubble */}
@@ -210,12 +210,20 @@ export default function Chat({
           );
         })}
 
-        {/* Assistant pending indicator */}
-        {status === "pending" && (
-          <Bubble role="assistant">
-            <span className="opacity-70">…</span>
-          </Bubble>
-        )}
+      {/* Assistant pending indicator – Mimsy on the wheel */}
+          {status === "pending" && (
+            <div className="flex w-full justify-start">
+              <div className="flex items-start gap-2 max-w-[80%]">
+                {/* Hamster wheel in place of avatar */}
+                <div className="mt-1">
+                  <span
+                    className="hamster-wheel"
+                    aria-label="Mimsy is thinking"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
         <div ref={scrollRef} />
       </div>

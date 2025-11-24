@@ -127,12 +127,22 @@ export default function Chat({
     setInput(SuggestedPrompts[idx]);
   }
 
-  // Scroll-to-bottom ref
+  // useRefs
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typed, status]);
+
+    // When Mimsy replies, focus the input
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    if (last.role === "assistant") {
+      inputRef.current?.focus();
+    }
+  }, [messages]);
 
   // Render a bubble
   function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
@@ -248,11 +258,13 @@ export default function Chat({
           </Button>
 
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder='Try "Show me a geeky video"'
             className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
           />
+
 
           <Button
             type="submit"

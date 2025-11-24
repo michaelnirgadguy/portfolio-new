@@ -163,25 +163,20 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
-/* Chat input – animated border sweep */
-@property --chat-gradient-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
+/* Chat input – animated border sweep (simple version) */
 .chat-pill-glow {
   position: relative;
+  z-index: 0;
 }
 
 .chat-pill-glow::before,
 .chat-pill-glow::after {
   content: "";
   position: absolute;
-  inset: -2px; /* how far the glow sits outside the pill */
-  border-radius: 9999px; /* pill shape */
+  inset: -2px;               /* thickness + offset */
+  border-radius: 9999px;     /* pill shape */
   background: conic-gradient(
-    from var(--chat-gradient-angle),
+    from 0deg,
     transparent 0deg,
     transparent 220deg,
     hsl(var(--accent)) 260deg,
@@ -190,20 +185,16 @@
     transparent 360deg
   );
   z-index: -1;
-  animation: chat-pill-rotate 1.6s linear 2; /* 2 full spins */
+  animation: chat-pill-rotate 1.4s linear 2; /* 2 spins then stop */
 }
 
 .chat-pill-glow::after {
   filter: blur(8px);
-  opacity: 0.7; /* soften the glow */
+  opacity: 0.7;
 }
 
 @keyframes chat-pill-rotate {
-  0% {
-    --chat-gradient-angle: 0deg;
-  }
-  100% {
-    --chat-gradient-angle: 360deg;
+  to {
+    transform: rotate(360deg);
   }
 }
-

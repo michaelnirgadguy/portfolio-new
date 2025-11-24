@@ -163,37 +163,47 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
-/* BORDER SWEEP ANIMATION */
-.border-sweep {
+/* Chat input – animated border sweep */
+@property --chat-gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.chat-pill-glow {
   position: relative;
 }
 
-/* The animated border layer */
-.border-sweep::before {
+.chat-pill-glow::before,
+.chat-pill-glow::after {
   content: "";
   position: absolute;
-  inset: 0;
-  padding: 2px; /* match the wrapper padding */
-  border-radius: inherit;
+  inset: -2px; /* how far the glow sits outside the pill */
+  border-radius: 9999px; /* pill shape */
   background: conic-gradient(
-    from 0deg,
+    from var(--chat-gradient-angle),
     transparent 0deg,
-    transparent 250deg,
-    hsl(var(--accent)) 300deg,
-    hsl(var(--accent)) 340deg,
+    transparent 220deg,
+    hsl(var(--accent)) 260deg,
+    hsl(var(--accent)) 320deg,
+    transparent 350deg,
     transparent 360deg
   );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  animation: sweep 2s linear infinite;
+  z-index: -1;
+  animation: chat-pill-rotate 1.6s linear 2; /* 2 full spins */
 }
 
-/* The rotation animation */
-@keyframes sweep {
-  to {
-    transform: rotate(360deg);
+.chat-pill-glow::after {
+  filter: blur(8px);
+  opacity: 0.7; /* soften the glow */
+}
+
+@keyframes chat-pill-rotate {
+  0% {
+    --chat-gradient-angle: 0deg;
+  }
+  100% {
+    --chat-gradient-angle: 360deg;
   }
 }
+

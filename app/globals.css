@@ -173,12 +173,15 @@
 .chat-pill-glow::before {
   content: "";
   position: absolute;
-  inset: -2px;               /* thickness + offset around the pill */
-  border-radius: 9999px;     /* pill shape */
+  inset: -2px;               /* border thickness */
+  border-radius: 9999px;     /* pill */
   padding: 2px;
+
+  --angle: 0deg;
+
   background:
     conic-gradient(
-      from 0deg,
+      from var(--angle),
       transparent 0deg,
       transparent 220deg,
       hsl(var(--accent)) 260deg,
@@ -186,7 +189,8 @@
       transparent 340deg,
       transparent 360deg
     );
-  /* Show only a ring (exclude center) */
+
+  /* Make it a hollow ring */
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -194,11 +198,11 @@
           mask-composite: exclude;
 
   z-index: -1;
-  animation: chat-pill-sweep 1.4s linear 2; /* 2 spins, then stop */
+  animation: chat-pill-sweep 1.4s linear infinite;
 }
 
 @keyframes chat-pill-sweep {
   to {
-    transform: rotate(360deg);
+    --angle: 360deg;
   }
 }

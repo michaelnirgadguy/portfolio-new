@@ -163,37 +163,41 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
-/* Chat input – animated border sweep (simple version) */
+/* Chat input – border sweep with a moving accent segment */
 .chat-pill-glow {
   position: relative;
   z-index: 0;
 }
 
-.chat-pill-glow::before,
-.chat-pill-glow::after {
+/* The animated border ring */
+.chat-pill-glow::before {
   content: "";
   position: absolute;
-  inset: -2px;               /* thickness + offset */
+  inset: -2px;               /* thickness + offset around the pill */
   border-radius: 9999px;     /* pill shape */
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 220deg,
-    hsl(var(--accent)) 260deg,
-    hsl(var(--accent)) 320deg,
-    transparent 350deg,
-    transparent 360deg
-  );
+  padding: 2px;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      transparent 220deg,
+      hsl(var(--accent)) 260deg,
+      hsl(var(--accent)) 320deg,
+      transparent 340deg,
+      transparent 360deg
+    );
+  /* Show only a ring (exclude center) */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+
   z-index: -1;
-  animation: chat-pill-rotate 1.4s linear 2; /* 2 spins then stop */
+  animation: chat-pill-sweep 1.4s linear 2; /* 2 spins, then stop */
 }
 
-.chat-pill-glow::after {
-  filter: blur(8px);
-  opacity: 0.7;
-}
-
-@keyframes chat-pill-rotate {
+@keyframes chat-pill-sweep {
   to {
     transform: rotate(360deg);
   }

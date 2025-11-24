@@ -216,7 +216,7 @@ export default function Chat({
           <div className="flex items-start gap-2 max-w-[80%]">
       
             {/* Hamster wheel in place of avatar */}
-            <div className="mt-1 h-20 w-20 flex items-center justify-center">
+            <div className="mt-1 h-28 w-28 flex items-center justify-center">
               <span
                 className="hamster-wheel scale-[0.55] origin-top-left block"
                 aria-label="Mimsy is thinking"

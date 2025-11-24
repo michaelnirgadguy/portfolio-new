@@ -6,6 +6,7 @@ import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
 import { useAct1Driver } from "@/hooks/useAct1Driver";
+import ChatGlowBorder from "@/components/ChatGlowBorder";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -248,10 +249,10 @@ export default function Chat({
   onSubmit={onSubmit}
   className="px-2 pb-1 pt-2"
 >
-  {/* Wrapper that gets the animated border sweep */}
-  <div className={`${inputGlow ? "chat-pill-glow" : ""} rounded-full`}>
+  <div className="relative rounded-full">
+    <ChatGlowBorder active={inputGlow} />
 
-    <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+    <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
 
       <Button
         type="button"
@@ -268,8 +269,8 @@ export default function Chat({
         ref={inputRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onFocus={() => setInputGlow(true)}     // ✔ manual-focus glow
-        onBlur={() => setInputGlow(false)}      // ✔ remove glow when leaving
+        onFocus={() => setInputGlow(true)}
+        onBlur={() => setInputGlow(false)}
         placeholder='Try "Show me a geeky video"'
         className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
       />
@@ -285,9 +286,9 @@ export default function Chat({
       </Button>
 
     </div>
-
   </div>
 </form>
+
 
     </section>
   );

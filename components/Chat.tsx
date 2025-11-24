@@ -52,6 +52,9 @@ export default function Chat({
   const [assistantFull, setAssistantFull] = useState<string>("");
   const [initialSubmitted, setInitialSubmitted] = useState(false);
 
+   // Input glow effect
+  const [inputGlow, setInputGlow] = useState(false);
+ 
   function push(role: Role, text: string) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
@@ -240,43 +243,52 @@ export default function Chat({
         <div ref={scrollRef} />
       </div>
 
-      {/* Composer */}
-      <form
-        onSubmit={onSubmit}
-        className="px-2 pb-1 pt-2"
+{/* Composer */}
+<form
+  onSubmit={onSubmit}
+  className="px-2 pb-1 pt-2"
+>
+  {/* Animated border wrapper */}
+  <div className={`rounded-full p-[2px] ${inputGlow ? "border-sweep" : ""}`}>
+
+    <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+      
+      <Button
+        type="button"
+        variant="outlineAccent"
+        size="pill"
+        onClick={handleSparkle}
+        aria-label="Generate a prompt"
+        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
       >
-        <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-          <Button
-            type="button"
-            variant="outlineAccent"
-            size="pill"
-            onClick={handleSparkle}
-            aria-label="Generate a prompt"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <span className="text-xl leading-none">✨</span>
-          </Button>
+        <span className="text-xl leading-none">✨</span>
+      </Button>
 
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder='Try "Show me a geeky video"'
-            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-          />
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onFocus={() => setInputGlow(true)}
+        onBlur={() => setInputGlow(false)}
+        placeholder='Try "Show me a geeky video"'
+        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+      />
 
+      <Button
+        type="submit"
+        variant="outlineAccent"
+        size="icon"
+        aria-label="Send"
+        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+      >
+        <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+      </Button>
 
-          <Button
-            type="submit"
-            variant="outlineAccent"
-            size="icon"
-            aria-label="Send"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-          </Button>
-        </div>
-      </form>
+    </div>
+
+  </div>
+</form>
+
     </section>
   );
 }

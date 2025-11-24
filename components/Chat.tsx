@@ -249,8 +249,10 @@ export default function Chat({
   onSubmit={onSubmit}
   className="px-2 pb-1 pt-2"
 >
-  <div className="relative rounded-full">
-    <ChatGlowBorder active={inputGlow} />
+  <div className="relative rounded-full overflow-visible">
+    <div className="absolute inset-0">
+      <ChatGlowBorder active={inputGlow} />
+    </div>
 
     <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
 

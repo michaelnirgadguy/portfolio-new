@@ -214,7 +214,7 @@ export default function Chat({
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder='Type a request… e.g. "bold, funny tech ad"'
+            placeholder='Try "Show me a geeky video"'
             className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
           />
 

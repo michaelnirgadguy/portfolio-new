@@ -243,7 +243,7 @@ export default function Chat({
         <div ref={scrollRef} />
       </div>
 
-/* Composer */}
+{/* Composer */}
 <form
   onSubmit={onSubmit}
   className="px-2 pb-1 pt-2"

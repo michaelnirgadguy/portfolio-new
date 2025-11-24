@@ -137,23 +137,49 @@ export default function Chat({
   // Render a bubble
   function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
     const isUser = role === "user";
+
+    // USER bubble
+    if (isUser) {
+      return (
+        <div className="flex w-full justify-end">
+          <div
+            className={`
+              max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+              bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]
+            `}
+          >
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    // ASSISTANT (Mimsy) bubble with avatar
     return (
-      <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-        <div
-          className={`
-            max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-            ${
-              isUser
-                ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
-                : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
-            }
-          `}
-        >
-          {children}
+      <div className="flex w-full justify-start">
+        <div className="flex items-start gap-2 max-w-[80%]">
+
+          {/* Mimsy avatar */}
+          <img
+            src="/mimsyavatar.png"
+            alt="Mimsy"
+            className="mt-1 h-8 w-8 rounded-full shrink-0"
+          />
+
+          {/* Assistant bubble */}
+          <div
+            className={`
+              flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+              bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]
+            `}
+          >
+            {children}
+          </div>
         </div>
       </div>
     );
   }
+
 
   return (
     <section className="w-full h-full flex flex-col overflow-hidden">

@@ -158,15 +158,15 @@ export default function Act1Chat({
       );
     }
 
-    if (isSystem) {
+      if (isSystem) {
       return (
-        <div className="flex w-full justify-center">
+        <div className="flex w-full justify-start">
           <div className="flex items-start gap-3 max-w-[80%]">
             {/* Spinner ONLY while this system line is active */}
             {isSystemActive && (
-              <div className="mt-1 h-16 w-16 flex items-center justify-center shrink-0">
+              <div className="mt-1 h-20 w-20 flex items-center justify-center shrink-0">
                 <span
-                  className="hamster-wheel scale-[0.7] origin-center block"
+                  className="hamster-wheel origin-center block"
                   aria-label="Mimsy is thinking"
                 />
               </div>
@@ -175,8 +175,8 @@ export default function Act1Chat({
             <div
               className={`
                 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-                bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]
-                text-center
+                bg-muted text-muted-foreground border border-dashed border-[hsl(var(--border))]
+                text-sm
               `}
             >
               {children}
@@ -185,6 +185,7 @@ export default function Act1Chat({
         </div>
       );
     }
+
 
     // Assistant (Mimsy) – normal messages
     return (

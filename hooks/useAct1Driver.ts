@@ -107,35 +107,40 @@ export function useAct1Driver({
 
         setHasRun(true);
 
-    // Play lines one by one with a short pause in between
-    
-    let lineIndex = 0;
-    
-    for (const line of lines) {
-      const clean = line.trim();
-      if (!clean) continue;
-    
-      lineIndex += 1;
-    
-      // 1. Show spinner for the full wait duration
-      setAssistantFull("");        // clear previous text
-      setStatus("pending");        // show hamster wheel
-    
-      // wait 2500 ms with spinner
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-    
-      // 2. Now show the actual line
-      push("assistant", clean);
-      setAssistantFull(clean);
-      setStatus("answer");
-    
-      // 3. Trigger oopsie on line 5
-      if (lineIndex === 5) {
-        onAct1Oopsie?.();
-      }
-    }
+        let lineIndex = 0;
 
+        // Play lines one by one
+        for (const line of lines) {
+          const clean = line.trim();
+          if (!clean) continue;
+
+          lineIndex += 1;
+
+          // 1) Show the line itself
+          push("assistant", clean);
+          setAssistantFull(clean);
+
+          // 2) While this line is "live", show the spinner
+          setStatus("pending");
+
+          // Trigger Oopsie exactly when the 5th line shows up
+          if (lineIndex === 5) {
+            onAct1Oopsie?.();
+          }
+
+          // Keep spinner visible for 2.5s
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 2500));
+
+          // 3) Turn spinner off — line now looks like a regular Mimsy bubble
+          setStatus("answer");
+        }
+
+        // Extra 2.5s delay AFTER line 5, before the invite
+        setAssistantFull("");
+        setStatus("pending");
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 2500));
 
         // Final invitation line – sets up Act 1's punchline
         const invite =

@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { Acts } from "@/lib/acts";
 import CenterDock from "@/components/CenterDock";
-import Chat from "@/components/Chat";
 import FakeVideoCard from "@/components/FakeVideoCard";
 import Act1Chat from "@/components/Act1Chat";
 

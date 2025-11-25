@@ -128,17 +128,20 @@ export default function Act1Chat({
     }
   }, [messages]);
 
-  // Bubble component
-  function Bubble({
+   function Bubble({
     role,
+    kind,
     isSystemActive,
     children,
   }: {
     role: Role;
+    kind?: "normal" | "system";
     isSystemActive?: boolean;
     children: React.ReactNode;
   }) {
+
     const isUser = role === "user";
+    const isSystem = kind === "system";
 
     if (isUser) {
       return (
@@ -155,7 +158,35 @@ export default function Act1Chat({
       );
     }
 
-    // Assistant (Mimsy)
+    if (isSystem) {
+      return (
+        <div className="flex w-full justify-center">
+          <div className="flex items-start gap-3 max-w-[80%]">
+            {/* Spinner ONLY while this system line is active */}
+            {isSystemActive && (
+              <div className="mt-1 h-16 w-16 flex items-center justify-center shrink-0">
+                <span
+                  className="hamster-wheel scale-[0.7] origin-center block"
+                  aria-label="Mimsy is thinking"
+                />
+              </div>
+            )}
+
+            <div
+              className={`
+                px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+                bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]
+                text-center
+              `}
+            >
+              {children}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Assistant (Mimsy) – normal messages
     return (
       <div className="flex w-full justify-start">
         <div className="flex items-start gap-2 max-w-[80%]">
@@ -192,7 +223,7 @@ export default function Act1Chat({
     <section className="w-full h-full flex flex-col overflow-hidden">
       {/* Messages surface */}
       <div className="flex-1 overflow-y-auto px-3 pt-4 pb-1 space-y-4 min-h-0">
-        {messages.map((m) => {
+         {messages.map((m) => {
           const isSystemActive =
             m.kind === "system" &&
             m.id === lastSystemId &&
@@ -204,12 +235,14 @@ export default function Act1Chat({
             <Bubble
               key={m.id}
               role={m.role}
+              kind={m.kind}
               isSystemActive={isSystemActive}
             >
               {textToShow}
             </Bubble>
           );
         })}
+
 
         <div ref={scrollRef} />
       </div>

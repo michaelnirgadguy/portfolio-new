@@ -6,6 +6,7 @@ import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
 import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
 import { useAct1Driver } from "@/hooks/useAct1Driver";
+import ChatGlowBorder from "@/components/ChatGlowBorder";
 
 type Role = "user" | "assistant";
 type Message = { id: string; role: Role; text: string };
@@ -52,6 +53,9 @@ export default function Chat({
   const [assistantFull, setAssistantFull] = useState<string>("");
   const [initialSubmitted, setInitialSubmitted] = useState(false);
 
+   // Input glow effect
+  const [inputGlow, setInputGlow] = useState(false);
+ 
   function push(role: Role, text: string) {
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
   }
@@ -127,33 +131,69 @@ export default function Chat({
     setInput(SuggestedPrompts[idx]);
   }
 
-  // Scroll-to-bottom ref
+  // useRefs
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typed, status]);
 
+    // When Mimsy replies, focus the input
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    if (last.role === "assistant") {
+      inputRef.current?.focus();
+    }
+  }, [messages]);
+
   // Render a bubble
   function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
     const isUser = role === "user";
+
+    // USER bubble
+    if (isUser) {
+      return (
+        <div className="flex w-full justify-end">
+          <div
+            className={`
+              max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+              bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]
+            `}
+          >
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    // ASSISTANT (Mimsy) bubble with avatar
     return (
-      <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-        <div
-          className={`
-            max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-            ${
-              isUser
-                ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]"
-                : "bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]"
-            }
-          `}
-        >
-          {children}
+      <div className="flex w-full justify-start">
+        <div className="flex items-start gap-2 max-w-[80%]">
+
+          {/* Mimsy avatar */}
+          <img
+            src="/bigger-avatar.png"
+            alt="Mimsy"
+            className="mt-1 h-10 w-10 rounded-full shrink-0"
+          />
+
+          {/* Assistant bubble */}
+          <div
+            className={`
+              flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+              bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]
+            `}
+          >
+            {children}
+          </div>
         </div>
       </div>
     );
   }
+
 
   return (
     <section className="w-full h-full flex flex-col overflow-hidden">
@@ -184,51 +224,71 @@ export default function Chat({
           );
         })}
 
-        {/* Assistant pending indicator */}
-        {status === "pending" && (
-          <Bubble role="assistant">
-            <span className="opacity-70">…</span>
-          </Bubble>
-        )}
+      {/* Assistant pending indicator – Mimsy on the wheel */}
+      {status === "pending" && (
+        <div className="flex w-full justify-start">
+          <div className="flex items-start gap-2 max-w-[80%]">
+      
+            {/* Hamster wheel in place of avatar */}
+            <div className="mt-1 h-28 w-28 flex items-center justify-center">
+              <span
+                className="hamster-wheel scale-[0.55] origin-top-left block"
+                aria-label="Mimsy is thinking"
+              />
+            </div>
+      
+          </div>
+        </div>
+      )}
 
         <div ref={scrollRef} />
       </div>
 
-      {/* Composer */}
-      <form
-        onSubmit={onSubmit}
-        className="px-2 pb-1 pt-2"
+{/* Composer */}
+<form
+  onSubmit={onSubmit}
+  className="px-2 pb-1 pt-2"
+>
+  <div className="relative">
+    {/* This div IS the pill; SVG will hug this box exactly */}
+    <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+      <ChatGlowBorder active={inputGlow} />
+
+      <Button
+        type="button"
+        variant="outlineAccent"
+        size="pill"
+        onClick={handleSparkle}
+        aria-label="Generate a prompt"
+        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
       >
-        <div className="w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-          <Button
-            type="button"
-            variant="outlineAccent"
-            size="pill"
-            onClick={handleSparkle}
-            aria-label="Generate a prompt"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <span className="text-xl leading-none">✨</span>
-          </Button>
+        <span className="text-xl leading-none">✨</span>
+      </Button>
 
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder='Type a request… e.g. "bold, funny tech ad"'
-            className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-          />
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onFocus={() => setInputGlow(true)}
+        onBlur={() => setInputGlow(false)}
+        placeholder='Try "Show me a geeky video"'
+        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+      />
 
-          <Button
-            type="submit"
-            variant="outlineAccent"
-            size="icon"
-            aria-label="Send"
-            className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-          >
-            <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-          </Button>
-        </div>
-      </form>
+      <Button
+        type="submit"
+        variant="outlineAccent"
+        size="icon"
+        aria-label="Send"
+        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+      >
+        <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+      </Button>
+    </div>
+  </div>
+</form>
+
+
     </section>
   );
 }

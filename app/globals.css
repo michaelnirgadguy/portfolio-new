@@ -162,3 +162,55 @@
   transform: scale(0.4);      /* makes it appear ~40×40 */
   transform-origin: top left; /* keeps it aligned correctly */
 }
+
+/* Chat input – border sweep with a moving accent segment */
+/* Make the angle custom property smoothly animatable */
+@property --chat-pill-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+
+.chat-pill-glow {
+  position: relative;
+  z-index: 0;
+}
+
+/* The animated border ring */
+.chat-pill-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;               /* border thickness */
+  border-radius: 9999px;     /* pill */
+  padding: 2px;
+
+  background:
+    conic-gradient(
+      from var(--chat-pill-angle),
+      transparent 0deg,
+      transparent 220deg,
+      hsl(var(--accent)) 260deg,
+      hsl(var(--accent)) 320deg,
+      transparent 340deg,
+      transparent 360deg
+    );
+
+  /* Hollow ring mask */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+
+  pointer-events: none;
+  z-index: -1;
+
+  animation: chat-pill-sweep 1.4s linear infinite;
+}
+
+@keyframes chat-pill-sweep {
+  to {
+    --chat-pill-angle: 360deg;
+  }
+}

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
-import { useLLMEventBridge } from "@/hooks/useChatHooks";
 import { useAct1Driver } from "@/hooks/useAct1Driver";
 import ChatGlowBorder from "@/components/ChatGlowBorder";
 
@@ -66,7 +65,7 @@ export default function Act1Chat({
     [...messages].reverse().find((m) => m.kind === "system")?.id ?? null;
 
   // Act 1 driver (LLM script)
-  const { submitUserText, handleScreenEvent } = useAct1Driver({
+  const { submitUserText } = useAct1Driver({
     log,
     setLog,
     push,
@@ -85,14 +84,6 @@ export default function Act1Chat({
     setInitialSubmitted(true);
     submitUserText(initialUserText);
   }, [initialUserText, initialSubmitted, submitUserText]);
-
-  // Event bridge (currently a no-op in useAct1Driver, but wired for future use)
-  useLLMEventBridge({
-    handleScreenEvent,
-    push,
-    setAssistantFull,
-    setStatus,
-  });
 
   // Submit handler
   async function onSubmit(e: React.FormEvent) {
@@ -119,16 +110,16 @@ export default function Act1Chat({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status, assistantFull]);
 
-  // When Mimsy replies, focus the input
+  // When Mimsy replies, focus the input (once composer is visible)
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last) return;
-    if (last.role === "assistant") {
+    if (last.role === "assistant" && status === "answer") {
       inputRef.current?.focus();
     }
-  }, [messages]);
+  }, [messages, status]);
 
-   function Bubble({
+  function Bubble({
     role,
     kind,
     isSystemActive,
@@ -139,10 +130,10 @@ export default function Act1Chat({
     isSystemActive?: boolean;
     children: React.ReactNode;
   }) {
-
     const isUser = role === "user";
     const isSystem = kind === "system";
 
+    // User bubble
     if (isUser) {
       return (
         <div className="flex w-full justify-end">
@@ -158,15 +149,16 @@ export default function Act1Chat({
       );
     }
 
-      if (isSystem) {
+    // System bubble (scripted generator lines)
+    if (isSystem) {
       return (
         <div className="flex w-full justify-start">
           <div className="flex items-start gap-3 max-w-[80%]">
-            {/* Spinner ONLY while this system line is active */}
+            {/* Big hamster-wheel while this system line is active */}
             {isSystemActive && (
-              <div className="mt-1 h-20 w-20 flex items-center justify-center shrink-0">
+              <div className="mt-1 h-20 w-24 flex items-center justify-center shrink-0">
                 <span
-                  className="hamster-wheel origin-center block"
+                  className="hamster-wheel origin-center block scale-[0.65]"
                   aria-label="Mimsy is thinking"
                 />
               </div>
@@ -175,8 +167,10 @@ export default function Act1Chat({
             <div
               className={`
                 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-                bg-muted text-muted-foreground border border-dashed border-[hsl(var(--border))]
-                text-sm
+                bg-muted text-[hsl(var(--foreground))]
+                border border-dashed border-[hsl(var(--border))]
+                text-[0.95rem] font-medium
+                ${isSystemActive ? "animate-pulse" : ""}
               `}
             >
               {children}
@@ -186,16 +180,17 @@ export default function Act1Chat({
       );
     }
 
-
     // Assistant (Mimsy) – normal messages
+    const showInlineSpinner = isSystemActive;
+
     return (
       <div className="flex w-full justify-start">
         <div className="flex items-start gap-2 max-w-[80%]">
-          {/* Mimsy avatar OR inline spinner for active system message */}
-          {isSystemActive ? (
-            <div className="mt-1 h-10 w-10 flex items-center justify-center shrink-0">
+          {/* Mimsy avatar OR inline spinner */}
+          {showInlineSpinner ? (
+            <div className="mt-1 h-16 w-16 flex items-center justify-center shrink-0">
               <span
-                className="hamster-wheel scale-[0.55] origin-center block"
+                className="hamster-wheel origin-center block scale-[0.5]"
                 aria-label="Mimsy is thinking"
               />
             </div>
@@ -224,7 +219,7 @@ export default function Act1Chat({
     <section className="w-full h-full flex flex-col overflow-hidden">
       {/* Messages surface */}
       <div className="flex-1 overflow-y-auto px-3 pt-4 pb-1 space-y-4 min-h-0">
-         {messages.map((m) => {
+        {messages.map((m) => {
           const isSystemActive =
             m.kind === "system" &&
             m.id === lastSystemId &&
@@ -244,50 +239,51 @@ export default function Act1Chat({
           );
         })}
 
-
         <div ref={scrollRef} />
       </div>
 
-      {/* Composer */}
-      <form onSubmit={onSubmit} className="px-2 pb-1 pt-2">
-        <div className="relative">
-          {/* This div IS the pill; SVG will hug this box exactly */}
-          <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-            <ChatGlowBorder active={inputGlow} />
+      {/* Composer – only appears once Mimsy is ready for the final answer */}
+      {status === "answer" && (
+        <form onSubmit={onSubmit} className="px-2 pb-1 pt-2">
+          <div className="relative">
+            {/* This div IS the pill; SVG will hug this box exactly */}
+            <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+              <ChatGlowBorder active={inputGlow} />
 
-            <Button
-              type="button"
-              variant="outlineAccent"
-              size="pill"
-              onClick={handleSparkle}
-              aria-label="Generate a prompt"
-              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-            >
-              <span className="text-xl leading-none">✨</span>
-            </Button>
+              <Button
+                type="button"
+                variant="outlineAccent"
+                size="pill"
+                onClick={handleSparkle}
+                aria-label="Generate a prompt"
+                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+              >
+                <span className="text-xl leading-none">✨</span>
+              </Button>
 
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={() => setInputGlow(true)}
-              onBlur={() => setInputGlow(false)}
-              placeholder='Try "Shrink my crazy idea"'
-              className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-            />
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onFocus={() => setInputGlow(true)}
+                onBlur={() => setInputGlow(false)}
+                placeholder='Try "Shrink my crazy idea"'
+                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+              />
 
-            <Button
-              type="submit"
-              variant="outlineAccent"
-              size="icon"
-              aria-label="Send"
-              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-            >
-              <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-            </Button>
+              <Button
+                type="submit"
+                variant="outlineAccent"
+                size="icon"
+                aria-label="Send"
+                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+              >
+                <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+              </Button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      )}
     </section>
   );
 }

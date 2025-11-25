@@ -250,7 +250,10 @@ export default function Chat({
           const useTyping = mode === "main";
 
           const isSystemActive =
-            m.kind === "system" && m.id === lastSystemId;
+            mode === "act1" &&
+            m.kind === "system" &&
+            m.id === lastSystemId &&
+            status === "pending";
 
           const textToShow =
             useTyping && isLastAssistantActive ? typed : m.text;

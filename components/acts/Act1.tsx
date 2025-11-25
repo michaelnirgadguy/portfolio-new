@@ -35,27 +35,29 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
   // Phase B — Fake-run screen
   if (phase === "fakeRun") {
     return (
-      <CenterDock
-        chat={
-          <Chat
-            mode="act1"
-            initialUserText={idea}
-            onAct1Complete={finish}
-            onAct1Oopsie={() => setOopsie(true)}
-            onAct1Title={(t) => setTitle(t)}
-          />
-        }
-       top={
-        <FakeVideoCard
-          title={title}
-          oopsie={oopsie}
-          onShowHumanVideos={finish}
+      <div className="h-[100svh] w-full bg-background">
+        <CenterDock
+          chat={
+            <Chat
+              mode="act1"
+              initialUserText={idea}
+              onAct1Complete={finish}
+              onAct1Oopsie={() => setOopsie(true)}
+              onAct1Title={(t) => setTitle(t)}
+            />
+          }
+          top={
+            <FakeVideoCard
+              title={title}
+              oopsie={oopsie}
+              onShowHumanVideos={finish}
+            />
+          }
         />
-
-        }
-      />
+      </div>
     );
   }
+
 
   // Phase A — Landing screen
   return (

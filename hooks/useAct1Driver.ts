@@ -107,29 +107,35 @@ export function useAct1Driver({
 
         setHasRun(true);
 
-        let lineIndex = 0;
+    // Play lines one by one with a short pause in between
+    
+    let lineIndex = 0;
+    
+    for (const line of lines) {
+      const clean = line.trim();
+      if (!clean) continue;
+    
+      lineIndex += 1;
+    
+      // 1. Show spinner for the full wait duration
+      setAssistantFull("");        // clear previous text
+      setStatus("pending");        // show hamster wheel
+    
+      // wait 2500 ms with spinner
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    
+      // 2. Now show the actual line
+      push("assistant", clean);
+      setAssistantFull(clean);
+      setStatus("answer");
+    
+      // 3. Trigger oopsie on line 5
+      if (lineIndex === 5) {
+        onAct1Oopsie?.();
+      }
+    }
 
-        // Play lines one by one with a short pause in between
-        for (const line of lines) {
-          const clean = line.trim();
-          if (!clean) continue;
-
-          lineIndex += 1;
-
-          // Show this line as Mimsy's current message
-          push("assistant", clean);
-          setAssistantFull(clean);
-          setStatus("answer");
-
-          // When the 5th line appears, trigger the Oopsie state
-          if (lineIndex === 5) {
-            onAct1Oopsie?.();
-          }
-
-          // Wait ~2.5s before the next line
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 2500));
-        }
 
         // Final invitation line – sets up Act 1's punchline
         const invite =

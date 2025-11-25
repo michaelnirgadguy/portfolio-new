@@ -7,6 +7,7 @@ import { Acts } from "@/lib/acts";
 import CenterDock from "@/components/CenterDock";
 import Chat from "@/components/Chat";
 import FakeVideoCard from "@/components/FakeVideoCard";
+import Act1Chat from "@/components/Act1Chat";
 
 export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");

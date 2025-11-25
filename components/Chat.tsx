@@ -9,7 +9,13 @@ import { useAct1Driver } from "@/hooks/useAct1Driver";
 import ChatGlowBorder from "@/components/ChatGlowBorder";
 
 type Role = "user" | "assistant";
-type Message = { id: string; role: Role; text: string };
+type Message = {
+  id: string;
+  role: Role;
+  text: string;
+  kind?: "normal" | "system";
+};
+
 type SurfaceStatus = "idle" | "pending" | "answer";
 type ChatMode = "main" | "act1";
 
@@ -55,9 +61,20 @@ export default function Chat({
 
    // Input glow effect
   const [inputGlow, setInputGlow] = useState(false);
+
+  // Last "system" message on screen (used for the inline spinner in Act 1)
+  const lastSystemId =
+    [...messages].reverse().find((m) => m.kind === "system")?.id ?? null;
  
-  function push(role: Role, text: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
+  function push(
+    role: Role,
+    text: string,
+    kind: "normal" | "system" = "normal"
+  ) {
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role, text, kind },
+    ]);
   }
 
 // Which driver should Chat use?
@@ -149,7 +166,15 @@ export default function Chat({
   }, [messages]);
 
   // Render a bubble
-  function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
+    function Bubble({
+    role,
+    isSystemActive,
+    children,
+  }: {
+    role: Role;
+    isSystemActive?: boolean;
+    children: React.ReactNode;
+  }) {
     const isUser = role === "user";
 
     // USER bubble
@@ -173,12 +198,22 @@ export default function Chat({
       <div className="flex w-full justify-start">
         <div className="flex items-start gap-2 max-w-[80%]">
 
-          {/* Mimsy avatar */}
-          <img
-            src="/bigger-avatar.png"
-            alt="Mimsy"
-            className="mt-1 h-10 w-10 rounded-full shrink-0"
-          />
+          {/* Mimsy avatar OR inline spinner for active system message */}
+          {isSystemActive ? (
+            <div className="mt-1 h-10 w-10 flex items-center justify-center shrink-0">
+              <span
+                className="hamster-wheel scale-[0.55] origin-center block"
+                aria-label="Mimsy is thinking"
+              />
+            </div>
+          ) : (
+            <img
+              src="/bigger-avatar.png"
+              alt="Mimsy"
+              className="mt-1 h-10 w-10 rounded-full shrink-0"
+            />
+          )}
+
 
           {/* Assistant bubble */}
           <div
@@ -214,14 +249,22 @@ export default function Chat({
           // Only use typewriter in main mode; Act 1 just shows full text
           const useTyping = mode === "main";
 
+          const isSystemActive =
+            m.kind === "system" && m.id === lastSystemId;
+
           const textToShow =
             useTyping && isLastAssistantActive ? typed : m.text;
 
-          return (
-            <Bubble key={m.id} role={m.role}>
+           return (
+            <Bubble
+              key={m.id}
+              role={m.role}
+              isSystemActive={isSystemActive}
+            >
               {textToShow}
             </Bubble>
           );
+
         })}
 
       {/* Assistant pending indicator – Mimsy on the wheel */}

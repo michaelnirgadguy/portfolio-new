@@ -38,8 +38,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
       <div className="h-[100svh] w-full bg-background">
         <CenterDock
           chat={
-            <Chat
-              mode="act1"
+            <Act1Chat
               initialUserText={idea}
               onAct1Complete={finish}
               onAct1Oopsie={() => setOopsie(true)}

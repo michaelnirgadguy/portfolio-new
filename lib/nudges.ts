@@ -8,8 +8,8 @@ import { getAct } from "@/lib/acts";
 
 /** Tweak thresholds here (number of actions until each nudge) */
 export const NUDGE_THRESHOLDS = {
-  ACT1_FIRST: 3,     // Act 1 → first nudge after this many actions
-  ACT1_REMINDER: 5,  // Act 1 → reminder after this many actions (after we reset on the first)
+  ACT1_FIRST: 8,     // Act 1 → first nudge after this many actions
+  ACT1_REMINDER: 3,  // Act 1 → reminder after this many actions (after we reset on the first)
   ACT2_FIRST: 3,     // Act 2 → single nudge directing to Act 3
 } as const;
 

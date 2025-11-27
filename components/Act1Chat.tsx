@@ -284,25 +284,12 @@ export default function Act1Chat({
 
       {/* Composer – only appears once Mimsy is ready for the final answer */}
       {status === "answer" && (
-        <form onSubmit={onSubmit} className="px-3 pb-4 pt-2">
+        <form onSubmit={onSubmit} className="px-3 pb-6 pt-2">
           <div className="relative">
             {/* This div IS the pill; SVG will hug this box exactly */}
             <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
               <ChatGlowBorder active={inputGlow} />
 
-              <Button
-                type="button"
-                variant="outlineAccent"
-                size="pill"
-                onClick={() => {
-                  markInteracted();
-                  handleSparkle();
-                }}
-                aria-label="Generate a prompt"
-                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-              >
-                <span className="text-xl leading-none">✨</span>
-              </Button>
 
               <input
                 ref={inputRef}
@@ -311,7 +298,6 @@ export default function Act1Chat({
                   setInput(e.target.value);
                   markInteracted();
                 }}
-                onFocus={markInteracted}
                 placeholder="yes please!"
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
               />

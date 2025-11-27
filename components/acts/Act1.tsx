@@ -2,12 +2,11 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Acts } from "@/lib/acts";
 import CenterDock from "@/components/CenterDock";
 import FakeVideoCard from "@/components/FakeVideoCard";
 import Act1Chat from "@/components/Act1Chat";
-import ChatGlowBorder from "@/components/ChatGlowBorder";
 
 export default function Act1({ onDone }: { onDone?: () => void }) {
   const [idea, setIdea] = useState("");
@@ -16,20 +15,6 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
 
   // Oopsie blackout state
   const [oopsie, setOopsie] = useState(false);
-
-  // Glow for input after inactivity
-  const [inputGlow, setInputGlow] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-
-  useEffect(() => {
-    if (hasInteracted) return;
-
-    const timer = setTimeout(() => {
-      setInputGlow(true);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [hasInteracted]);
 
   function run() {
     if (!idea.trim()) return;
@@ -90,40 +75,23 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           {/* Line B + input feel like one block */}
           <div className="space-y-2">
             <p className="text-[16px] leading-7">
-              Tell me you idea for a video - and  I’ll generate it for you!
+              Tell me you idea for a video - and I’ll generate it for you
             </p>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setHasInteracted(true);
-                setInputGlow(false);
                 run();
               }}
               className="flex items-center"
             >
               <div className="w-full">
-                <div
-                  className={
-                    "relative w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur" +
-                    (inputGlow
-                      ? " ring-2 ring-[hsl(var(--accent))] ring-offset-2 ring-offset-background"
-                      : "")
-                  }
-                >
-                  <ChatGlowBorder active={inputGlow} />
-
+                <div className="relative w-full flex items-center gap-2 rounded-full border bg-white/70 px-3 py-2 shadow-sm backdrop-blur">
                   <input
                     value={idea}
                     autoFocus
                     onChange={(e) => {
                       setIdea(e.target.value);
-                      if (!hasInteracted) setHasInteracted(true);
-                      setInputGlow(false);
-                    }}
-                    onFocus={() => {
-                      if (!hasInteracted) setHasInteracted(true);
-                      setInputGlow(false);
                     }}
                     placeholder='try "dogs dancing on the moon"'
                     className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
@@ -131,7 +99,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
 
                   <button
                     type="submit"
-                    className="shrink-0 rounded-full h-10 px-4 border border-input hover:border-[hsl(var(--accent))] transition"
+                    className="shrink-0 rounded-full h-10 px-5 border border-transparent bg-[hsl(var(--accent))] text-sm font-medium text-white transition hover:bg-[hsl(var(--accent))]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     Generate
                   </button>

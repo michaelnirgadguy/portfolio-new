@@ -90,7 +90,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
           {/* Line B + input feel like one block */}
           <div className="space-y-2">
             <p className="text-[16px] leading-7">
-              Tell me any video idea and I’ll generate it for you…
+              Tell me you idea for a video - and  I’ll generate it for you!
             </p>
 
             <form
@@ -125,7 +125,7 @@ export default function Act1({ onDone }: { onDone?: () => void }) {
                       if (!hasInteracted) setHasInteracted(true);
                       setInputGlow(false);
                     }}
-                    placeholder='Type your video idea. Maybe "Three dogs dancing on the moon"?'
+                    placeholder='try "dogs dancing on the moon"'
                     className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
                   />
 

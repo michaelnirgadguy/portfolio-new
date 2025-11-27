@@ -144,7 +144,7 @@ export function useAct1Driver({
 
         // Final invitation line – regular assistant message (not system)
         const invite =
-          "Oh My! this never happened to me before. mmmm...\nmaybe instead I can show you videos by my human, Michael?";
+          "Oh My! this never happened to me before.\nMmm...Maybe instead I can show you videos made by my human, Michael?";
         push("assistant", invite);
         setAssistantFull(invite);
         setStatus("answer");

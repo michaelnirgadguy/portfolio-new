@@ -204,15 +204,16 @@ export default function Act1Chat({
                 )}
               </div>
               <div
-          className={`
-            flex items-center min-h-[72px]
-            flex-1 px-4 py-3 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-            bg-muted text-[hsl(var(--foreground))]
-            border border-dashed border-[hsl(var(--border))]
-            text-[0.95rem] font-medium
-            ${isSystemActive ? "animate-pulse" : ""}
-          `}
-        >
+                className={`
+                  flex items-center justify-center text-center
+                  min-h-[72px] flex-1
+                  px-4 py-3 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+                  bg-muted text-[hsl(var(--foreground))]
+                  border border-dashed border-[hsl(var(--border))]
+                  text-[0.95rem] font-medium
+                  ${isSystemActive ? "animate-pulse" : ""}
+                `}
+              >
                 {children}
               </div>
             </div>

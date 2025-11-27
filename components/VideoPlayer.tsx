@@ -17,7 +17,6 @@ type Flags = {
   isMuted: boolean;
   stopped: boolean;
   ended: boolean;
-  idle3s: boolean;
 };
 
 function extractYouTubeId(url: string): string | null {
@@ -44,7 +43,6 @@ const initialFlags: Flags = {
   isMuted: false,
   stopped: false,
   ended: false,
-  idle3s: false,
 };
 
 export default function VideoPlayer({ url, title, className, autoplay }: Props) {
@@ -56,11 +54,11 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
   // Refs to avoid stale closures
   const durationRef = useRef<number | null>(null);
   const lastLoggedSecondRef = useRef<number | null>(null);
+  const hasStartedRef = useRef(false);
   const isPlayingRef = useRef(false);
   const endedRef = useRef(false);
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
-  const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset when URL changes
   useEffect(() => {
@@ -68,14 +66,11 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
     setLog([]);
     durationRef.current = null;
     lastLoggedSecondRef.current = null;
+    hasStartedRef.current = false;
     isPlayingRef.current = false;
     endedRef.current = false;
     played10Ref.current = false;
     midpointRef.current = false;
-    if (idleTimeoutRef.current) {
-      clearTimeout(idleTimeoutRef.current);
-      idleTimeoutRef.current = null;
-    }
   }, [url]);
 
   // Build src
@@ -99,23 +94,6 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
 
   const updateFlags = (partial: Partial<Flags>) => {
     setFlags((prev) => ({ ...prev, ...partial }));
-  };
-
-  const clearIdleTimer = () => {
-    if (idleTimeoutRef.current) {
-      clearTimeout(idleTimeoutRef.current);
-      idleTimeoutRef.current = null;
-    }
-  };
-
-  const scheduleIdle = () => {
-    clearIdleTimer();
-    idleTimeoutRef.current = setTimeout(() => {
-      if (!isPlayingRef.current) {
-        updateFlags({ idle3s: true });
-        appendLog("idle ≥3s (no video playing)");
-      }
-    }, 3000);
   };
 
   // Load Bunny player.js script
@@ -145,109 +123,121 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
 
     const player = new w.playerjs.Player(iframeRef.current);
 
+    const handlePlay = () => {
+      appendLog("play");
+      hasStartedRef.current = true;
+      isPlayingRef.current = true;
+      endedRef.current = false;
+      updateFlags({
+        isPlaying: true,
+        stopped: false,
+        ended: false,
+      });
+    };
+
+    const handlePause = () => {
+      appendLog("pause");
+      isPlayingRef.current = false;
+      updateFlags({ isPlaying: false });
+
+      // "stopped" = paused at some point after playback started and not ended
+      if (hasStartedRef.current && !endedRef.current) {
+        updateFlags({ stopped: true });
+        appendLog("stopped (paused mid-video)");
+      }
+    };
+
+    const handleEnded = () => {
+      appendLog("ended");
+      isPlayingRef.current = false;
+      endedRef.current = true;
+      updateFlags({
+        isPlaying: false,
+        stopped: false,
+        ended: true,
+      });
+    };
+
+    const handleVolumeChange = (data: any) => {
+      let muted = flags.isMuted;
+
+      if (data) {
+        if (typeof data.muted === "boolean") {
+          muted = data.muted;
+        } else if (typeof data.volume === "number") {
+          muted = data.volume <= 0;
+        }
+      }
+
+      appendLog(muted ? "muted" : "unmuted/volumechange");
+      updateFlags({ isMuted: muted });
+    };
+
+    const handleTimeUpdate = (data: any) => {
+      if (!data || typeof data.seconds !== "number") return;
+      const seconds = data.seconds as number;
+
+      if (typeof data.duration === "number" && data.duration > 0) {
+        durationRef.current = data.duration;
+      }
+
+      const secInt = Math.floor(seconds);
+      if (secInt % 5 === 0 && lastLoggedSecondRef.current !== secInt) {
+        appendLog(`time: ${secInt}s`);
+        lastLoggedSecondRef.current = secInt;
+      }
+
+      if (!played10Ref.current && seconds >= 10) {
+        played10Ref.current = true;
+        updateFlags({ playedAtLeast10s: true });
+        appendLog("played ≥10s");
+      }
+
+      const duration = durationRef.current;
+      if (
+        duration &&
+        duration > 0 &&
+        !midpointRef.current &&
+        seconds >= duration / 2
+      ) {
+        midpointRef.current = true;
+        updateFlags({ reachedMidpoint: true });
+        appendLog("reached midpoint");
+      }
+    };
+
+    // Attach listeners (outside "ready" so autoplay also triggers them)
+    player.on("play", handlePlay);
+    player.on("playing", handlePlay); // some players use "playing"
+    player.on("pause", handlePause);
+    player.on("ended", handleEnded);
+    player.on("volumechange", handleVolumeChange);
+    player.on("timeupdate", handleTimeUpdate);
+
+    // Ready: log + try to get initial muted state
     player.on("ready", () => {
       appendLog("ready");
-
-      player.on("play", () => {
-        appendLog("play");
-        isPlayingRef.current = true;
-        endedRef.current = false;
-        updateFlags({
-          isPlaying: true,
-          stopped: false,
-          idle3s: false,
-        });
-        clearIdleTimer();
-      });
-
-      player.on("pause", (data: any) => {
-        const seconds =
-          data && typeof data.seconds === "number" ? data.seconds : undefined;
-        appendLog("pause");
-        isPlayingRef.current = false;
-        updateFlags({ isPlaying: false });
-
-        // "stopped" = paused after starting, but not ended
-        if (!endedRef.current && seconds && seconds > 0) {
-          updateFlags({ stopped: true });
-          appendLog("stopped (paused mid-video)");
+      if (typeof player.getMuted === "function") {
+        try {
+          player.getMuted((muted: boolean) => {
+            appendLog(`initial muted: ${muted ? "yes" : "no"}`);
+            updateFlags({ isMuted: muted });
+          });
+        } catch {
+          // ignore
         }
-
-        scheduleIdle();
-      });
-
-      player.on("ended", () => {
-        appendLog("ended");
-        isPlayingRef.current = false;
-        endedRef.current = true;
-        updateFlags({
-          isPlaying: false,
-          stopped: false,
-          ended: true,
-        });
-        scheduleIdle();
-      });
-
-      player.on("volumechange", (data: any) => {
-        if (data && typeof data.muted === "boolean") {
-          appendLog(data.muted ? "muted" : "unmuted");
-          updateFlags({ isMuted: data.muted });
-        } else {
-          appendLog("volumechange");
-        }
-      });
-
-      // Progress + derived flags
-      player.on("timeupdate", (data: any) => {
-        if (!data || typeof data.seconds !== "number") return;
-        const seconds = data.seconds as number;
-
-        // duration if provided
-        if (typeof data.duration === "number" && data.duration > 0) {
-          durationRef.current = data.duration;
-        }
-
-        // Log every 5 seconds, de-duped
-        const secInt = Math.floor(seconds);
-        if (
-          secInt % 5 === 0 &&
-          lastLoggedSecondRef.current !== secInt
-        ) {
-          appendLog(`time: ${secInt}s`);
-          lastLoggedSecondRef.current = secInt;
-        }
-
-        // ≥ 10s flag
-        if (!played10Ref.current && seconds >= 10) {
-          played10Ref.current = true;
-          updateFlags({ playedAtLeast10s: true });
-          appendLog("played ≥10s");
-        }
-
-        // Midpoint flag
-        const duration = durationRef.current;
-        if (
-          duration &&
-          duration > 0 &&
-          !midpointRef.current &&
-          seconds >= duration / 2
-        ) {
-          midpointRef.current = true;
-          updateFlags({ reachedMidpoint: true });
-          appendLog("reached midpoint");
-        }
-      });
+      }
     });
 
     return () => {
-      clearIdleTimer();
       try {
+        // Player.js doesn't require explicit destroy, but guard anyway
         if ((player as any).destroy) (player as any).destroy();
       } catch {
         // ignore
       }
     };
-  }, [scriptLoaded, url]);
+  }, [scriptLoaded, url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`w-full ${className ?? ""}`}>
@@ -282,8 +272,7 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
         </div>
         <div>
           muted: <span>{flags.isMuted ? "yes" : "no"}</span> ·{" "}
-          stopped: <span>{flags.stopped ? "yes" : "no"}</span> ·{" "}
-          idle≥3s (no video): <span>{flags.idle3s ? "yes" : "no"}</span>
+          stopped: <span>{flags.stopped ? "yes" : "no"}</span>
         </div>
       </div>
     </div>

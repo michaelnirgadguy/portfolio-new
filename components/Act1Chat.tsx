@@ -17,6 +17,7 @@ type Message = {
   kind?: "normal" | "system";
 };
 
+const DEFAULT_REPLY = "yes please!";
 export default function Act1Chat({
   onShowVideo,
   onAct1Complete,
@@ -123,13 +124,16 @@ export default function Act1Chat({
     };
   }, [status]);
 
-  // Submit handler
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const text = input;        // allow empty
-    setInput("");
-    await submitUserText(text);
-  }
+async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+
+  const trimmed = input.trim();
+  const textToSend = trimmed || DEFAULT_REPLY;
+
+  setInput("");
+  await submitUserText(textToSend);
+}
+
 
 
   // Prompt suggestion button
@@ -300,7 +304,7 @@ export default function Act1Chat({
                   setInput(e.target.value);
                   markInteracted();
                 }}
-                placeholder="yes please!"
+                placeholder={DEFAULT_REPLY}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
               />
 

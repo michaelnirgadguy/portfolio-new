@@ -189,7 +189,7 @@ export default function Act1Chat({
       );
     }
 
-    // System bubble (scripted generator lines)
+      // System bubble (scripted generator lines)
     if (isSystem) {
       return (
         <div className="flex w-full justify-start">
@@ -218,7 +218,6 @@ export default function Act1Chat({
           </div>
         </div>
       );
-    }
 
     // Assistant (Mimsy) – normal messages
     const showInlineSpinner = isSystemActive;

@@ -59,6 +59,8 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
   const endedRef = useRef(false);
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
+  const lastMutedRef = useRef<boolean | null>(null);
+
 
   // Reset when URL changes
   useEffect(() => {
@@ -158,30 +160,7 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
       });
     };
 
-    const handleVolumeChange = (data: any) => {
-      let muted = flags.isMuted;
 
-      if (data) {
-        if (typeof data.muted === "boolean") {
-          muted = data.muted;
-        } else if (typeof data.volume === "number") {
-          muted = data.volume <= 0;
-        }
-      }
-
-      appendLog(muted ? "muted (volumechange)" : "unmuted/volumechange");
-      updateFlags({ isMuted: muted });
-    };
-
-    const handleMute = () => {
-      appendLog("muted (mute event)");
-      updateFlags({ isMuted: true });
-    };
-
-    const handleUnmute = () => {
-      appendLog("unmuted (unmute event)");
-      updateFlags({ isMuted: false });
-    };
 
     const handleTimeUpdate = (data: any) => {
       if (!data || typeof data.seconds !== "number") return;
@@ -214,6 +193,32 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
         updateFlags({ reachedMidpoint: true });
         appendLog("reached midpoint");
       }
+
+   // --- POLL MUTED STATE  ---
+    if (typeof player.getMuted === "function") {
+      try {
+        player.getMuted((muted: boolean) => {
+          if (lastMutedRef.current === null) {
+            // First time we learn about mute state
+            lastMutedRef.current = muted;
+            updateFlags({ isMuted: muted });
+            appendLog(
+              `initial muted (via poll): ${muted ? "yes" : "no"}`
+            );
+          } else if (lastMutedRef.current !== muted) {
+            // It changed since last time
+            lastMutedRef.current = muted;
+            updateFlags({ isMuted: muted });
+            appendLog(
+              muted ? "muted (via poll)" : "unmuted (via poll)"
+            );
+          }
+        });
+      } catch {
+        // ignore
+      }
+    }
+      
     };
 
     // Attach listeners (including "playing" for autoplay)
@@ -221,9 +226,6 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
     player.on("playing", handlePlay);
     player.on("pause", handlePause);
     player.on("ended", handleEnded);
-    player.on("volumechange", handleVolumeChange);
-    player.on("mute", handleMute);
-    player.on("unmute", handleUnmute);
     player.on("timeupdate", handleTimeUpdate);
 
     // Ready: detect initial play/mute state for autoplay

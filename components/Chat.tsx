@@ -4,43 +4,37 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SuggestedPrompts } from "@/lib/suggestedPrompts";
 import { ArrowUp } from "lucide-react";
-import { useTypewriter, useIntroMessage, useChatFlow, useLLMEventBridge } from "@/hooks/useChatHooks";
-import { useAct1Driver } from "@/hooks/useAct1Driver";
+import {
+  useTypewriter,
+  useIntroMessage,
+  useChatFlow,
+  useLLMEventBridge,
+} from "@/hooks/useChatHooks";
 import ChatGlowBorder from "@/components/ChatGlowBorder";
 
 type Role = "user" | "assistant";
-type Message = { id: string; role: Role; text: string };
+
+type Message = {
+  id: string;
+  role: Role;
+  text: string;
+  kind?: "normal" | "system";
+};
+
 type SurfaceStatus = "idle" | "pending" | "answer";
-type ChatMode = "main" | "act1";
 
 export default function Chat({
   onShowVideo,
-  mode = "main",
-  onAct1Complete,
-  initialUserText,
-  onAct1Oopsie,
-  onAct1Title,
 }: {
   onShowVideo?: (videoIds: string[]) => void;
-  mode?: ChatMode;
-  onAct1Complete?: () => void;
-  initialUserText?: string;
-  onAct1Oopsie?: () => void;
-  onAct1Title?: (title: string) => void;
 }) {
-
-
-
-
   // Intro line (session-aware)
   const intro = useIntroMessage();
 
   // Visible messages
-  const [messages, setMessages] = useState<Message[]>(() =>
-    mode === "act1"
-      ? [] // Act 1: no intro bubble, we start from the user idea
-      : [{ id: "m0", role: "assistant", text: intro }]
-  );
+  const [messages, setMessages] = useState<Message[]>([
+    { id: "m0", role: "assistant", text: intro },
+  ]);
 
   // API log
   const [log, setLog] = useState<any[]>([]);
@@ -51,50 +45,29 @@ export default function Chat({
   // Assistant typing pipeline
   const [status, setStatus] = useState<SurfaceStatus>("idle");
   const [assistantFull, setAssistantFull] = useState<string>("");
-  const [initialSubmitted, setInitialSubmitted] = useState(false);
 
-   // Input glow effect
+  // Input glow effect
   const [inputGlow, setInputGlow] = useState(false);
- 
-  function push(role: Role, text: string) {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, text }]);
+
+  function push(
+    role: Role,
+    text: string,
+    kind: "normal" | "system" = "normal"
+  ) {
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role, text, kind },
+    ]);
   }
 
-// Which driver should Chat use?
-  const driver =
-    mode === "act1"
-      ? useAct1Driver({
-          log,
-          setLog,
-          push,
-          setAssistantFull,
-          setStatus,
-          onShowVideo,
-          onAct1Complete,
-          onAct1Oopsie,
-          onAct1Title, 
-        })
-      : useChatFlow({
-          log,
-          setLog,
-          push,
-          setAssistantFull,
-          setStatus,
-          onShowVideo,
-        });
-  
-  const { submitUserText, handleScreenEvent } = driver;
-  
-  // If Act 1 passes an initial user idea, submit it automatically once
-  useEffect(() => {
-    if (!initialUserText || initialSubmitted) return;
-    if (mode !== "act1") return;
-
-    setInitialSubmitted(true);
-    // Fire the driver as if the user had typed this in the composer
-    submitUserText(initialUserText);
-  }, [initialUserText, initialSubmitted, mode, submitUserText]);
-
+  const { submitUserText, handleScreenEvent } = useChatFlow({
+    log,
+    setLog,
+    push,
+    setAssistantFull,
+    setStatus,
+    onShowVideo,
+  });
 
   useLLMEventBridge({
     handleScreenEvent,
@@ -105,9 +78,11 @@ export default function Chat({
 
   const typed = useTypewriter(assistantFull, 16);
 
-  // Initialize first answer bubble
+  // Initialize first answer bubble (intro)
   useEffect(() => {
-    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant");
     if (status === "idle" && lastAssistant) {
       setAssistantFull(lastAssistant.text);
       setStatus("answer");
@@ -131,7 +106,6 @@ export default function Chat({
     setInput(SuggestedPrompts[idx]);
   }
 
-  // useRefs
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -139,7 +113,7 @@ export default function Chat({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typed, status]);
 
-    // When Mimsy replies, focus the input
+  // When Mimsy replies, focus the input
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last) return;
@@ -148,8 +122,13 @@ export default function Chat({
     }
   }, [messages]);
 
-  // Render a bubble
-  function Bubble({ role, children }: { role: Role; children: React.ReactNode }) {
+  function Bubble({
+    role,
+    children,
+  }: {
+    role: Role;
+    children: React.ReactNode;
+  }) {
     const isUser = role === "user";
 
     // USER bubble
@@ -172,15 +151,11 @@ export default function Chat({
     return (
       <div className="flex w-full justify-start">
         <div className="flex items-start gap-2 max-w-[80%]">
-
-          {/* Mimsy avatar */}
           <img
             src="/bigger-avatar.png"
             alt="Mimsy"
             className="mt-1 h-10 w-10 rounded-full shrink-0"
           />
-
-          {/* Assistant bubble */}
           <div
             className={`
               flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
@@ -194,28 +169,23 @@ export default function Chat({
     );
   }
 
-
   return (
     <section className="w-full h-full flex flex-col overflow-hidden">
-      {/* Small instruction text – only in main mode */}
-      {mode === "main" && (
-          <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground">
-          Chat with Mimsy to explore Michael’s portfolio.
-        </div>
-      )}
+      {/* Small instruction text */}
+      <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground">
+        Chat with Mimsy to explore Michael’s portfolio.
+      </div>
 
       {/* Messages surface */}
       <div className="flex-1 overflow-y-auto px-3 pt-4 pb-1 space-y-4 min-h-0">
         {messages.map((m) => {
           const lastMessageId = messages[messages.length - 1]?.id;
           const isLastAssistantActive =
-            m.role === "assistant" && m.id === lastMessageId && status === "answer";
+            m.role === "assistant" &&
+            m.id === lastMessageId &&
+            status === "answer";
 
-          // Only use typewriter in main mode; Act 1 just shows full text
-          const useTyping = mode === "main";
-
-          const textToShow =
-            useTyping && isLastAssistantActive ? typed : m.text;
+          const textToShow = isLastAssistantActive ? typed : m.text;
 
           return (
             <Bubble key={m.id} role={m.role}>
@@ -224,71 +194,63 @@ export default function Chat({
           );
         })}
 
-      {/* Assistant pending indicator – Mimsy on the wheel */}
-      {status === "pending" && (
-        <div className="flex w-full justify-start">
-          <div className="flex items-start gap-2 max-w-[80%]">
-      
-            {/* Hamster wheel in place of avatar */}
-            <div className="mt-1 h-28 w-28 flex items-center justify-center">
-              <span
-                className="hamster-wheel scale-[0.55] origin-top-left block"
-                aria-label="Mimsy is thinking"
-              />
+        {/* Assistant pending indicator – Mimsy on the wheel */}
+        {status === "pending" && (
+          <div className="flex w-full justify-start">
+            <div className="flex items-start gap-2 max-w-[80%]">
+              <div className="mt-1 h-28 w-28 flex items-center justify-center">
+                <span
+                  className="hamster-wheel scale-[0.55] origin-top-left block"
+                  aria-label="Mimsy is thinking"
+                />
+              </div>
             </div>
-      
           </div>
-        </div>
-      )}
+        )}
 
         <div ref={scrollRef} />
       </div>
 
-{/* Composer */}
-<form
-  onSubmit={onSubmit}
-  className="px-2 pb-1 pt-2"
->
-  <div className="relative">
-    {/* This div IS the pill; SVG will hug this box exactly */}
-    <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-      <ChatGlowBorder active={inputGlow} />
+      {/* Composer */}
+      <form onSubmit={onSubmit} className="px-2 pb-1 pt-2">
+        <div className="relative">
+          {/* This div IS the pill; SVG will hug this box exactly */}
+          <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
+            <ChatGlowBorder active={inputGlow} />
 
-      <Button
-        type="button"
-        variant="outlineAccent"
-        size="pill"
-        onClick={handleSparkle}
-        aria-label="Generate a prompt"
-        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-      >
-        <span className="text-xl leading-none">✨</span>
-      </Button>
+            <Button
+              type="button"
+              variant="outlineAccent"
+              size="pill"
+              onClick={handleSparkle}
+              aria-label="Generate a prompt"
+              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+            >
+              <span className="text-xl leading-none">✨</span>
+            </Button>
 
-      <input
-        ref={inputRef}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onFocus={() => setInputGlow(true)}
-        onBlur={() => setInputGlow(false)}
-        placeholder='Try "Show me a geeky video"'
-        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-      />
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onFocus={() => setInputGlow(true)}
+              onBlur={() => setInputGlow(false)}
+              placeholder='Try "Show me a geeky video"'
+              className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+            />
 
-      <Button
-        type="submit"
-        variant="outlineAccent"
-        size="icon"
-        aria-label="Send"
-        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-      >
-        <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-      </Button>
-    </div>
-  </div>
-</form>
-
-
+            <Button
+              type="submit"
+              variant="outlineAccent"
+              size="icon"
+              aria-label="Send"
+              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+            >
+              <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
+            </Button>
+          </div>
+        </div>
+      </form>
     </section>
   );
 }

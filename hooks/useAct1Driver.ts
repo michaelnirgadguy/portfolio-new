@@ -8,7 +8,7 @@ type SurfaceStatus = "idle" | "pending" | "answer";
 type Act1DriverParams = {
   log: any[]; // kept for API compatibility with useChatFlow
   setLog: (next: any[]) => void;
-  push: (role: Role, text: string) => void;
+  push: (role: Role, text: string, kind?: "normal" | "system") => void;
   setAssistantFull: (t: string) => void;
   setStatus: (s: SurfaceStatus) => void;
   onShowVideo?: (ids: string[]) => void;
@@ -105,39 +105,51 @@ export function useAct1Driver({
           onAct1Title?.(titleFromApi);
         }
 
-        setHasRun(true);
+          setHasRun(true);
 
         let lineIndex = 0;
 
-        // Play lines one by one with a short pause in between
+        // Play lines one by one as "system" messages
         for (const line of lines) {
           const clean = line.trim();
           if (!clean) continue;
 
           lineIndex += 1;
 
-          // Show this line as Mimsy's current message
-          push("assistant", clean);
+          // 1) Show this line immediately as a system message
+          push("assistant", clean, "system");
           setAssistantFull(clean);
-          setStatus("answer");
 
-          // When the 5th line appears, trigger the Oopsie state
+          // 2) While this line is "active", show the inline spinner (Act 1 logic)
+          setStatus("pending");
+
+          // Trigger Oopsie exactly when the 5th line shows up
           if (lineIndex === 5) {
             onAct1Oopsie?.();
           }
 
-          // Wait ~2.5s before the next line
+          // Keep this line in its "active" spinning state for 2.5s
           // eslint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 2500));
+
+          // 3) Mark it as "settled" – spinner off, avatar on
+          setStatus("answer");
         }
 
-        // Final invitation line – sets up Act 1's punchline
+        // Extra 2.5s delay AFTER the last system line, before the invite
+        setAssistantFull("");
+        setStatus("pending");
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+
+        // Final invitation line – regular assistant message (not system)
         const invite =
-          "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
+          "Oh My! this never happened to me before.\n\nMmm...Maybe instead I can show you videos made by my human, Michael?";
         push("assistant", invite);
         setAssistantFull(invite);
         setStatus("answer");
         setStage("scriptFinished");
+
 
         return;
       }

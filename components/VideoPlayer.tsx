@@ -1,22 +1,23 @@
 // /components/VideoPlayer.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type Props = {
   url: string; // Bunny iframe URL or YouTube URL
   title?: string;
   className?: string;
   autoplay?: boolean;
-};
 
-type Flags = {
-  isPlaying: boolean;
-  playedAtLeast10s: boolean;
-  reachedMidpoint: boolean;
-  isMuted: boolean;
-  stopped: boolean;
-  ended: boolean;
+  // STATE (live)
+  onPlayingChange?: (isPlaying: boolean) => void;
+
+  // EVENTS (one-off / edge transitions)
+  onPlayed10s?: () => void;
+  onReachedMidpoint?: () => void;
+  onStoppedEarly?: () => void;
+  onEnded?: () => void;
+  onMutedChange?: (muted: boolean) => void;
 };
 
 function extractYouTubeId(url: string): string | null {
@@ -36,24 +37,22 @@ function extractYouTubeId(url: string): string | null {
   }
 }
 
-const initialFlags: Flags = {
-  isPlaying: false,
-  playedAtLeast10s: false,
-  reachedMidpoint: false,
-  isMuted: false,
-  stopped: false,
-  ended: false,
-};
-
-export default function VideoPlayer({ url, title, className, autoplay }: Props) {
+export default function VideoPlayer({
+  url,
+  title,
+  className,
+  autoplay,
+  onPlayingChange,
+  onPlayed10s,
+  onReachedMidpoint,
+  onStoppedEarly,
+  onEnded,
+  onMutedChange,
+}: Props) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [log, setLog] = useState<string[]>([]);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [flags, setFlags] = useState<Flags>(initialFlags);
 
-  // Refs to avoid stale closures
+  // Internal refs for Bunny player state
   const durationRef = useRef<number | null>(null);
-  const lastLoggedSecondRef = useRef<number | null>(null);
   const hasStartedRef = useRef(false);
   const isPlayingRef = useRef(false);
   const endedRef = useRef(false);
@@ -61,25 +60,14 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
 
-
-  // Reset when URL changes
-  useEffect(() => {
-    setFlags(initialFlags);
-    setLog([]);
-    durationRef.current = null;
-    lastLoggedSecondRef.current = null;
-    hasStartedRef.current = false;
-    isPlayingRef.current = false;
-    endedRef.current = false;
-    played10Ref.current = false;
-    midpointRef.current = false;
-  }, [url]);
-
   // Build src
   let src: string | null = null;
 
-  if (url.includes("iframe.mediadelivery.net")) {
+  const isBunny = url.includes("iframe.mediadelivery.net");
+
+  if (isBunny) {
     src = url;
+    // If you want autoplay for Bunny later, you can add query params here.
     // if (autoplay) src += (url.includes("?") ? "&" : "?") + "autoplay=1&muted=1";
   } else {
     const id = extractYouTubeId(url);
@@ -89,185 +77,179 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
     }`;
   }
 
-  const appendLog = (msg: string) => {
-    const t = new Date().toISOString().split("T")[1].slice(0, 8);
-    setLog((prev) => [...prev.slice(-30), `${t}  ${msg}`]);
-  };
-
-  const updateFlags = (partial: Partial<Flags>) => {
-    setFlags((prev) => ({ ...prev, ...partial }));
-  };
-
-  // Load Bunny player.js script
+  // Reset internal refs when URL changes
   useEffect(() => {
+    durationRef.current = null;
+    hasStartedRef.current = false;
+    isPlayingRef.current = false;
+    endedRef.current = false;
+    played10Ref.current = false;
+    midpointRef.current = false;
+    lastMutedRef.current = null;
+    onPlayingChange?.(false);
+  }, [url, onPlayingChange]);
+
+  // Load Bunny player.js and wire events
+  useEffect(() => {
+    if (!isBunny) return;
     if (typeof window === "undefined") return;
 
-    if ((window as any).playerjs) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "//assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    document.body.appendChild(script);
-  }, []);
-
-  // Wire up Player.js for Bunny iframes
-  useEffect(() => {
-    if (!scriptLoaded) return;
-    if (!iframeRef.current) return;
-    if (!url.includes("iframe.mediadelivery.net")) return; // only Bunny
-
     const w = window as any;
-    if (!w.playerjs || !w.playerjs.Player) return;
 
-    const player = new w.playerjs.Player(iframeRef.current);
-
-    const handlePlay = () => {
-      appendLog("play/playing");
-      hasStartedRef.current = true;
-      isPlayingRef.current = true;
-      endedRef.current = false;
-      updateFlags({
-        isPlaying: true,
-        stopped: false,
-        ended: false,
+    const ensureScript = () =>
+      new Promise<void>((resolve) => {
+        if (w.playerjs && w.playerjs.Player) {
+          resolve();
+          return;
+        }
+        const existing = document.querySelector<HTMLScriptElement>(
+          'script[src="//assets.mediadelivery.net/playerjs/playerjs-latest.min.js"]'
+        );
+        if (existing) {
+          existing.addEventListener("load", () => resolve(), { once: true });
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "//assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
+        script.async = true;
+        script.onload = () => resolve();
+        document.body.appendChild(script);
       });
-    };
 
-    const handlePause = () => {
-      appendLog("pause");
-      isPlayingRef.current = false;
-      updateFlags({ isPlaying: false });
+    let player: any | null = null;
 
-      // "stopped" = paused at some point after playback started and not ended
-      if (hasStartedRef.current && !endedRef.current) {
-        updateFlags({ stopped: true });
-        appendLog("stopped (paused mid-video)");
-      }
-    };
+    let cancelled = false;
 
-    const handleEnded = () => {
-      appendLog("ended");
-      isPlayingRef.current = false;
-      endedRef.current = true;
-      updateFlags({
-        isPlaying: false,
-        stopped: false,
-        ended: true,
-      });
-    };
+    ensureScript().then(() => {
+      if (cancelled) return;
+      if (!iframeRef.current) return;
+      if (!w.playerjs || !w.playerjs.Player) return;
 
+      player = new w.playerjs.Player(iframeRef.current);
 
+      const handlePlayOrPlaying = () => {
+        hasStartedRef.current = true;
+        isPlayingRef.current = true;
+        endedRef.current = false;
+        onPlayingChange?.(true);
+      };
 
-    const handleTimeUpdate = (data: any) => {
-      if (!data || typeof data.seconds !== "number") return;
-      const seconds = data.seconds as number;
+      const handlePause = () => {
+        isPlayingRef.current = false;
+        onPlayingChange?.(false);
 
-      if (typeof data.duration === "number" && data.duration > 0) {
-        durationRef.current = data.duration;
-      }
+        // "stopped early" = paused after playing started, before end
+        if (hasStartedRef.current && !endedRef.current) {
+          onStoppedEarly?.();
+        }
+      };
 
-      const secInt = Math.floor(seconds);
-      if (secInt % 5 === 0 && lastLoggedSecondRef.current !== secInt) {
-        appendLog(`time: ${secInt}s`);
-        lastLoggedSecondRef.current = secInt;
-      }
+      const handleEnded = () => {
+        isPlayingRef.current = false;
+        endedRef.current = true;
+        onPlayingChange?.(false);
+        onEnded?.();
+      };
 
-      if (!played10Ref.current && seconds >= 10) {
-        played10Ref.current = true;
-        updateFlags({ playedAtLeast10s: true });
-        appendLog("played ≥10s");
-      }
+      const handleTimeUpdate = (data: any) => {
+        if (!data || typeof data.seconds !== "number") return;
+        const seconds = data.seconds as number;
 
-      const duration = durationRef.current;
-      if (
-        duration &&
-        duration > 0 &&
-        !midpointRef.current &&
-        seconds >= duration / 2
-      ) {
-        midpointRef.current = true;
-        updateFlags({ reachedMidpoint: true });
-        appendLog("reached midpoint");
-      }
+        // Track duration if provided
+        if (typeof data.duration === "number" && data.duration > 0) {
+          durationRef.current = data.duration;
+        }
 
-   // --- POLL MUTED STATE  ---
-    if (typeof player.getMuted === "function") {
-      try {
-        player.getMuted((muted: boolean) => {
-          if (lastMutedRef.current === null) {
-            // First time we learn about mute state
-            lastMutedRef.current = muted;
-            updateFlags({ isMuted: muted });
-            appendLog(
-              `initial muted (via poll): ${muted ? "yes" : "no"}`
-            );
-          } else if (lastMutedRef.current !== muted) {
-            // It changed since last time
-            lastMutedRef.current = muted;
-            updateFlags({ isMuted: muted });
-            appendLog(
-              muted ? "muted (via poll)" : "unmuted (via poll)"
-            );
+        // Event: played at least 10s (fire once)
+        if (!played10Ref.current && seconds >= 10) {
+          played10Ref.current = true;
+          onPlayed10s?.();
+        }
+
+        // Event: reached midpoint (fire once)
+        const duration = durationRef.current;
+        if (
+          duration &&
+          duration > 0 &&
+          !midpointRef.current &&
+          seconds >= duration / 2
+        ) {
+          midpointRef.current = true;
+          onReachedMidpoint?.();
+        }
+
+        // Poll mute state (Bunny doesn't emit mute events)
+        if (typeof player.getMuted === "function") {
+          try {
+            player.getMuted((muted: boolean) => {
+              if (lastMutedRef.current === null) {
+                lastMutedRef.current = muted;
+                onMutedChange?.(muted);
+              } else if (lastMutedRef.current !== muted) {
+                lastMutedRef.current = muted;
+                onMutedChange?.(muted);
+              }
+            });
+          } catch {
+            // ignore
           }
-        });
-      } catch {
-        // ignore
-      }
-    }
-      
-    };
-
-    // Attach listeners (including "playing" for autoplay)
-    player.on("play", handlePlay);
-    player.on("playing", handlePlay);
-    player.on("pause", handlePause);
-    player.on("ended", handleEnded);
-    player.on("timeupdate", handleTimeUpdate);
-
-    // Ready: detect initial play/mute state for autoplay
-    player.on("ready", () => {
-      appendLog("ready");
-
-      // Detect if it's already playing (autoplay)
-      if (typeof player.getPaused === "function") {
-        try {
-          player.getPaused((paused: boolean) => {
-            appendLog(`initial paused: ${paused ? "yes" : "no"}`);
-            if (!paused) {
-              // already playing when we attach listeners
-              handlePlay();
-            }
-          });
-        } catch {
-          // ignore
         }
-      }
+      };
 
-      // Detect initial muted state
-      if (typeof player.getMuted === "function") {
-        try {
-          player.getMuted((muted: boolean) => {
-            appendLog(`initial muted: ${muted ? "yes" : "no"}`);
-            updateFlags({ isMuted: muted });
-          });
-        } catch {
-          // ignore
+      // Attach listeners
+      player.on("play", handlePlayOrPlaying);
+      player.on("playing", handlePlayOrPlaying);
+      player.on("pause", handlePause);
+      player.on("ended", handleEnded);
+      player.on("timeupdate", handleTimeUpdate);
+
+      // On ready, detect autoplay & initial mute
+      player.on("ready", () => {
+        if (typeof player.getPaused === "function") {
+          try {
+            player.getPaused((paused: boolean) => {
+              if (!paused) {
+                handlePlayOrPlaying();
+              }
+            });
+          } catch {
+            // ignore
+          }
         }
-      }
+
+        if (typeof player.getMuted === "function") {
+          try {
+            player.getMuted((muted: boolean) => {
+              lastMutedRef.current = muted;
+              onMutedChange?.(muted);
+            });
+          } catch {
+            // ignore
+          }
+        }
+      });
     });
 
     return () => {
+      cancelled = true;
       try {
-        if ((player as any).destroy) (player as any).destroy();
+        if (player && typeof player.destroy === "function") {
+          player.destroy();
+        }
       } catch {
         // ignore
       }
     };
-  }, [scriptLoaded, url]); // intentionally not depending on `flags`
+  }, [
+    isBunny,
+    url,
+    onPlayingChange,
+    onPlayed10s,
+    onReachedMidpoint,
+    onStoppedEarly,
+    onEnded,
+    onMutedChange,
+  ]);
 
   return (
     <div className={`w-full ${className ?? ""}`}>
@@ -281,29 +263,6 @@ export default function VideoPlayer({ url, title, className, autoplay }: Props) 
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />
-      </div>
-
-      {/* TEMPORARY DEBUG LOG */}
-      <div className="mt-2 rounded-lg bg-muted/40 p-2 text-xs font-mono max-h-32 overflow-auto">
-        {log.length === 0 ? (
-          <div className="text-muted-foreground">[video event log]</div>
-        ) : (
-          log.map((line, i) => <div key={i}>{line}</div>)
-        )}
-      </div>
-
-      {/* TEMPORARY FLAGS VIEW */}
-      <div className="mt-1 rounded-md bg-muted/20 p-2 text-[10px] font-mono text-muted-foreground space-y-1">
-        <div>
-          playing: <span>{flags.isPlaying ? "yes" : "no"}</span> ·{" "}
-          ≥10s: <span>{flags.playedAtLeast10s ? "yes" : "no"}</span> ·{" "}
-          midpoint: <span>{flags.reachedMidpoint ? "yes" : "no"}</span> ·{" "}
-          ended: <span>{flags.ended ? "yes" : "no"}</span>
-        </div>
-        <div>
-          muted: <span>{flags.isMuted ? "yes" : "no"}</span> ·{" "}
-          stopped: <span>{flags.stopped ? "yes" : "no"}</span>
-        </div>
       </div>
     </div>
   );

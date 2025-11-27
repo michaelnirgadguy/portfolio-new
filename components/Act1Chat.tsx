@@ -126,12 +126,11 @@ export default function Act1Chat({
   // Submit handler
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    markInteracted();
+    const text = input;        // allow empty
     setInput("");
-    await submitUserText(trimmed);
+    await submitUserText(text);
   }
+
 
   // Prompt suggestion button
   function handleSparkle() {

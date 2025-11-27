@@ -45,8 +45,18 @@ export default function Act1Chat({
 
   const [initialSubmitted, setInitialSubmitted] = useState(false);
 
-  // Input glow effect
+  // Input glow effect (idle)
   const [inputGlow, setInputGlow] = useState(false);
+  const [composerSeen, setComposerSeen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Helper to mark any user interaction with the composer
+  function markInteracted() {
+    if (!hasInteracted) {
+      setHasInteracted(true);
+    }
+    setInputGlow(false);
+  }
 
   // Helper: push message into the list
   function push(
@@ -85,11 +95,33 @@ export default function Act1Chat({
     submitUserText(initialUserText);
   }, [initialUserText, initialSubmitted, submitUserText]);
 
+  // Detect when the composer first appears
+  useEffect(() => {
+    if (status === "answer" && !composerSeen) {
+      setComposerSeen(true);
+    }
+  }, [status, composerSeen]);
+
+  // After composer is visible, if user does nothing for 5s, show glow once
+  useEffect(() => {
+    if (!composerSeen || hasInteracted) {
+      setInputGlow(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setInputGlow(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [composerSeen, hasInteracted]);
+
   // Submit handler
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
+    markInteracted();
     setInput("");
     await submitUserText(trimmed);
   }
@@ -97,6 +129,7 @@ export default function Act1Chat({
   // Prompt suggestion button
   function handleSparkle() {
     if (!SuggestedPrompts.length) return;
+    markInteracted();
     const idx = Math.floor(Math.random() * SuggestedPrompts.length);
     setInput(SuggestedPrompts[idx]);
   }
@@ -244,7 +277,7 @@ export default function Act1Chat({
 
       {/* Composer – only appears once Mimsy is ready for the final answer */}
       {status === "answer" && (
-        <form onSubmit={onSubmit} className="px-2 pb-1 pt-2">
+        <form onSubmit={onSubmit} className="px-3 pb-4 pt-2">
           <div className="relative">
             {/* This div IS the pill; SVG will hug this box exactly */}
             <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
@@ -254,7 +287,10 @@ export default function Act1Chat({
                 type="button"
                 variant="outlineAccent"
                 size="pill"
-                onClick={handleSparkle}
+                onClick={() => {
+                  markInteracted();
+                  handleSparkle();
+                }}
                 aria-label="Generate a prompt"
                 className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
               >
@@ -264,10 +300,12 @@ export default function Act1Chat({
               <input
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => setInputGlow(true)}
-                onBlur={() => setInputGlow(false)}
-                placeholder='Try "Shrink my crazy idea"'
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  markInteracted();
+                }}
+                onFocus={markInteracted}
+                placeholder='yes please!'
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
               />
 

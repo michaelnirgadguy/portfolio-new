@@ -45,15 +45,15 @@ export default function Act1Chat({
 
   const [initialSubmitted, setInitialSubmitted] = useState(false);
 
-  // Input glow effect (idle)
+  // Input glow after idle
   const [inputGlow, setInputGlow] = useState(false);
-  const [composerSeen, setComposerSeen] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const idleTimerRef = useRef<number | null>(null);
 
-  // Helper to mark any user interaction with the composer
+  // Helper: any user interaction with the composer
   function markInteracted() {
-    if (!hasInteracted) {
-      setHasInteracted(true);
+    if (idleTimerRef.current !== null) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
     }
     setInputGlow(false);
   }
@@ -95,26 +95,33 @@ export default function Act1Chat({
     submitUserText(initialUserText);
   }, [initialUserText, initialSubmitted, submitUserText]);
 
-  // Detect when the composer first appears
+  // Start idle timer when composer appears; clear it otherwise
   useEffect(() => {
-    if (status === "answer" && !composerSeen) {
-      setComposerSeen(true);
-    }
-  }, [status, composerSeen]);
-
-  // After composer is visible, if user does nothing for 5s, show glow once
-  useEffect(() => {
-    if (!composerSeen || hasInteracted) {
+    // Composer visible
+    if (status === "answer") {
+      // Only start if not already running
+      if (idleTimerRef.current === null) {
+        idleTimerRef.current = window.setTimeout(() => {
+          setInputGlow(true);
+        }, 5000);
+      }
+    } else {
+      // Composer hidden — ensure glow & timer are reset
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
       setInputGlow(false);
-      return;
     }
 
-    const timer = setTimeout(() => {
-      setInputGlow(true);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [composerSeen, hasInteracted]);
+    // Cleanup on unmount
+    return () => {
+      if (idleTimerRef.current !== null) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    };
+  }, [status]);
 
   // Submit handler
   async function onSubmit(e: React.FormEvent) {
@@ -305,7 +312,7 @@ export default function Act1Chat({
                   markInteracted();
                 }}
                 onFocus={markInteracted}
-                placeholder='yes please!'
+                placeholder="yes please!"
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
               />
 

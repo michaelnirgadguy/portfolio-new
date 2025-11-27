@@ -190,34 +190,37 @@ export default function Act1Chat({
     }
 
       // System bubble (scripted generator lines)
-    if (isSystem) {
-      return (
-        <div className="flex w-full justify-start">
-          <div className="flex items-start gap-3 max-w-[80%]">
-            {/* Big hamster-wheel while this system line is active */}
-            {isSystemActive && (
+      if (isSystem) {
+        return (
+          <div className="flex w-full justify-start">
+            <div className="flex items-start gap-3 w-full max-w-[80%]">
+              {/* Fixed wheel column — stays even when not active */}
               <div className="mt-1 h-20 w-24 flex items-center justify-center shrink-0">
-                <span
-                  className="hamster-wheel origin-center block scale-[0.65]"
-                  aria-label="Mimsy is thinking"
-                />
+                {isSystemActive && (
+                  <span
+                    className="hamster-wheel origin-center block scale-[0.65]"
+                    aria-label="Mimsy is thinking"
+                  />
+                )}
               </div>
-            )}
-
-            <div
-              className={`
-                px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-                bg-muted text-[hsl(var(--foreground))]
-                border border-dashed border-[hsl(var(--border))]
-                text-[0.95rem] font-medium
-                ${isSystemActive ? "animate-pulse" : ""}
-              `}
-            >
-              {children}
+      
+              {/* Fixed-width box for the text */}
+              <div
+                className={`
+                  flex-1 px-4 py-3 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
+                  bg-muted text-[hsl(var(--foreground))]
+                  border border-dashed border-[hsl(var(--border))]
+                  text-[0.95rem] font-medium
+                  ${isSystemActive ? "animate-pulse" : ""}
+                `}
+              >
+                {children}
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      }
+
 
     // Assistant (Mimsy) – normal messages
     const showInlineSpinner = isSystemActive;

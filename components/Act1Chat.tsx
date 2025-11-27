@@ -192,9 +192,10 @@ export default function Act1Chat({
       // System bubble (scripted generator lines)
       if (isSystem) {
         return (
-          <div className="flex w-full justify-start">
+          <div className="w-full mb-3 last:mb-0">
             <div className="flex items-start gap-3 w-full max-w-[80%]">
-              {/* Fixed wheel column — stays even when not active */}
+      
+              {/* Fixed wheel column */}
               <div className="mt-1 h-20 w-24 flex items-center justify-center shrink-0">
                 {isSystemActive && (
                   <span
@@ -204,7 +205,6 @@ export default function Act1Chat({
                 )}
               </div>
       
-              {/* Fixed-width box for the text */}
               <div
                 className={`
                   flex-1 px-4 py-3 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed

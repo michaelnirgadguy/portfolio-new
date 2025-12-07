@@ -4,6 +4,12 @@
 export type SendTurnResult = { text: string; nextLog: any[] };
 type ShowVideos = (ids: string[]) => void;
 
+enum ToolName {
+  ShowVideos = "ui_show_videos",
+  ShowAllVideos = "ui_show_all_videos",
+  SetDarkMode = "ui_set_dark_mode",
+}
+
 export async function sendTurn(opts: {
   log: any[];
   userText: string;
@@ -35,7 +41,7 @@ export async function sendTurn(opts: {
     if (item?.type !== "function_call") continue;
 
     // ui_show_videos(videoIds: string[])
-    if (item.name === "ui_show_videos") {
+    if (item.name === ToolName.ShowVideos) {
       let ids: string[] = [];
       try {
         const parsed = JSON.parse(item.arguments || "{}");
@@ -43,10 +49,8 @@ export async function sendTurn(opts: {
         ids = arr.filter((x: any) => typeof x === "string");
       } catch {}
 
-      // Execute UI side-effect
       if (ids.length) {
-        if (onShowVideo) onShowVideo(ids);
-        else (globalThis as any).uiTool?.show_videos?.(ids);
+        onShowVideo?.(ids);
       }
 
       toolOutputs.push({
@@ -60,8 +64,8 @@ export async function sendTurn(opts: {
                 videoIds: ids,
                 message:
                   ids.length === 1
-                    ? `UI launched player for ${ids[0]}`
-                    : `UI showing grid for ${ids.join(", ")}`,
+                    ? `Widget launched player for ${ids[0]}`
+                    : `Widget showing grid for ${ids.join(", ")}`,
               }
             : {
                 ok: false,
@@ -76,18 +80,14 @@ export async function sendTurn(opts: {
     }
 
     // ui_show_all_videos()
-    if (item.name === "ui_show_all_videos") {
-      try {
-        (globalThis as any).uiTool?.show_all_videos?.();
-      } catch {}
-
+    if (item.name === ToolName.ShowAllVideos) {
       toolOutputs.push({
         type: "function_call_output",
         call_id: item.call_id,
         output: JSON.stringify({
           ok: true,
           kind: "all_videos",
-          message: "UI showing full catalogue.",
+          message: "Widget gallery opened.",
         }),
       });
 
@@ -95,15 +95,11 @@ export async function sendTurn(opts: {
     }
 
     // ui_set_dark_mode({ enabled: boolean })
-    if (item.name === "ui_set_dark_mode") {
+    if (item.name === ToolName.SetDarkMode) {
       let enabled = true;
       try {
         const parsed = JSON.parse(item.arguments || "{}");
         if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
-      } catch {}
-
-      try {
-        (globalThis as any).uiTool?.set_dark_mode?.(enabled);
       } catch {}
 
       toolOutputs.push({
@@ -120,7 +116,6 @@ export async function sendTurn(opts: {
       continue;
     }
   }
-
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {

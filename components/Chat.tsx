@@ -1,153 +1,147 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SuggestedPrompts } from "@/lib/suggestedPrompts";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
-import {
-  useTypewriter,
-  useIntroMessage,
-  useChatFlow,
-  useLLMEventBridge,
-} from "@/hooks/useChatHooks";
-import ChatGlowBorder from "@/components/ChatGlowBorder";
+import { Button } from "@/components/ui/button";
+import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
+import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
+import GalleryBubble from "@/components/bubbles/GalleryBubble";
+import ProfileBubble from "@/components/bubbles/ProfileBubble";
+import { usePendingDots } from "@/hooks/useChatHooks";
+import { sendTurn } from "@/lib/llm/sendTurn";
+import type { Message } from "@/types/message";
 
-type Role = "user" | "assistant";
+const LANDING_GREETING =
+  "Hi! I’m Mimsy—a hamster, a genius, and your guide to Michael’s video portfolio. What would you like to watch?";
+const LANDING_VIDEO_ID = "aui-apollo";
 
-type Message = {
-  id: string;
-  role: Role;
-  text: string;
-  kind?: "normal" | "system";
-};
-
-type SurfaceStatus = "idle" | "pending" | "answer";
-
-export default function Chat({
-  onShowVideo,
-}: {
-  onShowVideo?: (videoIds: string[]) => void;
-}) {
-  // Intro line (session-aware)
-  const intro = useIntroMessage();
-
-  // Visible messages
-  const [messages, setMessages] = useState<Message[]>([
-    { id: "m0", role: "assistant", text: intro },
-  ]);
-
-  // API log
-  const [log, setLog] = useState<any[]>([]);
-
-  // Input state
+export default function Chat() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-
-  // Assistant typing pipeline
-  const [status, setStatus] = useState<SurfaceStatus>("idle");
-  const [assistantFull, setAssistantFull] = useState<string>("");
-
-  // Input glow effect
-  const [inputGlow, setInputGlow] = useState(false);
-
-  function push(
-    role: Role,
-    text: string,
-    kind: "normal" | "system" = "normal"
-  ) {
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role, text, kind },
-    ]);
-  }
-
-  const { submitUserText, handleScreenEvent } = useChatFlow({
-    log,
-    setLog,
-    push,
-    setAssistantFull,
-    setStatus,
-    onShowVideo,
-  });
-
-  useLLMEventBridge({
-    handleScreenEvent,
-    push,
-    setAssistantFull,
-    setStatus,
-  });
-
-  const typed = useTypewriter(assistantFull, 16);
-
-  // Initialize first answer bubble (intro)
-  useEffect(() => {
-    const lastAssistant = [...messages]
-      .reverse()
-      .find((m) => m.role === "assistant");
-    if (status === "idle" && lastAssistant) {
-      setAssistantFull(lastAssistant.text);
-      setStatus("answer");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Submit handler
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    setInput("");
-    await submitUserText(trimmed);
-  }
-
-  // Prompt suggestion button
-  function handleSparkle() {
-    if (!SuggestedPrompts.length) return;
-    const idx = Math.floor(Math.random() * SuggestedPrompts.length);
-    setInput(SuggestedPrompts[idx]);
-  }
+  const [log, setLog] = useState<any[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasRunLanding, setHasRunLanding] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Warm greeting on first mount
+  useEffect(() => {
+    setMessages([{ id: crypto.randomUUID(), role: "assistant", text: LANDING_GREETING }]);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typed, status]);
+  }, [messages, isTyping]);
 
-  // When Mimsy replies, focus the input
-  useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (!last) return;
-    if (last.role === "assistant") {
-      inputRef.current?.focus();
+  const appendMessage = (msg: Message) => {
+    setMessages((prev) => [...prev, msg]);
+  };
+
+  const handleShowVideos = (ids: string[]) => {
+    if (!ids?.length) return;
+    if (ids.length === 1) {
+      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "hero", videoId: ids[0] });
+    } else {
+      appendMessage({
+        id: crypto.randomUUID(),
+        role: "widget",
+        type: "gallery",
+        videoIds: ids,
+      });
     }
+  };
+
+  const runLandingSequence = async () => {
+    setIsTyping(true);
+    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "INITIALIZING..." });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "RENDERING..." });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "FAILURE..." });
+    appendMessage({
+      id: crypto.randomUUID(),
+      role: "assistant",
+      text: "I can’t do that. Watch this instead.",
+    });
+    handleShowVideos([LANDING_VIDEO_ID]);
+    setIsTyping(false);
+    setHasRunLanding(true);
+  };
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    if (isTyping) return;
+
+    const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: trimmed };
+    appendMessage(userMessage);
+    setInput("");
+
+    if (!hasRunLanding) {
+      await runLandingSequence();
+      return;
+    }
+
+    setIsTyping(true);
+    try {
+      const { text, nextLog } = await sendTurn({
+        log,
+        userText: trimmed,
+        onShowVideo: handleShowVideos,
+      });
+
+      if (text) {
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+      setLog(nextLog);
+    } catch (err) {
+      console.error(err);
+      appendMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        text: "Hmm, the wheel slipped. Try again?",
+      });
+    } finally {
+      setIsTyping(false);
+    }
+  }
+
+  const dots = usePendingDots(isTyping);
+
+  const suggestionChips = useMemo(() => {
+    const last = messages[messages.length - 1];
+    if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
+      return ["More like this", "Show me humor"];
+    }
+    if (!messages.length) return ["Show me tech", "Surprise me"];
+    return ["Show me tech", "Surprise me"];
   }, [messages]);
 
-  function Bubble({
-    role,
-    children,
-  }: {
-    role: Role;
-    children: React.ReactNode;
-  }) {
-    const isUser = role === "user";
+  function renderMessage(msg: Message) {
+    if (msg.role === "system_log") {
+      return <SystemLogBubble text={msg.text} />;
+    }
 
-    // USER bubble
+    if (msg.role === "widget") {
+      if (msg.type === "hero") return <HeroPlayerBubble videoId={msg.videoId} />;
+      if (msg.type === "gallery")
+        return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(id) => handleShowVideos([id])} />;
+      if (msg.type === "profile") return <ProfileBubble />;
+    }
+
+    const isUser = msg.role === "user";
+
     if (isUser) {
       return (
         <div className="flex w-full justify-end">
-          <div
-            className={`
-              max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-              bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]
-            `}
-          >
-            {children}
+          <div className="max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+            {msg.text}
           </div>
         </div>
       );
     }
 
-    // ASSISTANT (Mimsy) bubble with avatar
     return (
       <div className="flex w-full justify-start">
         <div className="flex items-start gap-2 max-w-[80%]">
@@ -156,13 +150,8 @@ export default function Chat({
             alt="Mimsy"
             className="mt-1 h-10 w-10 rounded-full shrink-0"
           />
-          <div
-            className={`
-              flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed
-              bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]
-            `}
-          >
-            {children}
+          <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
+            {msg.text}
           </div>
         </div>
       </div>
@@ -170,40 +159,17 @@ export default function Chat({
   }
 
   return (
-    <section className="w-full h-full flex flex-col overflow-hidden">
-      {/* Small instruction text */}
-      <div className="px-4 pt-3 pb-2 text-sm text-muted-foreground">
-        Chat with Mimsy to explore Michael’s portfolio.
-      </div>
+    <section className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto px-4 pb-28 pt-6 space-y-4">
+        {messages.map((msg) => (
+          <div key={msg.id}>{renderMessage(msg)}</div>
+        ))}
 
-      {/* Messages surface */}
-      <div className="flex-1 overflow-y-auto px-3 pt-4 pb-1 space-y-4 min-h-0">
-        {messages.map((m) => {
-          const lastMessageId = messages[messages.length - 1]?.id;
-          const isLastAssistantActive =
-            m.role === "assistant" &&
-            m.id === lastMessageId &&
-            status === "answer";
-
-          const textToShow = isLastAssistantActive ? typed : m.text;
-
-          return (
-            <Bubble key={m.id} role={m.role}>
-              {textToShow}
-            </Bubble>
-          );
-        })}
-
-        {/* Assistant pending indicator – Mimsy on the wheel */}
-        {status === "pending" && (
+        {isTyping && (
           <div className="flex w-full justify-start">
-            <div className="flex items-start gap-2 max-w-[80%]">
-              <div className="mt-1 h-28 w-28 flex items-center justify-center">
-                <span
-                  className="hamster-wheel scale-[0.55] origin-top-left block"
-                  aria-label="Mimsy is thinking"
-                />
-              </div>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <div className="h-3 w-3 rounded-full bg-muted-foreground/50 animate-ping" />
+              <span>hamster is thinking{".".repeat(dots)}</span>
             </div>
           </div>
         )}
@@ -211,46 +177,38 @@ export default function Chat({
         <div ref={scrollRef} />
       </div>
 
-      {/* Composer */}
-      <form onSubmit={onSubmit} className="px-2 pb-1 pt-2">
-        <div className="relative">
-          {/* This div IS the pill; SVG will hug this box exactly */}
-          <div className="relative w-full flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-2">
-            <ChatGlowBorder active={inputGlow} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
-            <Button
-              type="button"
-              variant="outlineAccent"
-              size="pill"
-              onClick={handleSparkle}
-              aria-label="Generate a prompt"
-              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-            >
-              <span className="text-xl leading-none">✨</span>
-            </Button>
-
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={() => setInputGlow(true)}
-              onBlur={() => setInputGlow(false)}
-              placeholder='Try "Show me a geeky video"'
-              className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
-            />
-
-            <Button
-              type="submit"
-              variant="outlineAccent"
-              size="icon"
-              aria-label="Send"
-              className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-            >
-              <ArrowUp className="w-6 h-6" strokeWidth={2.5} />
-            </Button>
+      <div className="sticky bottom-0 w-full border-t border-border bg-background/80 backdrop-blur">
+        <div className="px-3 pt-2 pb-3 space-y-2">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {suggestionChips.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => setInput(chip)}
+                className="pointer-events-auto rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-foreground transition-colors"
+              >
+                {chip}
+              </button>
+            ))}
           </div>
+
+          <form onSubmit={handleSubmit} className="pointer-events-auto">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 shadow-sm">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder='Try "Show me a geeky video"'
+                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+              />
+              <Button type="submit" size="icon" variant="outlineAccent" className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]">
+                <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
+              </Button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </section>
   );
 }

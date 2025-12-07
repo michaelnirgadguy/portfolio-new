@@ -26,34 +26,41 @@ function extractYouTubeId(url: string): string | null {
   }
 }
 
-function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string | null {
+function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): {
+  src: string | null;
+  isBunny: boolean;
+} {
   const shouldMute = muted ?? Boolean(autoplay);
+  let isBunny = false;
 
   try {
     const parsedUrl = new URL(url);
-    if (parsedUrl.hostname.includes("mediadelivery.net")) {
+    if (parsedUrl.hostname.includes("iframe.mediadelivery.net")) {
+      isBunny = true;
       if (autoplay && !parsedUrl.searchParams.has("autoplay")) {
         parsedUrl.searchParams.set("autoplay", "1");
       }
       if (shouldMute && !parsedUrl.searchParams.has("muted")) {
         parsedUrl.searchParams.set("muted", "1");
       }
-      return parsedUrl.toString();
+      return { src: parsedUrl.toString(), isBunny };
     }
   } catch {
     // If URL parsing fails but we still have a Bunny URL, fall back to string concatenation.
-    if (url.includes("mediadelivery.net")) {
+    if (url.includes("iframe.mediadelivery.net")) {
+      isBunny = true;
       const params = new URLSearchParams();
       if (autoplay) params.set("autoplay", "1");
       if (shouldMute) params.set("muted", "1");
       const qs = params.toString();
-      if (!qs) return url;
-      return url.includes("?") ? `${url}&${qs}` : `${url}?${qs}`;
+      if (!qs) return { src: url, isBunny };
+      const withParams = url.includes("?") ? `${url}&${qs}` : `${url}?${qs}`;
+      return { src: withParams, isBunny };
     }
   }
 
   const youtubeId = extractYouTubeId(url);
-  if (!youtubeId) return null;
+  if (!youtubeId) return { src: null, isBunny };
 
   const params = new URLSearchParams();
   if (autoplay) params.set("autoplay", "1");
@@ -61,7 +68,7 @@ function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string
   const qs = params.toString();
 
   const baseUrl = `https://www.youtube.com/embed/${youtubeId}`;
-  return qs ? `${baseUrl}?${qs}` : baseUrl;
+  return { src: qs ? `${baseUrl}?${qs}` : baseUrl, isBunny };
 }
 
 export default function VideoPlayer({
@@ -71,7 +78,7 @@ export default function VideoPlayer({
   autoplay,
   muted,
 }: Props) {
-  const src = buildEmbedSrc(url, autoplay, muted);
+  const { src, isBunny } = buildEmbedSrc(url, autoplay, muted);
 
   if (!src) {
     return (
@@ -91,9 +98,14 @@ export default function VideoPlayer({
           title={title ?? "Video player"}
           className="w-full h-full"
           frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share"
+          allow={
+            isBunny
+              ? "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              : "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share"
+          }
           allowFullScreen
-          referrerPolicy="no-referrer"
+          loading="lazy"
+          referrerPolicy={isBunny ? "strict-origin-when-cross-origin" : undefined}
         />
       </div>
     </div>

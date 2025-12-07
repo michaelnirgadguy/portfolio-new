@@ -8,6 +8,7 @@ type Props = {
   title?: string;
   className?: string;
   autoplay?: boolean;
+  muted?: boolean;
 
   // STATE (live)
   onPlayingChange?: (isPlaying: boolean) => void;
@@ -42,6 +43,7 @@ export default function VideoPlayer({
   title,
   className,
   autoplay,
+  muted,
   onPlayingChange,
   onPlayed10s,
   onReachedMidpoint,
@@ -63,18 +65,26 @@ export default function VideoPlayer({
   // Build src
   let src: string | null = null;
 
+  const shouldMute = muted ?? Boolean(autoplay);
   const isBunny = url.includes("iframe.mediadelivery.net");
 
   if (isBunny) {
-    src = url;
-    // If you want autoplay for Bunny later, you can add query params here.
-    // if (autoplay) src += (url.includes("?") ? "&" : "?") + "autoplay=1&muted=1";
+    try {
+      const bunnyUrl = new URL(url);
+      if (autoplay) bunnyUrl.searchParams.set("autoplay", "1");
+      if (shouldMute) bunnyUrl.searchParams.set("muted", "1");
+      src = bunnyUrl.toString();
+    } catch {
+      src = url;
+    }
   } else {
     const id = extractYouTubeId(url);
     if (!id) return null;
-    src = `https://www.youtube.com/embed/${id}${
-      autoplay ? "?autoplay=1&mute=1" : ""
-    }`;
+    const params = [] as string[];
+    if (autoplay) params.push("autoplay=1");
+    if (shouldMute) params.push("mute=1");
+    const qs = params.length ? `?${params.join("&")}` : "";
+    src = `https://www.youtube.com/embed/${id}${qs}`;
   }
 
   // Reset internal refs when URL changes

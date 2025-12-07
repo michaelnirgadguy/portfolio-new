@@ -31,13 +31,25 @@ function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string
 
   try {
     const parsedUrl = new URL(url);
-    if (parsedUrl.hostname.includes("iframe.mediadelivery.net")) {
-      if (autoplay) parsedUrl.searchParams.set("autoplay", "1");
-      if (shouldMute) parsedUrl.searchParams.set("muted", "1");
+    if (parsedUrl.hostname.includes("mediadelivery.net")) {
+      if (autoplay && !parsedUrl.searchParams.has("autoplay")) {
+        parsedUrl.searchParams.set("autoplay", "1");
+      }
+      if (shouldMute && !parsedUrl.searchParams.has("muted")) {
+        parsedUrl.searchParams.set("muted", "1");
+      }
       return parsedUrl.toString();
     }
   } catch {
-    // ignore URL parsing failures for Bunny URLs
+    // If URL parsing fails but we still have a Bunny URL, fall back to string concatenation.
+    if (url.includes("mediadelivery.net")) {
+      const params = new URLSearchParams();
+      if (autoplay) params.set("autoplay", "1");
+      if (shouldMute) params.set("muted", "1");
+      const qs = params.toString();
+      if (!qs) return url;
+      return url.includes("?") ? `${url}&${qs}` : `${url}?${qs}`;
+    }
   }
 
   const youtubeId = extractYouTubeId(url);
@@ -79,8 +91,9 @@ export default function VideoPlayer({
           title={title ?? "Video player"}
           className="w-full h-full"
           frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share"
           allowFullScreen
+          referrerPolicy="no-referrer"
         />
       </div>
     </div>

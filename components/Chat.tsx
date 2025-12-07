@@ -11,9 +11,11 @@ import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
 
-const LANDING_GREETING =
-  "Hi! I’m Mimsy—a hamster, a genius, and your guide to Michael’s video portfolio. What would you like to watch?";
 const LANDING_VIDEO_ID = "aui-apollo";
+const ACT1_INVITE =
+  "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
+
+type Phase = "landing" | "chat";
 
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,13 +23,10 @@ export default function Chat() {
   const [log, setLog] = useState<any[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [hasRunLanding, setHasRunLanding] = useState(false);
+  const [phase, setPhase] = useState<Phase>("landing");
+  const [isRunningAct1, setIsRunningAct1] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  // Warm greeting on first mount
-  useEffect(() => {
-    setMessages([{ id: crypto.randomUUID(), role: "assistant", text: LANDING_GREETING }]);
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +35,15 @@ export default function Chat() {
   const appendMessage = (msg: Message) => {
     setMessages((prev) => [...prev, msg]);
   };
+
+  async function handleLandingSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    if (isTyping || isRunningAct1) return;
+
+    await runLandingSequence(trimmed);
+  }
 
   const handleShowVideos = (ids: string[]) => {
     if (!ids?.length) return;
@@ -51,37 +59,84 @@ export default function Chat() {
     }
   };
 
-  const runLandingSequence = async () => {
+  const runLandingSequence = async (idea: string) => {
+    setPhase("chat");
+    setIsRunningAct1(true);
     setIsTyping(true);
-    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "INITIALIZING..." });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "RENDERING..." });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    appendMessage({ id: crypto.randomUUID(), role: "system_log", text: "FAILURE..." });
-    appendMessage({
-      id: crypto.randomUUID(),
-      role: "assistant",
-      text: "I can’t do that. Watch this instead.",
-    });
+
+    const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: idea };
+    setMessages([userMessage]);
+
+    let script: string[] = [];
+    let title = "";
+
+    try {
+      const res = await fetch("/api/act1", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idea }),
+      });
+
+      const data = await res.json();
+      if (typeof data?.title === "string" && data.title.trim()) {
+        title = data.title.trim();
+      }
+
+      if (Array.isArray(data?.script)) {
+        script = data.script
+          .map((line: any) => String(line).trim())
+          .filter(Boolean);
+      }
+
+      if (!script.length && typeof data?.text === "string") {
+        script = data.text
+          .split(/\r?\n/)
+          .map((line: string) => line.trim())
+          .filter(Boolean);
+      }
+    } catch (err) {
+      console.error("Act1 landing sequence failed", err);
+    }
+
+    if (!script.length) {
+      script = [
+        `Generating idea: ${idea}`,
+        "Spinning hamster wheel...",
+        "Calibrating genius settings...",
+        "Rendering glorious cinematic sequence...",
+        "Error: video didn’t generate (hamster demanded a snack break)",
+      ];
+    }
+
+    for (const line of script) {
+      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => setTimeout(resolve, 2200));
+    }
+
+    const pivotLine = title
+      ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
+      : ACT1_INVITE;
+
+    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: pivotLine });
     handleShowVideos([LANDING_VIDEO_ID]);
-    setIsTyping(false);
+
     setHasRunLanding(true);
+    setIsTyping(false);
+    setIsRunningAct1(false);
+    setInput("");
   };
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
-    if (isTyping) return;
+    if (isTyping || isRunningAct1) return;
+    if (!hasRunLanding) return;
 
     const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: trimmed };
     appendMessage(userMessage);
     setInput("");
-
-    if (!hasRunLanding) {
-      await runLandingSequence();
-      return;
-    }
 
     setIsTyping(true);
     try {
@@ -110,13 +165,15 @@ export default function Chat() {
   const dots = usePendingDots(isTyping);
 
   const suggestionChips = useMemo(() => {
+    if (!hasRunLanding) return [];
+
     const last = messages[messages.length - 1];
     if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
       return ["More like this", "Show me humor"];
     }
     if (!messages.length) return ["Show me tech", "Surprise me"];
     return ["Show me tech", "Surprise me"];
-  }, [messages]);
+  }, [hasRunLanding, messages]);
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
@@ -155,6 +212,55 @@ export default function Chat() {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (phase === "landing") {
+    return (
+      <section className="min-h-[100svh] w-full bg-background grid place-items-center px-6">
+        <div className="w-full max-w-2xl space-y-6 text-center">
+          <img
+            src="/tiny-Mimsy.png"
+            alt="Mimsy"
+            className="mx-auto h-20 w-20"
+          />
+
+          <p className="text-[18px] font-semibold leading-7">
+            Hi, I’m Mimsy, a hamster, a film creator, a genius!
+          </p>
+
+          <div className="space-y-3">
+            <p className="text-[16px] leading-7">
+              Tell me your idea for a video - and I’ll generate it for you
+            </p>
+
+            <form
+              onSubmit={handleLandingSubmit}
+              className="flex items-center justify-center"
+            >
+              <div className="w-full">
+                <div className="relative w-full flex items-center gap-2 rounded-full border bg-card px-3 py-2 shadow-sm backdrop-blur">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder='try "dogs dancing on the moon"'
+                    disabled={isTyping || isRunningAct1}
+                    className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={isTyping || isRunningAct1}
+                    className="shrink-0 rounded-full h-10 px-5 border border-transparent bg-[hsl(var(--accent))] text-sm font-medium text-white transition hover:bg-[hsl(var(--accent))]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    Generate
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -202,9 +308,16 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder='Try "Show me a geeky video"'
-                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground"
+                disabled={isTyping || isRunningAct1}
+                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />
-              <Button type="submit" size="icon" variant="outlineAccent" className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]">
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!hasRunLanding || isTyping || isRunningAct1}
+                variant="outlineAccent"
+                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+              >
                 <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
               </Button>
             </div>

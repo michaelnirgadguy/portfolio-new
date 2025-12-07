@@ -29,17 +29,24 @@ function extractYouTubeId(url: string): string | null {
 function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string | null {
   const shouldMute = muted ?? Boolean(autoplay);
 
+  // Bunny / mediadelivery.net embeds
   try {
     const parsedUrl = new URL(url);
-    if (parsedUrl.hostname.includes("iframe.mediadelivery.net")) {
+    if (parsedUrl.hostname.includes("mediadelivery.net")) {
       if (autoplay) parsedUrl.searchParams.set("autoplay", "1");
       if (shouldMute) parsedUrl.searchParams.set("muted", "1");
       return parsedUrl.toString();
     }
   } catch {
-    // ignore URL parsing failures for Bunny URLs
+    // If URL parsing fails (e.g. protocol-relative), still try to append params
+    const params = new URLSearchParams();
+    if (autoplay) params.set("autoplay", "1");
+    if (shouldMute) params.set("muted", "1");
+    const qs = params.toString();
+    if (qs) return `${url}${url.includes("?") ? "&" : "?"}${qs}`;
   }
 
+  // YouTube embeds
   const youtubeId = extractYouTubeId(url);
   if (!youtubeId) return null;
 
@@ -79,6 +86,7 @@ export default function VideoPlayer({
           title={title ?? "Video player"}
           className="w-full h-full"
           frameBorder="0"
+          referrerPolicy="origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />

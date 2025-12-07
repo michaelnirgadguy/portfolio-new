@@ -26,31 +26,64 @@ function extractYouTubeId(url: string): string | null {
   }
 }
 
-function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string | null {
+function buildBunnyEmbedSrc(
+  url: string,
+  autoplay?: boolean,
+  muted?: boolean,
+): string | null {
   const shouldMute = muted ?? Boolean(autoplay);
 
   try {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.hostname.includes("iframe.mediadelivery.net")) {
-      if (autoplay) parsedUrl.searchParams.set("autoplay", "1");
-      if (shouldMute) parsedUrl.searchParams.set("muted", "1");
-      parsedUrl.searchParams.set("controls", "1");
-      return parsedUrl.toString();
-    }
-  } catch {
-    // ignore URL parsing failures for Bunny URLs
-  }
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("iframe.mediadelivery.net")) return null;
 
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    const embedIndex = segments.indexOf("embed");
+    const libraryId = embedIndex >= 0 ? segments[embedIndex + 1] : segments[0];
+    const videoId = embedIndex >= 0 ? segments[embedIndex + 2] : segments[1];
+    if (!libraryId || !videoId) return null;
+
+    const embedUrl = new URL(
+      `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`,
+    );
+
+    parsed.searchParams.forEach((value, key) => {
+      embedUrl.searchParams.set(key, value);
+    });
+
+    if (autoplay) embedUrl.searchParams.set("autoplay", "1");
+    if (shouldMute) embedUrl.searchParams.set("muted", "1");
+    embedUrl.searchParams.set("controls", "1");
+
+    return embedUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
+function buildYouTubeEmbedSrc(
+  url: string,
+  autoplay?: boolean,
+  muted?: boolean,
+): string | null {
+  const shouldMute = muted ?? Boolean(autoplay);
   const youtubeId = extractYouTubeId(url);
   if (!youtubeId) return null;
 
   const params = new URLSearchParams();
   if (autoplay) params.set("autoplay", "1");
   if (shouldMute) params.set("mute", "1");
-  const qs = params.toString();
 
+  const qs = params.toString();
   const baseUrl = `https://www.youtube.com/embed/${youtubeId}`;
   return qs ? `${baseUrl}?${qs}` : baseUrl;
+}
+
+function buildEmbedSrc(url: string, autoplay?: boolean, muted?: boolean): string | null {
+  return (
+    buildBunnyEmbedSrc(url, autoplay, muted) ??
+    buildYouTubeEmbedSrc(url, autoplay, muted)
+  );
 }
 
 export default function VideoPlayer({

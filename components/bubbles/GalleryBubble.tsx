@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 import VideoCard from "@/components/VideoCard";
 import { renderMosaic } from "@/components/video-grid/mosaic";

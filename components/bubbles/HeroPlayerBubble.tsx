@@ -1,3 +1,5 @@
+"use client";
+
 import VideoPlayer from "@/components/VideoPlayer";
 import { getVideoById } from "@/lib/videos";
 

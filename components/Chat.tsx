@@ -159,28 +159,30 @@ export default function Chat() {
   }
 
   return (
-    <section className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 pb-28 pt-6 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id}>{renderMessage(msg)}</div>
-        ))}
+    <section className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-28 pt-6 md:px-6 space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id}>{renderMessage(msg)}</div>
+          ))}
 
-        {isTyping && (
-          <div className="flex w-full justify-start">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <div className="h-3 w-3 rounded-full bg-muted-foreground/50 animate-ping" />
-              <span>hamster is thinking{".".repeat(dots)}</span>
+          {isTyping && (
+            <div className="flex w-full justify-start">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <div className="h-3 w-3 rounded-full bg-muted-foreground/50 animate-ping" />
+                <span>hamster is thinking{".".repeat(dots)}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div ref={scrollRef} />
+          <div ref={scrollRef} />
+        </div>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
       <div className="sticky bottom-0 w-full border-t border-border bg-background/80 backdrop-blur">
-        <div className="px-3 pt-2 pb-3 space-y-2">
+        <div className="mx-auto w-full max-w-4xl px-4 md:px-6 pt-2 pb-3 space-y-2">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {suggestionChips.map((chip) => (
               <button

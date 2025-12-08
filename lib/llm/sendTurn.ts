@@ -1,8 +1,13 @@
 // lib/llm/sendTurn.ts
 // One-turn LLM call with optional tool handling. Returns assistant text + next log.
 
-export type SendTurnResult = { text: string; nextLog: any[] };
-type ShowVideos = (ids: string[]) => void;
+export type SendTurnResult = {
+  text: string;
+  nextLog: any[];
+  pendingVideoQueues: string[][];
+  showAllVideos: boolean;
+  darkModeEnabled: boolean | null;
+};
 
 enum ToolName {
   ShowVideos = "ui_show_videos",
@@ -14,9 +19,8 @@ export async function sendTurn(opts: {
   log: any[];
   userText: string;
   syntheticAfterUser?: string; // ✅ NEW
-  onShowVideo?: ShowVideos;
 }): Promise<SendTurnResult> {
-  const { log, userText, syntheticAfterUser, onShowVideo } = opts;
+  const { log, userText, syntheticAfterUser } = opts;
 
   // 1) Start log (real user message, then optional synthetic user message)
   const turnStartLog = [
@@ -37,6 +41,9 @@ export async function sendTurn(opts: {
 
   // 3) Handle tool calls (ui_show_videos, ui_show_all_videos, ui_set_dark_mode)
   const toolOutputs: any[] = [];
+  const pendingVideoQueues: string[][] = [];
+  let shouldShowAllVideos = false;
+  let darkModeEnabled: boolean | null = null;
   for (const item of output) {
     if (item?.type !== "function_call") continue;
 
@@ -49,9 +56,7 @@ export async function sendTurn(opts: {
         ids = arr.filter((x: any) => typeof x === "string");
       } catch {}
 
-      if (ids.length) {
-        onShowVideo?.(ids);
-      }
+      if (ids.length) pendingVideoQueues.push(ids);
 
       toolOutputs.push({
         type: "function_call_output",
@@ -81,6 +86,8 @@ export async function sendTurn(opts: {
 
     // ui_show_all_videos()
     if (item.name === ToolName.ShowAllVideos) {
+      shouldShowAllVideos = true;
+
       toolOutputs.push({
         type: "function_call_output",
         call_id: item.call_id,
@@ -99,8 +106,10 @@ export async function sendTurn(opts: {
       let enabled = true;
       try {
         const parsed = JSON.parse(item.arguments || "{}");
-        if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
-      } catch {}
+      if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
+    } catch {}
+
+      darkModeEnabled = enabled;
 
       toolOutputs.push({
         type: "function_call_output",
@@ -120,7 +129,7 @@ export async function sendTurn(opts: {
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
     const text = (typeof data1?.text === "string" && data1.text.trim()) || "";
-    return { text, nextLog: afterModelLog };
+    return { text, nextLog: afterModelLog, pendingVideoQueues, showAllVideos: shouldShowAllVideos, darkModeEnabled };
   }
 
   // 5) Second pass with function_call_output(s)
@@ -136,5 +145,11 @@ export async function sendTurn(opts: {
     (typeof data2?.text === "string" && data2.text.trim()) || "";
 
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
-  return { text: followText, nextLog: [...logWithToolOutputs, ...finalOutput] };
+  return {
+    text: followText,
+    nextLog: [...logWithToolOutputs, ...finalOutput],
+    pendingVideoQueues,
+    showAllVideos: shouldShowAllVideos,
+    darkModeEnabled,
+  };
 }

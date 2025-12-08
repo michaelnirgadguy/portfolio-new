@@ -9,7 +9,7 @@ export default function GalleryBubble({
   onOpenVideo,
 }: {
   videoIds: string[];
-  onOpenVideo?: (id: string) => void;
+  onOpenVideo?: (video: VideoItem) => void;
 }) {
   const byId = useMemo(() => {
     const map = new Map<string, VideoItem>();
@@ -30,7 +30,8 @@ export default function GalleryBubble({
   }
 
   const handleClick = (id: string) => {
-    onOpenVideo?.(id);
+    const video = videos.find((v) => v.id === id);
+    if (video) onOpenVideo?.(video);
   };
 
   if (videos.length <= 4) {

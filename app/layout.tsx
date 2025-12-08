@@ -9,7 +9,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen">
         {/* Let pages decide about headers / chrome */}
-        <main className="min-h-screen overflow-hidden">{children}</main>
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );

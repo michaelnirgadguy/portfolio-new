@@ -127,9 +127,8 @@ export default function Chat() {
     setInput("");
   };
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
+  async function processSubmitText(text: string) {
+    const trimmed = text.trim();
     if (!trimmed) return;
     if (isTyping || isRunningAct1) return;
     if (!hasRunLanding) return;
@@ -140,14 +139,14 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog } = await sendTurn({
+      const { text: responseText, nextLog } = await sendTurn({
         log,
         userText: trimmed,
         onShowVideo: handleShowVideos,
       });
 
-      if (text) {
-        appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      if (responseText) {
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text: responseText });
       }
       setLog(nextLog);
     } catch (err) {
@@ -162,6 +161,11 @@ export default function Chat() {
     }
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    await processSubmitText(input);
+  }
+
   const dots = usePendingDots(isTyping);
 
   const suggestionChips = useMemo(() => {
@@ -169,11 +173,18 @@ export default function Chat() {
 
     const last = messages[messages.length - 1];
     if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
-      return ["More like this", "Show me humor"];
+      return ["More like this", "Give me humor", "Another surprise"];
     }
-    if (!messages.length) return ["Show me tech", "Surprise me"];
-    return ["Show me tech", "Surprise me"];
+    if (!messages.length) return ["Show me tech", "Give me humor", "Surprise me"];
+    return ["Show me tech", "Give me humor", "Surprise me"];
   }, [hasRunLanding, messages]);
+
+  const handleChipSelect = (chip: string) => {
+    setInput(chip);
+    setTimeout(() => {
+      processSubmitText(chip);
+    }, 200);
+  };
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
@@ -288,14 +299,14 @@ export default function Chat() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
       <div className="sticky bottom-0 w-full border-t border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto w-full max-w-4xl px-4 md:px-6 pt-2 pb-3 space-y-2">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="mx-auto w-full max-w-4xl px-4 md:px-6 pt-2 pb-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-3 overflow-x-auto no-scrollbar pb-1">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}
                 type="button"
-                onClick={() => setInput(chip)}
-                className="pointer-events-auto rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-foreground transition-colors"
+                onClick={() => handleChipSelect(chip)}
+                className="pointer-events-auto rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-foreground transition-colors"
               >
                 {chip}
               </button>

@@ -85,20 +85,7 @@
     @apply text-foreground antialiased;
     font-feature-settings: "ss01" on, "liga" on, "calt" on;
     text-rendering: optimizeLegibility;
-    position: relative;
-    isolation: isolate; /* create stacking context so ::before sits behind content */
-    background: transparent;
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background:
-      linear-gradient(180deg, rgba(5, 7, 14, 0.78), rgba(7, 9, 18, 0.64), rgba(5, 7, 14, 0.82)),
-      url('/BG.png') center/cover no-repeat;
-    background-attachment: fixed;
-    pointer-events: none;
+    background: url('/BG.png') center/cover fixed no-repeat;
   }
   h1, h2, h3 {
     @apply tracking-tight;

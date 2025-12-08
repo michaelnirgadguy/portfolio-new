@@ -142,12 +142,16 @@ export default function Chat() {
       const { text: responseText, nextLog } = await sendTurn({
         log,
         userText: trimmed,
-        onShowVideo: handleShowVideos,
       });
 
       if (responseText) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text: responseText });
       }
+
+      for (const ids of pendingVideoQueues) {
+        handleShowVideos(ids);
+      }
+
       setLog(nextLog);
     } catch (err) {
       console.error(err);
@@ -286,8 +290,8 @@ export default function Chat() {
           {isTyping && (
             <div className="flex w-full justify-start">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <div className="h-3 w-3 rounded-full bg-muted-foreground/50 animate-ping" />
-                <span>hamster is thinking{".".repeat(dots)}</span>
+                <div className="hamster-wheel hamster-wheel--small" aria-label="hamster is thinking" />
+                <span className="sr-only">hamster is thinking{".".repeat(dots)}</span>
               </div>
             </div>
           )}

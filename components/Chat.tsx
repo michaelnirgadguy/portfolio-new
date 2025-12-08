@@ -9,6 +9,7 @@ import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
+import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 
@@ -26,12 +27,18 @@ export default function Chat() {
   const [hasRunLanding, setHasRunLanding] = useState(false);
   const [phase, setPhase] = useState<Phase>("landing");
   const [isRunningAct1, setIsRunningAct1] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
 
   const appendMessage = (msg: Message) => {
     setMessages((prev) => [...prev, msg]);
@@ -60,6 +67,13 @@ export default function Chat() {
     }
   };
 
+  const handleShowAllVideos = () => {
+    const allIds = getAllVideos().map((video) => video.id);
+    if (!allIds.length) return;
+
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
+  };
+
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
 
@@ -68,7 +82,7 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, nextLog, pendingVideoQueues } = await sendTurn({
+      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -76,6 +90,14 @@ export default function Chat() {
 
       if (text) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+
+      if (showAllVideos) {
+        handleShowAllVideos();
+      }
+
+      if (typeof darkModeEnabled === "boolean") {
+        setIsDarkMode(darkModeEnabled);
       }
 
       handleShowVideos([video.id]);
@@ -179,13 +201,21 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog, pendingVideoQueues } = await sendTurn({
+      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: trimmed,
       });
 
       if (text) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+
+      if (showAllVideos) {
+        handleShowAllVideos();
+      }
+
+      if (typeof darkModeEnabled === "boolean") {
+        setIsDarkMode(darkModeEnabled);
       }
 
       for (const ids of pendingVideoQueues) {

@@ -10,6 +10,7 @@ import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
+import type { VideoItem } from "@/types/video";
 
 const LANDING_VIDEO_ID = "aui-apollo";
 const ACT1_INVITE =
@@ -56,6 +57,44 @@ export default function Chat() {
         type: "gallery",
         videoIds: ids,
       });
+    }
+  };
+
+  const handleOpenVideo = async (video: VideoItem) => {
+    if (isTyping || isRunningAct1) return;
+
+    const syntheticMessage = `User opened video "${video.title}" (id: ${video.id}). The video is already displaying with its title; do not call any tools to show it again and do not repeat the title. Provide one short, enthusiastic line reacting to their choice and keep the conversation moving.`;
+
+    setIsTyping(true);
+
+    try {
+      const { text, nextLog, pendingVideoQueues } = await sendTurn({
+        log,
+        userText: "User opened a video from the gallery.",
+        syntheticAfterUser: syntheticMessage,
+      });
+
+      if (text) {
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+
+      handleShowVideos([video.id]);
+
+      for (const ids of pendingVideoQueues) {
+        handleShowVideos(ids);
+      }
+
+      setLog(nextLog);
+    } catch (err) {
+      console.error(err);
+      appendMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        text: "Hmm, the wheel slipped. Try again?",
+      });
+      handleShowVideos([video.id]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -187,7 +226,7 @@ export default function Chat() {
     if (msg.role === "widget") {
       if (msg.type === "hero") return <HeroPlayerBubble videoId={msg.videoId} />;
       if (msg.type === "gallery")
-        return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(id) => handleShowVideos([id])} />;
+        return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "profile") return <ProfileBubble />;
     }
 

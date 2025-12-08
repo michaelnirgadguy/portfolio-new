@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -12,8 +12,12 @@ import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
+import { useSearchParams } from "next/navigation";
 
 const LANDING_VIDEO_ID = "aui-apollo";
+const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
+const DIRECT_GREETING =
+  "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
 const ACT1_INVITE =
   "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
 
@@ -30,6 +34,12 @@ export default function Chat() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
+  const hasSentGreetingRef = useRef(false);
+
+  const appendMessage = useCallback((msg: Message) => {
+    setMessages((prev) => [...prev, msg]);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,9 +50,29 @@ export default function Chat() {
     root.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
-  const appendMessage = (msg: Message) => {
-    setMessages((prev) => [...prev, msg]);
-  };
+  useEffect(() => {
+    const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
+    if (forceIntro) {
+      hasSentGreetingRef.current = false;
+      setPhase("landing");
+      setHasRunLanding(false);
+      return;
+    }
+
+    const skipIntroParam = searchParams?.get("skipIntro")?.toLowerCase() === "true";
+    const chatModeParam = searchParams?.get("mode")?.toLowerCase() === "chat";
+    const landingCompleted = typeof window !== "undefined" && localStorage.getItem(LANDING_COMPLETE_KEY) === "true";
+
+    if (skipIntroParam || chatModeParam || landingCompleted) {
+      setHasRunLanding(true);
+      setPhase("chat");
+
+      if (!hasSentGreetingRef.current) {
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text: DIRECT_GREETING });
+        hasSentGreetingRef.current = true;
+      }
+    }
+  }, [searchParams, appendMessage]);
 
   async function handleLandingSubmit(e: FormEvent) {
     e.preventDefault();
@@ -181,6 +211,10 @@ export default function Chat() {
 
     appendMessage({ id: crypto.randomUUID(), role: "assistant", text: pivotLine });
     handleShowVideos([LANDING_VIDEO_ID]);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LANDING_COMPLETE_KEY, "true");
+    }
 
     setHasRunLanding(true);
     setIsTyping(false);

@@ -279,8 +279,8 @@ export default function Chat() {
           {isTyping && (
             <div className="flex w-full justify-start">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <div className="h-3 w-3 rounded-full bg-muted-foreground/50 animate-ping" />
-                <span>hamster is thinking{".".repeat(dots)}</span>
+                <div className="hamster-wheel hamster-wheel--small" aria-label="hamster is thinking" />
+                <span className="sr-only">hamster is thinking{".".repeat(dots)}</span>
               </div>
             </div>
           )}

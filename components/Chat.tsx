@@ -188,9 +188,8 @@ export default function Chat() {
     setInput("");
   };
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
+  const submitMessage = async (text: string) => {
+    const trimmed = text.trim();
     if (!trimmed) return;
     if (isTyping || isRunningAct1) return;
     if (!hasRunLanding) return;
@@ -233,6 +232,11 @@ export default function Chat() {
     } finally {
       setIsTyping(false);
     }
+  };
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    await submitMessage(input);
   }
 
   const dots = usePendingDots(isTyping);
@@ -253,7 +257,7 @@ export default function Chat() {
 
     setInput(chip);
     setTimeout(() => {
-      handleSubmit(new Event("submit", { cancelable: true }) as unknown as FormEvent);
+      submitMessage(chip);
     }, 300);
   };
 

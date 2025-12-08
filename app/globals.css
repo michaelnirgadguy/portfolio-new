@@ -85,6 +85,17 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01" on, "liga" on, "calt" on;
     text-rendering: optimizeLegibility;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, rgba(10, 13, 26, 0.62), rgba(10, 13, 26, 0.48)),
+      url('/BG.png') center/cover no-repeat;
+    pointer-events: none;
   }
   h1, h2, h3 {
     @apply tracking-tight;

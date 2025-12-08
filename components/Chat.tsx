@@ -140,15 +140,19 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog } = await sendTurn({
+      const { text, nextLog, pendingVideoQueues } = await sendTurn({
         log,
         userText: trimmed,
-        onShowVideo: handleShowVideos,
       });
 
       if (text) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
       }
+
+      for (const ids of pendingVideoQueues) {
+        handleShowVideos(ids);
+      }
+
       setLog(nextLog);
     } catch (err) {
       console.error(err);

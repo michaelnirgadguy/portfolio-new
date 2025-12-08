@@ -242,11 +242,20 @@ export default function Chat() {
 
     const last = messages[messages.length - 1];
     if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
-      return ["More like this", "Show me humor"];
+      return ["More like this", "Show me humor", "Show me tech"];
     }
-    if (!messages.length) return ["Show me tech", "Surprise me"];
-    return ["Show me tech", "Surprise me"];
+    if (!messages.length) return ["Show me tech", "Show me humor", "Surprise me"];
+    return ["Show me tech", "Show me humor", "Surprise me"];
   }, [hasRunLanding, messages]);
+
+  const handleChipClick = (chip: string) => {
+    if (isTyping || isRunningAct1) return;
+
+    setInput(chip);
+    setTimeout(() => {
+      handleSubmit(new Event("submit", { cancelable: true }) as unknown as FormEvent);
+    }, 300);
+  };
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
@@ -367,8 +376,8 @@ export default function Chat() {
               <button
                 key={chip}
                 type="button"
-                onClick={() => setInput(chip)}
-                className="pointer-events-auto rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-foreground transition-colors"
+                onClick={() => handleChipClick(chip)}
+                className="pointer-events-auto rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
               >
                 {chip}
               </button>

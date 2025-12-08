@@ -387,7 +387,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-28 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-48 pt-6 md:px-6 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -407,9 +407,9 @@ export default function Chat() {
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
-      <div className="sticky bottom-0 w-full border-t border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto w-full max-w-4xl px-4 md:px-6 pt-2 pb-3 space-y-2">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 px-2 sm:px-4">
+        <div className="pointer-events-auto mx-auto w-full max-w-4xl rounded-2xl border border-border bg-background/90 px-3 md:px-5 pt-2 pb-3 shadow-lg backdrop-blur">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}

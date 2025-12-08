@@ -337,7 +337,7 @@ export default function Chat() {
 
   if (phase === "landing") {
     return (
-      <section className="min-h-[100svh] w-full bg-background grid place-items-center px-6">
+      <section className="min-h-[100svh] w-full grid place-items-center px-6">
         <div className="w-full max-w-2xl space-y-6 text-center">
           <img
             src="/tiny-Mimsy.png"
@@ -404,8 +404,6 @@ export default function Chat() {
           <div ref={scrollRef} />
         </div>
       </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 px-2 sm:px-4">
         <div className="pointer-events-auto mx-auto w-full max-w-4xl rounded-2xl border border-border bg-background/90 px-3 md:px-5 pt-2 pb-3 shadow-lg backdrop-blur">

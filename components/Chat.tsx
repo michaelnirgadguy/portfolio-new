@@ -413,7 +413,7 @@ export default function Chat() {
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className="pointer-events-auto rounded-full border border-border bg-background/70 px-3 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur hover:border-foreground hover:text-foreground transition-colors"
+                className="pointer-events-auto glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground"
               >
                 {chip}
               </button>
@@ -421,7 +421,7 @@ export default function Chat() {
           </div>
 
           <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
-            <div className="mx-auto flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-2 shadow-md backdrop-blur">
+            <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

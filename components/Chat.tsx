@@ -387,7 +387,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-48 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-40 pt-6 md:px-6 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -405,23 +405,23 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 px-2 sm:px-4">
-        <div className="pointer-events-auto mx-auto w-full max-w-4xl rounded-2xl border border-border bg-background/90 px-3 md:px-5 pt-2 pb-3 shadow-lg backdrop-blur">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30">
+        <div className="relative mx-auto w-full max-w-4xl px-4 md:px-6">
+          <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className="pointer-events-auto rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                className="pointer-events-auto rounded-full border border-border bg-background/70 px-3 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur hover:border-foreground hover:text-foreground transition-colors"
               >
                 {chip}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="pointer-events-auto">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 shadow-sm">
+          <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
+            <div className="mx-auto flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-2 shadow-md backdrop-blur">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

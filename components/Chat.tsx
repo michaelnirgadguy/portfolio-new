@@ -406,8 +406,8 @@ export default function Chat() {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30">
-        <div className="relative mx-auto flex w-full max-w-4xl items-end justify-center gap-4 px-4 md:px-6">
-          <div className="pointer-events-auto flex flex-col items-start gap-2 pb-1">
+        <div className="relative mx-auto w-full max-w-4xl px-4 md:px-6">
+          <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-end md:-ml-3">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}
@@ -420,7 +420,7 @@ export default function Chat() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl">
+          <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
             <div className="mx-auto flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-2 shadow-md backdrop-blur">
               <input
                 value={input}

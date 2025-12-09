@@ -16,14 +16,21 @@ export default function HeroPlayerBubble({ videoId }: { videoId: string }) {
     <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <VideoPlayer url={video.url} title={video.title} className="bg-black" autoplay />
 
-      <div className="p-4 space-y-1">
-        <div className="text-lg font-semibold leading-tight">{video.title}</div>
-        <div className="text-sm text-muted-foreground">{video.client}</div>
-        {video.display_credits ? (
-          <p className="text-sm text-muted-foreground whitespace-pre-line mt-2">
-            {video.display_credits}
-          </p>
-        ) : null}
+      <div className="p-4 sm:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="flex-1 space-y-1">
+            <div className="text-lg font-semibold leading-tight">{video.title}</div>
+            <div className="text-sm text-muted-foreground">{video.client}</div>
+          </div>
+
+          {video.display_credits ? (
+            <div className="whitespace-pre-line text-sm text-muted-foreground sm:min-w-[14rem] sm:text-right">
+              {video.display_credits}
+            </div>
+          ) : (
+            <div className="hidden sm:invisible sm:block sm:min-w-[14rem]" aria-hidden />
+          )}
+        </div>
       </div>
     </div>
   );

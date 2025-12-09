@@ -36,10 +36,37 @@
 
   --radius: 14px;
 
+  /* Translucent surfaces */
+  --surface-1: 0 0% 100% / 0.78;
+  --surface-2: 218 26% 96% / 0.6;
+  --surface-border-soft: 218 20% 88% / 0.6;
+  --surface-border-strong: 267 100% 77% / 0.45;
+
+  /* Chat bubble tokens */
+  --bubble-assistant-from: 210 26% 98% / 0.94;
+  --bubble-assistant-to: 210 24% 94% / 0.9;
+  --bubble-assistant-border: 214 26% 86% / 0.95;
+  --bubble-assistant-foreground: 222.2 47.4% 11.2%;
+
+  --bubble-user-from: 267 96% 81% / 0.96;
+  --bubble-user-to: 267 90% 72% / 0.95;
+  --bubble-user-border: 267 76% 68% / 0.85;
+  --bubble-user-foreground: 222 47% 11%;
+
+  --bubble-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --bubble-shadow-strong: 0 16px 42px rgba(15, 23, 42, 0.16);
+
+  /* Background veil over hero image */
+  --background-veil-strong: 0 0% 99%;
+  --background-veil-strong-alpha: 0.5;
+  --background-veil-soft: 210 16% 94%;
+  --background-veil-soft-edge-alpha: 0;
+  --background-veil-soft-mid-alpha: 0.55;
+
   /* Subtle, consistent shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-lg: 0 18px 48px rgba(0,0,0,0.10);
+  --shadow-sm: 0 6px 14px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 14px 36px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 24px 68px rgba(15, 23, 42, 0.16);
 }
 
 .dark {
@@ -71,6 +98,34 @@
   --destructive-foreground: 210 20% 98%;
 
   --ring: 217 91% 60%;
+
+  --surface-1: 224 16% 12% / 0.72;
+  --surface-2: 224 16% 10% / 0.55;
+  --surface-border-soft: 223 16% 32% / 0.45;
+  --surface-border-strong: 267 80% 78% / 0.5;
+
+  --bubble-assistant-from: 224 16% 12% / 0.9;
+  --bubble-assistant-to: 224 14% 16% / 0.9;
+  --bubble-assistant-border: 223 16% 32% / 0.65;
+  --bubble-assistant-foreground: 210 20% 98%;
+
+  --bubble-user-from: 267 78% 70% / 0.94;
+  --bubble-user-to: 267 72% 60% / 0.94;
+  --bubble-user-border: 267 80% 78% / 0.6;
+  --bubble-user-foreground: 210 20% 98%;
+
+  --bubble-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.38);
+  --bubble-shadow-strong: 0 16px 42px rgba(0, 0, 0, 0.46);
+
+  --background-veil-strong: 224 14% 6%;
+  --background-veil-strong-alpha: 0.48;
+  --background-veil-soft: 224 14% 10%;
+  --background-veil-soft-edge-alpha: 0;
+  --background-veil-soft-mid-alpha: 0.36;
+
+  --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 14px 36px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 24px 68px rgba(0, 0, 0, 0.5);
 }
 
 /* 2) Base element polish */
@@ -82,9 +137,24 @@
     height: 100%;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "ss01" on, "liga" on, "calt" on;
     text-rendering: optimizeLegibility;
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(
+        90deg,
+        hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 0%,
+        hsl(var(--background-veil-soft) / var(--background-veil-soft-mid-alpha)) 18%,
+        hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 50%,
+        hsl(var(--background-veil-soft) / var(--background-veil-soft-mid-alpha)) 82%,
+        hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 100%
+      ),
+      url('/BG2.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
   h1, h2, h3 {
     @apply tracking-tight;
@@ -112,6 +182,17 @@
   }
   .elevated-lg {
     box-shadow: var(--shadow-lg);
+  }
+  .glass-surface {
+    position: relative;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background:
+      linear-gradient(135deg, hsl(var(--surface-1)), hsl(var(--surface-2))) padding-box,
+      linear-gradient(120deg, hsl(var(--surface-border-soft)), hsl(var(--accent) / 0.35), hsl(var(--surface-border-strong))) border-box;
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(18px) saturate(1.05);
+    -webkit-backdrop-filter: blur(18px) saturate(1.05);
   }
   .container-prose {
     @apply max-w-3xl mx-auto px-4 sm:px-6 lg:px-8;

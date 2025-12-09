@@ -312,8 +312,12 @@ export default function Chat() {
     if (isUser) {
       return (
         <div className="flex w-full justify-end">
-          <div className="max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-            {msg.text}
+          <div className="max-w-[75%]">
+            <div
+              className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]"
+            >
+              {msg.text}
+            </div>
           </div>
         </div>
       );
@@ -321,13 +325,13 @@ export default function Chat() {
 
     return (
       <div className="flex w-full justify-start">
-        <div className="flex items-start gap-2 max-w-[80%]">
+        <div className="flex items-start gap-3 max-w-[80%]">
           <img
             src="/bigger-avatar.png"
             alt="Mimsy"
             className="mt-1 h-10 w-10 rounded-full shrink-0"
           />
-          <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
+          <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-soft)] bg-[linear-gradient(145deg,hsl(var(--bubble-assistant-from)),hsl(var(--bubble-assistant-to)))] text-[hsl(var(--bubble-assistant-foreground))] border-[hsl(var(--bubble-assistant-border))]">
             {msg.text}
           </div>
         </div>
@@ -337,7 +341,7 @@ export default function Chat() {
 
   if (phase === "landing") {
     return (
-      <section className="min-h-[100svh] w-full bg-background grid place-items-center px-6">
+      <section className="min-h-[100svh] w-full grid place-items-center px-6">
         <div className="w-full max-w-2xl space-y-6 text-center">
           <img
             src="/tiny-Mimsy.png"
@@ -387,7 +391,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-48 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-20 pt-6 md:px-6 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -405,25 +409,23 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30 px-2 sm:px-4">
-        <div className="pointer-events-auto mx-auto w-full max-w-4xl rounded-2xl border border-border bg-background/90 px-3 md:px-5 pt-2 pb-3 shadow-lg backdrop-blur">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
+        <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
+          <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className="pointer-events-auto rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                className="pointer-events-auto glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground"
               >
                 {chip}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="pointer-events-auto">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 shadow-sm">
+          <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
+            <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

@@ -24,8 +24,10 @@ export default function HeroPlayerBubble({ videoId }: { videoId: string }) {
           </div>
 
           {video.display_credits ? (
-            <div className="whitespace-pre-line text-sm text-muted-foreground sm:min-w-[14rem] sm:text-right">
-              {video.display_credits}
+            <div className="sm:flex sm:min-w-[14rem] sm:justify-end">
+              <div className="whitespace-pre-line text-sm text-muted-foreground sm:text-left">
+                {video.display_credits}
+              </div>
             </div>
           ) : (
             <div className="hidden sm:invisible sm:block sm:min-w-[14rem]" aria-hidden />

@@ -406,8 +406,8 @@ export default function Chat() {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30">
-        <div className="relative mx-auto flex w-full max-w-4xl justify-center px-4 md:px-6">
-          <div className="pointer-events-auto absolute left-4 bottom-[4.5rem] flex flex-col items-start gap-2 md:left-6">
+        <div className="relative mx-auto flex w-full max-w-4xl items-end justify-center gap-4 px-4 md:px-6">
+          <div className="pointer-events-auto flex flex-col items-start gap-2 pb-1">
             {suggestionChips.map((chip) => (
               <button
                 key={chip}

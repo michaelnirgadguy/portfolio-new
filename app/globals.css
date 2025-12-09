@@ -134,9 +134,21 @@
     @apply text-foreground antialiased;
     font-feature-settings: "ss01" on, "liga" on, "calt" on;
     text-rendering: optimizeLegibility;
-    background:
-      linear-gradient(180deg, hsl(var(--background-veil-strong)), hsl(var(--background-veil-soft))),
-      url('/BG.png') center/cover fixed no-repeat;
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(
+        90deg,
+        hsl(var(--background-veil-soft) / 0) 0%,
+        hsl(var(--background-veil-soft) / 0.55) 18%,
+        hsl(var(--background-veil-strong)) 50%,
+        hsl(var(--background-veil-soft) / 0.55) 82%,
+        hsl(var(--background-veil-soft) / 0) 100%
+      ),
+      url('/BG.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
   h1, h2, h3 {
     @apply tracking-tight;

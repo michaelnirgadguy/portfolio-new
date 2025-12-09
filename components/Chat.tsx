@@ -391,7 +391,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-4 pb-40 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-20 pt-6 md:px-6 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -409,8 +409,8 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30">
-        <div className="relative mx-auto w-full max-w-4xl px-4 md:px-6">
+      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
+        <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
           <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
             {suggestionChips.map((chip) => (
               <button

@@ -312,8 +312,12 @@ export default function Chat() {
     if (isUser) {
       return (
         <div className="flex w-full justify-end">
-          <div className="max-w-[75%] px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-            {msg.text}
+          <div className="max-w-[75%]">
+            <div
+              className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]"
+            >
+              {msg.text}
+            </div>
           </div>
         </div>
       );
@@ -321,13 +325,13 @@ export default function Chat() {
 
     return (
       <div className="flex w-full justify-start">
-        <div className="flex items-start gap-2 max-w-[80%]">
+        <div className="flex items-start gap-3 max-w-[80%]">
           <img
             src="/bigger-avatar.png"
             alt="Mimsy"
             className="mt-1 h-10 w-10 rounded-full shrink-0"
           />
-          <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed bg-[hsl(var(--card))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
+          <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-soft)] bg-[linear-gradient(145deg,hsl(var(--bubble-assistant-from)),hsl(var(--bubble-assistant-to)))] text-[hsl(var(--bubble-assistant-foreground))] border-[hsl(var(--bubble-assistant-border))]">
             {msg.text}
           </div>
         </div>

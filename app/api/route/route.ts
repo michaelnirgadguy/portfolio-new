@@ -5,6 +5,7 @@ import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
 import videos from "@/data/videos.json";
+import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
 
@@ -78,11 +79,30 @@ ${examples}
       parallel_tool_calls: false,
       instructions: fullInstructions,
       input: input_list,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "assistant_reply",
+          strict: true,
+          schema: assistantReplySchema,
+        },
+      },
     });
 
     // Expose both human text and raw tool calls
-    const text = (resp as any)?.output_text?.trim() || null;
+    const parsed = (resp as any)?.output_parsed ?? {};
+    const text =
+      typeof parsed?.text === "string"
+        ? parsed.text.trim()
+        : (resp as any)?.output_text?.trim() || null;
+    const chips = Array.isArray(parsed?.chips)
+      ? parsed.chips
+          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+          .filter(Boolean)
+      : [];
     const output = (resp as any)?.output ?? [];
+    const status = typeof (resp as any)?.status === "string" ? resp.status : null;
+    const statusDetails = (resp as any)?.status_details ?? null;
 
     // Helpful server logs while you iterate
     console.log(
@@ -92,7 +112,7 @@ ${examples}
     console.log(">>> OUTPUT_TEXT:", text);
     console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 
-    return new Response(JSON.stringify({ text, output }), {
+    return new Response(JSON.stringify({ text, chips, output, status, statusDetails }), {
       headers: { "content-type": "application/json" },
     });
   } catch (err: any) {

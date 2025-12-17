@@ -8,6 +8,8 @@ export type SendTurnResult = {
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
   darkModeEnabled: boolean | null;
+  responseStatus: string;
+  statusDetails?: unknown;
 };
 
 enum ToolName {
@@ -16,23 +18,37 @@ enum ToolName {
   SetDarkMode = "ui_set_dark_mode",
 }
 
-function parseModelJson(raw: unknown): { text: string; chips: string[] } {
-  const rawText = typeof raw === "string" ? raw.trim() : "";
-  if (!rawText) return { text: "", chips: [] };
+const FALLBACK_ERROR_TEXT = "Mimsy got shy. Mind trying again?";
 
-  try {
-    const parsed = JSON.parse(rawText);
-    const text = typeof parsed?.text === "string" ? parsed.text.trim() : "";
-    const chips = Array.isArray(parsed?.chips)
-      ? parsed.chips
-          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
-          .filter(Boolean)
-      : [];
+type AssistantPayload = {
+  text: string;
+  chips: string[];
+  status?: string;
+  statusDetails?: unknown;
+};
 
-    return { text: text || rawText, chips };
-  } catch (err) {
-    return { text: rawText, chips: [] };
+function normalizeAssistantPayload(data: any): AssistantPayload {
+  const text = typeof data?.text === "string" ? data.text.trim() : "";
+  const chips = Array.isArray(data?.chips)
+    ? data.chips
+        .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+        .filter(Boolean)
+    : [];
+
+  return {
+    text,
+    chips,
+    status: typeof data?.status === "string" ? data.status : undefined,
+    statusDetails: data?.statusDetails ?? data?.status_details,
+  };
+}
+
+function resolveAssistantText(payload: AssistantPayload): string {
+  if (payload.status && payload.status !== "completed") {
+    return payload.text || FALLBACK_ERROR_TEXT;
   }
+
+  return payload.text;
 }
 
 export async function sendTurn(opts: {
@@ -58,6 +74,8 @@ export async function sendTurn(opts: {
   const data1 = await res1.json();
   const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
   let afterModelLog = [...turnStartLog, ...output];
+  const primaryPayload = normalizeAssistantPayload(data1);
+  const primaryText = resolveAssistantText(primaryPayload);
 
   // 3) Handle tool calls (ui_show_videos, ui_show_all_videos, ui_set_dark_mode)
   const toolOutputs: any[] = [];
@@ -126,8 +144,8 @@ export async function sendTurn(opts: {
       let enabled = true;
       try {
         const parsed = JSON.parse(item.arguments || "{}");
-      if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
-    } catch {}
+        if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
+      } catch {}
 
       darkModeEnabled = enabled;
 
@@ -148,15 +166,15 @@ export async function sendTurn(opts: {
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
-    const { text, chips } = parseModelJson(data1?.text);
-
     return {
-      text,
-      chips,
+      text: primaryText,
+      chips: primaryPayload.chips,
       nextLog: afterModelLog,
       pendingVideoQueues,
       showAllVideos: shouldShowAllVideos,
       darkModeEnabled,
+      responseStatus: primaryPayload.status ?? "unknown",
+      statusDetails: primaryPayload.statusDetails,
     };
   }
 
@@ -168,16 +186,19 @@ export async function sendTurn(opts: {
     body: JSON.stringify({ input: logWithToolOutputs }),
   });
   const data2 = await res2.json();
-
-  const { text: followText, chips } = parseModelJson(data2?.text);
+  const followPayload = normalizeAssistantPayload(data2);
+  const followText = resolveAssistantText(followPayload);
 
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
   return {
     text: followText,
-    chips,
+    chips: followPayload.chips,
     nextLog: [...logWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,
     darkModeEnabled,
+    responseStatus:
+      followPayload.status ?? primaryPayload.status ?? "unknown",
+    statusDetails: followPayload.statusDetails ?? primaryPayload.statusDetails,
   };
 }

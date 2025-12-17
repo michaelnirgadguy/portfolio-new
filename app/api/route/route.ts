@@ -5,6 +5,7 @@ import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
 import videos from "@/data/videos.json";
+import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
 
@@ -78,11 +79,70 @@ ${examples}
       parallel_tool_calls: false,
       instructions: fullInstructions,
       input: input_list,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "assistant_reply",
+          strict: true,
+          schema: assistantReplySchema,
+        },
+      },
     });
 
     // Expose both human text and raw tool calls
-    const text = (resp as any)?.output_text?.trim() || null;
     const output = (resp as any)?.output ?? [];
+    let parsed = (resp as any)?.output_parsed ?? null;
+
+    if (!parsed && Array.isArray(output)) {
+      const parsedItem = output.find(
+        (item: any) => item && typeof item === "object" && item.parsed
+      );
+      parsed = parsedItem?.parsed ?? null;
+    }
+
+    let text: string | null = null;
+    let chips: string[] = [];
+
+    if (parsed) {
+      if (typeof parsed?.text === "string") {
+        text = parsed.text.trim();
+      }
+
+      if (Array.isArray(parsed?.chips)) {
+        chips = parsed.chips
+          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+          .filter(Boolean);
+      }
+    }
+
+    if (!text) {
+      const raw = (resp as any)?.output_text;
+      if (typeof raw === "string") {
+        const trimmed = raw.trim();
+
+        try {
+          const fallback = JSON.parse(trimmed);
+          if (typeof fallback?.text === "string") {
+            text = fallback.text.trim();
+          } else {
+            text = trimmed;
+          }
+
+          if (!chips.length && Array.isArray(fallback?.chips)) {
+            chips = fallback.chips
+              .map((chip: unknown) =>
+                typeof chip === "string" ? chip.trim() : ""
+              )
+              .filter(Boolean);
+          }
+        } catch {
+          text = trimmed;
+        }
+      }
+    }
+
+    const status = typeof (resp as any)?.status === "string" ? resp.status : null;
+    const statusDetails = (resp as any)?.status_details ?? null;
 
     // Helpful server logs while you iterate
     console.log(
@@ -92,7 +152,7 @@ ${examples}
     console.log(">>> OUTPUT_TEXT:", text);
     console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 
-    return new Response(JSON.stringify({ text, output }), {
+    return new Response(JSON.stringify({ text, chips, output, status, statusDetails }), {
       headers: { "content-type": "application/json" },
     });
   } catch (err: any) {

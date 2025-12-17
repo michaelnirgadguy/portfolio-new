@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -8,7 +8,7 @@ import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import { usePendingDots } from "@/hooks/useChatHooks";
-import { sendTurn } from "@/lib/llm/sendTurn";
+import { DEFAULT_SUGGESTION_CHIPS, sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
@@ -32,6 +32,7 @@ export default function Chat() {
   const [phase, setPhase] = useState<Phase>("landing");
   const [isRunningAct1, setIsRunningAct1] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [dynamicChips, setDynamicChips] = useState<string[]>([]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -49,6 +50,12 @@ export default function Chat() {
     const root = document.documentElement;
     root.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (hasRunLanding && !dynamicChips.length) {
+      setDynamicChips(DEFAULT_SUGGESTION_CHIPS);
+    }
+  }, [hasRunLanding, dynamicChips.length]);
 
   useEffect(() => {
     const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
@@ -112,7 +119,7 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -135,6 +142,8 @@ export default function Chat() {
       for (const ids of pendingVideoQueues) {
         handleShowVideos(ids);
       }
+
+      setDynamicChips(Array.isArray(chips) && chips.length ? chips : DEFAULT_SUGGESTION_CHIPS);
 
       setLog(nextLog);
     } catch (err) {
@@ -234,7 +243,7 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: trimmed,
       });
@@ -254,6 +263,8 @@ export default function Chat() {
       for (const ids of pendingVideoQueues) {
         handleShowVideos(ids);
       }
+
+      setDynamicChips(Array.isArray(chips) && chips.length ? chips : DEFAULT_SUGGESTION_CHIPS);
 
       setLog(nextLog);
     } catch (err) {
@@ -275,16 +286,7 @@ export default function Chat() {
 
   const dots = usePendingDots(isTyping);
 
-  const suggestionChips = useMemo(() => {
-    if (!hasRunLanding) return [];
-
-    const last = messages[messages.length - 1];
-    if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
-      return ["More like this", "Show me humor", "Show me tech"];
-    }
-    if (!messages.length) return ["Show me tech", "Show me humor", "Surprise me"];
-    return ["Show me tech", "Show me humor", "Surprise me"];
-  }, [hasRunLanding, messages]);
+  const chipsToShow = hasRunLanding ? dynamicChips : [];
 
   const handleChipClick = (chip: string) => {
     if (isTyping || isRunningAct1) return;
@@ -412,7 +414,7 @@ export default function Chat() {
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
         <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
           <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
-            {suggestionChips.map((chip) => (
+            {chipsToShow.map((chip) => (
               <button
                 key={chip}
                 type="button"

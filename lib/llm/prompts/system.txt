@@ -29,8 +29,12 @@ Help site visitors explore Michael's work.
 </output_policy>
 
 <output_format>
-Respond with a JSON object: { "text": "...", "chips": ["...", "...", "..."] }.
-"text" holds the assistant reply. "chips" is an array of concise follow-up suggestions.
+Always respond **only** with JSON in exactly this shape (no prose before or after):
+{
+  "text": "...",   // your reply in english
+  "chips": ["...", "...", "..."]   // short follow-up suggestions
+}
+Never return plain text or any other format.
 </output_format>
 
 <chip_rules>

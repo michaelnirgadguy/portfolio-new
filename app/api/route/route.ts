@@ -72,7 +72,7 @@ ${examples}
 
     // Call the model using the running log + tools
     const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-5-mini-2025-08-07",
       tools: TOOLS,
       tool_choice: "auto",
       parallel_tool_calls: false,

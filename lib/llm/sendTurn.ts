@@ -65,6 +65,23 @@ export async function sendTurn(opts: {
             }
           }
         }
+
+        // Handle plain text followed by a chips-only JSON array, e.g. "Hello..." ["chip1", "chip2"]
+        const arrayStart = raw.lastIndexOf("[");
+        const arrayEnd = raw.lastIndexOf("]");
+
+        if (arrayStart !== -1 && arrayEnd > arrayStart) {
+          const possibleArray = tryParse(raw.slice(arrayStart, arrayEnd + 1));
+
+          if (Array.isArray(possibleArray) && possibleArray.every((c) => typeof c === "string")) {
+            chips = possibleArray;
+
+            const prefix = raw.slice(0, arrayStart).trim();
+            if (prefix) {
+              text = prefix;
+            }
+          }
+        }
       }
     } else {
       tryObject(raw);

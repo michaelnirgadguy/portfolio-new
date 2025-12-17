@@ -3,11 +3,32 @@
 
 export type SendTurnResult = {
   text: string;
+  chips: string[];
   nextLog: any[];
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
   darkModeEnabled: boolean | null;
 };
+
+export const DEFAULT_CHIPS = ["Show me tech", "Show me humor", "Surprise me"];
+
+function parseAssistantResponse(rawText: string): { text: string; chips: string[] } {
+  const fallback = { text: (rawText || "").trim(), chips: DEFAULT_CHIPS };
+
+  try {
+    const parsed = JSON.parse(rawText);
+    const parsedText = typeof parsed?.text === "string" ? parsed.text.trim() : fallback.text;
+    const parsedChips = Array.isArray(parsed?.chips)
+      ? parsed.chips
+          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+          .filter(Boolean)
+      : [];
+
+    return { text: parsedText, chips: parsedChips.length ? parsedChips : DEFAULT_CHIPS };
+  } catch (err) {
+    return fallback;
+  }
+}
 
 enum ToolName {
   ShowVideos = "ui_show_videos",
@@ -128,8 +149,17 @@ export async function sendTurn(opts: {
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
-    const text = (typeof data1?.text === "string" && data1.text.trim()) || "";
-    return { text, nextLog: afterModelLog, pendingVideoQueues, showAllVideos: shouldShowAllVideos, darkModeEnabled };
+    const { text, chips } = parseAssistantResponse(
+      typeof data1?.text === "string" ? data1.text : ""
+    );
+    return {
+      text,
+      chips,
+      nextLog: afterModelLog,
+      pendingVideoQueues,
+      showAllVideos: shouldShowAllVideos,
+      darkModeEnabled,
+    };
   }
 
   // 5) Second pass with function_call_output(s)
@@ -141,12 +171,14 @@ export async function sendTurn(opts: {
   });
   const data2 = await res2.json();
 
-  const followText =
-    (typeof data2?.text === "string" && data2.text.trim()) || "";
+  const { text: followText, chips } = parseAssistantResponse(
+    typeof data2?.text === "string" ? data2.text : ""
+  );
 
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
   return {
     text: followText,
+    chips,
     nextLog: [...logWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,

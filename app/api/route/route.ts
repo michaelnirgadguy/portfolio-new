@@ -90,17 +90,57 @@ ${examples}
     });
 
     // Expose both human text and raw tool calls
-    const parsed = (resp as any)?.output_parsed ?? {};
-    const text =
-      typeof parsed?.text === "string"
-        ? parsed.text.trim()
-        : (resp as any)?.output_text?.trim() || null;
-    const chips = Array.isArray(parsed?.chips)
-      ? parsed.chips
-          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
-          .filter(Boolean)
-      : [];
     const output = (resp as any)?.output ?? [];
+    let parsed = (resp as any)?.output_parsed ?? null;
+
+    if (!parsed && Array.isArray(output)) {
+      const parsedItem = output.find(
+        (item: any) => item && typeof item === "object" && item.parsed
+      );
+      parsed = parsedItem?.parsed ?? null;
+    }
+
+    let text: string | null = null;
+    let chips: string[] = [];
+
+    if (parsed) {
+      if (typeof parsed?.text === "string") {
+        text = parsed.text.trim();
+      }
+
+      if (Array.isArray(parsed?.chips)) {
+        chips = parsed.chips
+          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+          .filter(Boolean);
+      }
+    }
+
+    if (!text) {
+      const raw = (resp as any)?.output_text;
+      if (typeof raw === "string") {
+        const trimmed = raw.trim();
+
+        try {
+          const fallback = JSON.parse(trimmed);
+          if (typeof fallback?.text === "string") {
+            text = fallback.text.trim();
+          } else {
+            text = trimmed;
+          }
+
+          if (!chips.length && Array.isArray(fallback?.chips)) {
+            chips = fallback.chips
+              .map((chip: unknown) =>
+                typeof chip === "string" ? chip.trim() : ""
+              )
+              .filter(Boolean);
+          }
+        } catch {
+          text = trimmed;
+        }
+      }
+    }
+
     const status = typeof (resp as any)?.status === "string" ? resp.status : null;
     const statusDetails = (resp as any)?.status_details ?? null;
 

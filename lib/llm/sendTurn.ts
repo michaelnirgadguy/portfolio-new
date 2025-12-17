@@ -3,11 +3,41 @@
 
 export type SendTurnResult = {
   text: string;
+  chips: string[];
   nextLog: any[];
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
   darkModeEnabled: boolean | null;
 };
+
+export const DEFAULT_CHIPS = ["Show me tech", "Show me humor", "Surprise me"];
+
+function parseAssistantResponse(raw: unknown) {
+  const fallbackText = typeof raw === "string" ? raw.trim() : String(raw ?? "").trim();
+
+  if (typeof raw !== "string") {
+    return { text: fallbackText, chips: DEFAULT_CHIPS };
+  }
+
+  const trimmed = fallbackText;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+
+    if (parsed && typeof parsed === "object" && typeof (parsed as any).text === "string") {
+      const parsedChips = Array.isArray((parsed as any).chips)
+        ? (parsed as any).chips.filter((chip: unknown) => typeof chip === "string" && chip.trim().length)
+        : [];
+
+      return {
+        text: (parsed as any).text,
+        chips: parsedChips.length ? parsedChips : DEFAULT_CHIPS,
+      };
+    }
+  } catch (err) {}
+
+  return { text: trimmed, chips: DEFAULT_CHIPS };
+}
 
 enum ToolName {
   ShowVideos = "ui_show_videos",
@@ -106,8 +136,8 @@ export async function sendTurn(opts: {
       let enabled = true;
       try {
         const parsed = JSON.parse(item.arguments || "{}");
-      if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
-    } catch {}
+        if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
+      } catch {}
 
       darkModeEnabled = enabled;
 
@@ -128,8 +158,15 @@ export async function sendTurn(opts: {
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
-    const text = (typeof data1?.text === "string" && data1.text.trim()) || "";
-    return { text, nextLog: afterModelLog, pendingVideoQueues, showAllVideos: shouldShowAllVideos, darkModeEnabled };
+    const { text, chips } = parseAssistantResponse(data1?.text);
+    return {
+      text,
+      chips,
+      nextLog: afterModelLog,
+      pendingVideoQueues,
+      showAllVideos: shouldShowAllVideos,
+      darkModeEnabled,
+    };
   }
 
   // 5) Second pass with function_call_output(s)
@@ -141,12 +178,12 @@ export async function sendTurn(opts: {
   });
   const data2 = await res2.json();
 
-  const followText =
-    (typeof data2?.text === "string" && data2.text.trim()) || "";
+  const { text, chips } = parseAssistantResponse(data2?.text);
 
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
   return {
-    text: followText,
+    text,
+    chips,
     nextLog: [...logWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,

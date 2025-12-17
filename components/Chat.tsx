@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -8,7 +8,7 @@ import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import { usePendingDots } from "@/hooks/useChatHooks";
-import { sendTurn } from "@/lib/llm/sendTurn";
+import { DEFAULT_CHIPS, sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
@@ -32,6 +32,7 @@ export default function Chat() {
   const [phase, setPhase] = useState<Phase>("landing");
   const [isRunningAct1, setIsRunningAct1] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [dynamicChips, setDynamicChips] = useState<string[]>(DEFAULT_CHIPS);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -112,7 +113,7 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -120,6 +121,10 @@ export default function Chat() {
 
       if (text) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+
+      if (chips?.length) {
+        setDynamicChips(chips);
       }
 
       if (showAllVideos) {
@@ -234,13 +239,17 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: trimmed,
       });
 
       if (text) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+      }
+
+      if (chips?.length) {
+        setDynamicChips(chips);
       }
 
       if (showAllVideos) {
@@ -275,16 +284,7 @@ export default function Chat() {
 
   const dots = usePendingDots(isTyping);
 
-  const suggestionChips = useMemo(() => {
-    if (!hasRunLanding) return [];
-
-    const last = messages[messages.length - 1];
-    if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
-      return ["More like this", "Show me humor", "Show me tech"];
-    }
-    if (!messages.length) return ["Show me tech", "Show me humor", "Surprise me"];
-    return ["Show me tech", "Show me humor", "Surprise me"];
-  }, [hasRunLanding, messages]);
+  const suggestionChips = hasRunLanding ? dynamicChips : [];
 
   const handleChipClick = (chip: string) => {
     if (isTyping || isRunningAct1) return;

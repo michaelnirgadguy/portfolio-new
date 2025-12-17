@@ -37,11 +37,34 @@ export async function sendTurn(opts: {
     };
 
     if (typeof raw === "string") {
-      try {
-        const parsed = JSON.parse(raw);
+      const tryParse = (input: string) => {
+        try {
+          return JSON.parse(input);
+        } catch {
+          return null;
+        }
+      };
+
+      const parsed = tryParse(raw);
+      if (parsed) {
         tryObject(parsed);
-      } catch {
-        // fallback to raw text
+      } else {
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+
+        if (start !== -1 && end > start) {
+          const sliced = tryParse(raw.slice(start, end + 1));
+
+          if (sliced) {
+            tryObject(sliced);
+
+            // If the assistant echoed both text + JSON, keep the human text and pull chips from JSON.
+            const prefix = raw.slice(0, start).trim();
+            if (prefix) {
+              text = prefix;
+            }
+          }
+        }
       }
     } else {
       tryObject(raw);

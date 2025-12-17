@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -20,6 +20,7 @@ const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
 const ACT1_INVITE =
   "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
+const FALLBACK_CHIPS = ["Show me tech", "Show me humor", "Surprise me"];
 
 type Phase = "landing" | "chat";
 
@@ -32,6 +33,7 @@ export default function Chat() {
   const [phase, setPhase] = useState<Phase>("landing");
   const [isRunningAct1, setIsRunningAct1] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [suggestionChips, setSuggestionChips] = useState<string[]>([]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -74,6 +76,12 @@ export default function Chat() {
     }
   }, [searchParams, appendMessage]);
 
+  useEffect(() => {
+    if (hasRunLanding && !suggestionChips.length) {
+      setSuggestionChips(FALLBACK_CHIPS);
+    }
+  }, [hasRunLanding, suggestionChips.length]);
+
   async function handleLandingSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
@@ -112,15 +120,17 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
       });
 
       if (text) {
-        appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
       }
+
+      setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
 
       if (showAllVideos) {
         handleShowAllVideos();
@@ -234,13 +244,19 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
         log,
         userText: trimmed,
       });
 
       if (text) {
-        appendMessage({ id: crypto.randomUUID(), role: "assistant", text });
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
+      }
+
+      if (chips?.length) {
+        setSuggestionChips(chips);
+      } else {
+        setSuggestionChips(FALLBACK_CHIPS);
       }
 
       if (showAllVideos) {
@@ -275,16 +291,7 @@ export default function Chat() {
 
   const dots = usePendingDots(isTyping);
 
-  const suggestionChips = useMemo(() => {
-    if (!hasRunLanding) return [];
-
-    const last = messages[messages.length - 1];
-    if (last?.role === "widget" && (last.type === "hero" || last.type === "gallery")) {
-      return ["More like this", "Show me humor", "Show me tech"];
-    }
-    if (!messages.length) return ["Show me tech", "Show me humor", "Surprise me"];
-    return ["Show me tech", "Show me humor", "Surprise me"];
-  }, [hasRunLanding, messages]);
+  const activeChips = hasRunLanding ? (suggestionChips.length ? suggestionChips : FALLBACK_CHIPS) : [];
 
   const handleChipClick = (chip: string) => {
     if (isTyping || isRunningAct1) return;
@@ -412,7 +419,7 @@ export default function Chat() {
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
         <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
           <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
-            {suggestionChips.map((chip) => (
+            {activeChips.map((chip) => (
               <button
                 key={chip}
                 type="button"

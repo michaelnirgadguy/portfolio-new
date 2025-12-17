@@ -3,6 +3,7 @@
 
 export type SendTurnResult = {
   text: string;
+  chips: string[];
   nextLog: any[];
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
@@ -21,6 +22,35 @@ export async function sendTurn(opts: {
   syntheticAfterUser?: string; // ✅ NEW
 }): Promise<SendTurnResult> {
   const { log, userText, syntheticAfterUser } = opts;
+
+  const DEFAULT_CHIPS = ["Show me tech", "Show me humor", "Surprise me"];
+
+  function parseLLMResponse(raw: any) {
+    let text = typeof raw === "string" ? raw.trim() : "";
+    let chips: string[] = DEFAULT_CHIPS;
+
+    const tryObject = (val: any) => {
+      if (val && typeof val === "object") {
+        if (typeof val.text === "string") text = val.text;
+        if (Array.isArray(val.chips)) chips = val.chips.filter((c) => typeof c === "string");
+      }
+    };
+
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        tryObject(parsed);
+      } catch {
+        // fallback to raw text
+      }
+    } else {
+      tryObject(raw);
+    }
+
+    if (!chips.length) chips = DEFAULT_CHIPS;
+
+    return { text, chips };
+  }
 
   // 1) Start log (real user message, then optional synthetic user message)
   const turnStartLog = [
@@ -106,8 +136,8 @@ export async function sendTurn(opts: {
       let enabled = true;
       try {
         const parsed = JSON.parse(item.arguments || "{}");
-      if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
-    } catch {}
+        if (typeof parsed?.enabled === "boolean") enabled = parsed.enabled;
+      } catch {}
 
       darkModeEnabled = enabled;
 
@@ -128,8 +158,15 @@ export async function sendTurn(opts: {
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
-    const text = (typeof data1?.text === "string" && data1.text.trim()) || "";
-    return { text, nextLog: afterModelLog, pendingVideoQueues, showAllVideos: shouldShowAllVideos, darkModeEnabled };
+    const { text, chips } = parseLLMResponse(data1?.text);
+    return {
+      text,
+      chips,
+      nextLog: afterModelLog,
+      pendingVideoQueues,
+      showAllVideos: shouldShowAllVideos,
+      darkModeEnabled,
+    };
   }
 
   // 5) Second pass with function_call_output(s)
@@ -141,12 +178,11 @@ export async function sendTurn(opts: {
   });
   const data2 = await res2.json();
 
-  const followText =
-    (typeof data2?.text === "string" && data2.text.trim()) || "";
-
+  const { text: followText, chips } = parseLLMResponse(data2?.text);
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
   return {
     text: followText,
+    chips,
     nextLog: [...logWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,

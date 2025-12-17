@@ -20,7 +20,7 @@ const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
 const ACT1_INVITE =
   "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
-const FALLBACK_CHIPS = ["Show me tech", "Show me humor", "Surprise me"];
+const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 
 type Phase = "landing" | "chat";
 

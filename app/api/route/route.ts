@@ -8,6 +8,23 @@ import videos from "@/data/videos.json";
 
 export const runtime = "nodejs";
 
+const assistantReplySchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      description: "Primary assistant reply for the chat UI.",
+    },
+    chips: {
+      type: "array",
+      items: { type: "string" },
+      description: "Optional quick-reply chip labels.",
+    },
+  },
+  required: ["text", "chips"],
+  additionalProperties: false,
+};
+
 // Load system prompt
 async function loadSystemPrompt(): Promise<string> {
   const p = path.join(process.cwd(), "lib", "llm", "prompts", "system.txt");
@@ -24,9 +41,9 @@ async function loadExamplesPrompt(): Promise<string> {
  * POST body shapes supported:
  *  A) { text: string }                                   // first turn from user
  *  B) { input: Array<any> }                              // full running log (includes function_call_output)
- * 
+ *
  * Response:
- *  { text: string | null, output: any[] }                // output_text & raw output array (contains function_call items with call_id)
+ *  { text: string, chips: string[], output: any[], status: string }
  */
 export async function POST(req: NextRequest) {
   try {
@@ -78,11 +95,24 @@ ${examples}
       parallel_tool_calls: false,
       instructions: fullInstructions,
       input: input_list,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "assistant_reply",
+          strict: true,
+          schema: assistantReplySchema,
+        },
+      },
     });
 
-    // Expose both human text and raw tool calls
-    const text = (resp as any)?.output_text?.trim() || null;
+    const parsed = (resp as any)?.output_parsed as
+      | { text?: string; chips?: string[] }
+      | undefined;
+    const text = typeof parsed?.text === "string" ? parsed.text.trim() : "";
+    const chips = Array.isArray(parsed?.chips) ? parsed.chips : [];
     const output = (resp as any)?.output ?? [];
+    const status = (resp as any)?.status ?? "completed";
+    const incompleteDetails = (resp as any)?.incomplete_details ?? null;
 
     // Helpful server logs while you iterate
     console.log(
@@ -92,7 +122,7 @@ ${examples}
     console.log(">>> OUTPUT_TEXT:", text);
     console.log(">>> OUTPUT_ARRAY:", JSON.stringify(output, null, 2));
 
-    return new Response(JSON.stringify({ text, output }), {
+    return new Response(JSON.stringify({ text, chips, output, status, incompleteDetails }), {
       headers: { "content-type": "application/json" },
     });
   } catch (err: any) {

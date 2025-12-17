@@ -3,6 +3,7 @@
 
 export type SendTurnResult = {
   text: string;
+  chips: string[];
   nextLog: any[];
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
@@ -13,6 +14,25 @@ enum ToolName {
   ShowVideos = "ui_show_videos",
   ShowAllVideos = "ui_show_all_videos",
   SetDarkMode = "ui_set_dark_mode",
+}
+
+function parseModelJson(raw: unknown): { text: string; chips: string[] } {
+  const rawText = typeof raw === "string" ? raw.trim() : "";
+  if (!rawText) return { text: "", chips: [] };
+
+  try {
+    const parsed = JSON.parse(rawText);
+    const text = typeof parsed?.text === "string" ? parsed.text.trim() : "";
+    const chips = Array.isArray(parsed?.chips)
+      ? parsed.chips
+          .map((chip: unknown) => (typeof chip === "string" ? chip.trim() : ""))
+          .filter(Boolean)
+      : [];
+
+    return { text: text || rawText, chips };
+  } catch (err) {
+    return { text: rawText, chips: [] };
+  }
 }
 
 export async function sendTurn(opts: {
@@ -128,8 +148,16 @@ export async function sendTurn(opts: {
 
   // 4) If no tools, return first reply
   if (!toolOutputs.length) {
-    const text = (typeof data1?.text === "string" && data1.text.trim()) || "";
-    return { text, nextLog: afterModelLog, pendingVideoQueues, showAllVideos: shouldShowAllVideos, darkModeEnabled };
+    const { text, chips } = parseModelJson(data1?.text);
+
+    return {
+      text,
+      chips,
+      nextLog: afterModelLog,
+      pendingVideoQueues,
+      showAllVideos: shouldShowAllVideos,
+      darkModeEnabled,
+    };
   }
 
   // 5) Second pass with function_call_output(s)
@@ -141,12 +169,12 @@ export async function sendTurn(opts: {
   });
   const data2 = await res2.json();
 
-  const followText =
-    (typeof data2?.text === "string" && data2.text.trim()) || "";
+  const { text: followText, chips } = parseModelJson(data2?.text);
 
   const finalOutput: any[] = Array.isArray(data2?.output) ? data2.output : [];
   return {
     text: followText,
+    chips,
     nextLog: [...logWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,

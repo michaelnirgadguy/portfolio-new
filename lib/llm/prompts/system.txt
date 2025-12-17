@@ -34,7 +34,7 @@ ALWAYS RETURN A SINGLE-LINE JSON OBJECT OF THE SHAPE { "text": "...", "chips": [
 <chip_rules>
 - Keep chips short (3–5 words) and actionable.
 - at least one chip should suggest a follow-up question (dive deeper)
-- at least one chip should request to see more content (see examples)
+- at least one chip should request to see more content (if a video was just shown - ask for a similar\contrasting video)
 </chip_rules>
 
 <about_michael>

@@ -16,6 +16,7 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
   const [visibleCount, setVisibleCount] = useState(safeScript.length ? 1 : 0);
   const [showVideo, setShowVideo] = useState(true);
   const dots = usePendingDots(visibleCount > 0 && visibleCount < safeScript.length);
+  const hasShownFifthLine = visibleCount >= 5;
 
   useEffect(() => {
     setVisibleCount(safeScript.length ? 1 : 0);
@@ -29,18 +30,32 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
       const timer = window.setTimeout(() => setVisibleCount((prev) => prev + 1), lineDelayMs);
       return () => window.clearTimeout(timer);
     }
-
-    setShowVideo(false);
   }, [lineDelayMs, safeScript.length, visibleCount]);
+
+  useEffect(() => {
+    if (!safeScript.length) {
+      setShowVideo(true);
+      return;
+    }
+
+    setShowVideo(!hasShownFifthLine);
+  }, [hasShownFifthLine, safeScript.length]);
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       {/* header (no separator line under it) */}
       <div className="text-sm text-muted-foreground">
-        <div className="flex items-center px-3 py-1" aria-label="hamster wheel spinning">
-          <div className="h-10 w-10 overflow-hidden">
-            <div className="hamster-wheel hamster-wheel--small" />
-          </div>
+        <div
+          className="flex items-center px-3 py-1"
+          aria-label={hasShownFifthLine ? "hamster avatar" : "hamster wheel spinning"}
+        >
+          {hasShownFifthLine ? (
+            <img src="/bigger-avatar.png" alt="Mimsy" className="h-10 w-10 rounded-full" />
+          ) : (
+            <div className="h-10 w-10 overflow-hidden">
+              <div className="hamster-wheel hamster-wheel--small" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -58,7 +73,7 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-black text-lg font-semibold text-white">
-              oopsie!
+              oopsie.
             </div>
           )}
         </div>

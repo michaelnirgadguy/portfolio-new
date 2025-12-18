@@ -244,6 +244,8 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
+
+
 /* Chat input – border sweep with a moving accent segment */
 /* Make the angle custom property smoothly animatable */
 @property --chat-pill-angle {

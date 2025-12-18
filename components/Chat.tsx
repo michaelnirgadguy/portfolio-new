@@ -7,6 +7,7 @@ import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
 import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
+import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
@@ -14,12 +15,12 @@ import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 import { useSearchParams } from "next/navigation";
 
-const LANDING_VIDEO_ID = "aui-apollo";
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
 const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
-const ACT1_INVITE =
-  "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
+const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
+const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
+const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 
 type Phase = "landing" | "chat";
@@ -168,8 +169,18 @@ export default function Chat() {
     const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: idea };
     setMessages([userMessage]);
 
+    const lineDelayMs = 2200;
+    const widgetId = crypto.randomUUID();
+
+    appendMessage({
+      id: widgetId,
+      role: "widget",
+      type: "act1-fail",
+      script: [],
+      lineDelayMs,
+    });
+
     let script: string[] = [];
-    let title = "";
 
     try {
       const res = await fetch("/api/act1", {
@@ -179,10 +190,6 @@ export default function Chat() {
       });
 
       const data = await res.json();
-      if (typeof data?.title === "string" && data.title.trim()) {
-        title = data.title.trim();
-      }
-
       if (Array.isArray(data?.script)) {
         script = data.script
           .map((line: any) => String(line).trim())
@@ -199,28 +206,32 @@ export default function Chat() {
       console.error("Act1 landing sequence failed", err);
     }
 
-    if (!script.length) {
-      script = [
-        `Generating idea: ${idea}`,
-        "Spinning hamster wheel...",
-        "Calibrating genius settings...",
-        "Rendering glorious cinematic sequence...",
-        "Error: video didn’t generate (hamster demanded a snack break)",
-      ];
+    if (script.length) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === widgetId && msg.role === "widget" && msg.type === "act1-fail"
+            ? { ...msg, script, lineDelayMs }
+            : msg,
+        ),
+      );
     }
 
-    for (const line of script) {
-      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-    }
+    await new Promise((resolve) => setTimeout(resolve, lineDelayMs * script.length));
 
-    const pivotLine = title
-      ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
-      : ACT1_INVITE;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_FAIL_REACTION });
 
-    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: pivotLine });
-    handleShowVideos([LANDING_VIDEO_ID]);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
+
+    setLog((prev) => [
+      ...prev,
+      { role: "user", content: idea },
+      { role: "assistant", content: ACT1_FAIL_REACTION },
+      { role: "assistant", content: ACT1_OFFER },
+    ]);
+
+    setSuggestionChips(ACT1_CHIPS);
 
     if (typeof window !== "undefined") {
       localStorage.setItem(LANDING_COMPLETE_KEY, "true");
@@ -289,7 +300,7 @@ export default function Chat() {
     await submitMessage(input);
   }
 
-  const dots = usePendingDots(isTyping);
+  const dots = usePendingDots(isTyping && !isRunningAct1);
 
   const activeChips = hasRunLanding ? (suggestionChips.length ? suggestionChips : FALLBACK_CHIPS) : [];
 
@@ -312,6 +323,7 @@ export default function Chat() {
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "profile") return <ProfileBubble />;
+      if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }
 
     const isUser = msg.role === "user";
@@ -403,7 +415,7 @@ export default function Chat() {
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
 
-          {isTyping && (
+          {isTyping && !isRunningAct1 && (
             <div className="flex w-full justify-start">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <div className="hamster-wheel hamster-wheel--small" aria-label="hamster is thinking" />

@@ -294,7 +294,7 @@ export default function Chat() {
     await submitMessage(input);
   }
 
-  const dots = usePendingDots(isTyping);
+  const dots = usePendingDots(isTyping && !isRunningAct1);
 
   const activeChips = hasRunLanding ? (suggestionChips.length ? suggestionChips : FALLBACK_CHIPS) : [];
 
@@ -409,7 +409,7 @@ export default function Chat() {
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
 
-          {isTyping && (
+          {isTyping && !isRunningAct1 && (
             <div className="flex w-full justify-start">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <div className="hamster-wheel hamster-wheel--small" aria-label="hamster is thinking" />

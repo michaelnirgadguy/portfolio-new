@@ -210,10 +210,23 @@ export default function Chat() {
     }
 
     for (const line of script) {
-      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
+      const id = crypto.randomUUID();
+
+      setMessages((prev) => {
+        const cleared = prev.map((msg) =>
+          msg.role === "system_log" ? { ...msg, active: false } : msg
+        );
+
+        return [...cleared, { id, role: "system_log", text: line, active: true }];
+      });
+
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 2200));
     }
+
+    setMessages((prev) =>
+      prev.map((msg) => (msg.role === "system_log" ? { ...msg, active: false } : msg))
+    );
 
     const pivotLine = title
       ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
@@ -289,7 +302,8 @@ export default function Chat() {
     await submitMessage(input);
   }
 
-  const dots = usePendingDots(isTyping);
+  const showTypingIndicator = isTyping && !isRunningAct1;
+  const dots = usePendingDots(showTypingIndicator);
 
   const activeChips = hasRunLanding ? (suggestionChips.length ? suggestionChips : FALLBACK_CHIPS) : [];
 
@@ -304,7 +318,7 @@ export default function Chat() {
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
-      return <SystemLogBubble text={msg.text} />;
+      return <SystemLogBubble text={msg.text} active={msg.active} />;
     }
 
     if (msg.role === "widget") {
@@ -403,7 +417,7 @@ export default function Chat() {
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
 
-          {isTyping && (
+          {showTypingIndicator && (
             <div className="flex w-full justify-start">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <div className="hamster-wheel hamster-wheel--small" aria-label="hamster is thinking" />

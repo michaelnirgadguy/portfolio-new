@@ -7,6 +7,7 @@ import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
 import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
+import Act1FailBubble from "@/components/bubbles/Act1FailBubble";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
@@ -21,6 +22,7 @@ const DIRECT_GREETING =
 const ACT1_INVITE =
   "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
+const ACT1_LINE_DELAY_MS = 2200;
 
 type Phase = "landing" | "chat";
 
@@ -209,11 +211,14 @@ export default function Chat() {
       ];
     }
 
-    for (const line of script) {
-      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-    }
+    script = script.slice(0, 5);
+
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "act1_fail", script });
+
+    // Allow the fail widget to play through before pivoting the conversation
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.max(script.length, 1) * ACT1_LINE_DELAY_MS)
+    );
 
     const pivotLine = title
       ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
@@ -312,6 +317,8 @@ export default function Chat() {
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "profile") return <ProfileBubble />;
+      if (msg.type === "act1_fail")
+        return <Act1FailBubble script={msg.script} lineDelayMs={ACT1_LINE_DELAY_MS} />;
     }
 
     const isUser = msg.role === "user";

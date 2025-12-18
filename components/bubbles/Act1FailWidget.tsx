@@ -36,7 +36,7 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
     <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <div className="border-b border-border text-sm text-muted-foreground">
         <div className="flex items-center px-3 py-2" aria-label="hamster wheel spinning">
-          <div className="hamster-wheel hamster-wheel--small" />
+          <div className="hamster-wheel hamster-wheel--act1" />
         </div>
       </div>
 

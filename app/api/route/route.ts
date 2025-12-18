@@ -39,9 +39,11 @@ export async function POST(req: NextRequest) {
     const system = await loadSystemPrompt();
     const examples = await loadExamplesPrompt();
 
+    const thinCatalog = videos.map(({ url, thumbnail, ...rest }) => rest);
+
     const catalogBlock = `
 # Full video catalog (use ONLY these ids)
-${JSON.stringify(videos)}
+${JSON.stringify(thinCatalog)}
 `;
 
     // Build final instructions:

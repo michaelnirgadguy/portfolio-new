@@ -15,12 +15,11 @@ import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 import { useSearchParams } from "next/navigation";
 
-const LANDING_VIDEO_ID = "aui-apollo";
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
 const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
-const ACT1_INVITE =
-  "WELL... i swear this never happened to me. but listen, maybe i can show you videos made by a human being called michael? would you like that?";
+const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
+const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 
 type Phase = "landing" | "chat";
@@ -181,7 +180,6 @@ export default function Chat() {
     });
 
     let script: string[] = [];
-    let title = "";
 
     try {
       const res = await fetch("/api/act1", {
@@ -191,10 +189,6 @@ export default function Chat() {
       });
 
       const data = await res.json();
-      if (typeof data?.title === "string" && data.title.trim()) {
-        title = data.title.trim();
-      }
-
       if (Array.isArray(data?.script)) {
         script = data.script
           .map((line: any) => String(line).trim())
@@ -223,12 +217,8 @@ export default function Chat() {
 
     await new Promise((resolve) => setTimeout(resolve, lineDelayMs * script.length));
 
-    const pivotLine = title
-      ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
-      : ACT1_INVITE;
-
-    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: pivotLine });
-    handleShowVideos([LANDING_VIDEO_ID]);
+    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_FAIL_REACTION });
+    appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
 
     if (typeof window !== "undefined") {
       localStorage.setItem(LANDING_COMPLETE_KEY, "true");

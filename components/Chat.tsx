@@ -20,6 +20,7 @@ const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
 const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
 const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
+const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 
 type Phase = "landing" | "chat";
@@ -229,6 +230,8 @@ export default function Chat() {
       { role: "assistant", content: ACT1_FAIL_REACTION },
       { role: "assistant", content: ACT1_OFFER },
     ]);
+
+    setSuggestionChips(ACT1_CHIPS);
 
     if (typeof window !== "undefined") {
       localStorage.setItem(LANDING_COMPLETE_KEY, "true");

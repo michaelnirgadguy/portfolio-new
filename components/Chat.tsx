@@ -7,6 +7,7 @@ import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
 import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
+import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
@@ -199,21 +200,25 @@ export default function Chat() {
       console.error("Act1 landing sequence failed", err);
     }
 
-    if (!script.length) {
-      script = [
-        `Generating idea: ${idea}`,
-        "Spinning hamster wheel...",
-        "Calibrating genius settings...",
-        "Rendering glorious cinematic sequence...",
-        "Error: video didn’t generate (hamster demanded a snack break)",
-      ];
-    }
+    const failScript = script.length
+      ? script
+      : [
+          `Generating idea: ${idea}`,
+          "Spinning hamster wheel...",
+          "Calibrating genius settings...",
+          "Rendering glorious cinematic sequence...",
+          "Error: video didn’t generate (hamster demanded a snack break)",
+        ];
 
-    for (const line of script) {
-      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-    }
+    appendMessage({
+      id: crypto.randomUUID(),
+      role: "widget",
+      type: "act1-fail",
+      script: failScript,
+      lineDelayMs: 2200,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 2200 * failScript.length));
 
     const pivotLine = title
       ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
@@ -312,6 +317,7 @@ export default function Chat() {
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "profile") return <ProfileBubble />;
+      if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }
 
     const isUser = msg.role === "user";

@@ -13,6 +13,7 @@ import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 import { useSearchParams } from "next/navigation";
+import Act1FailBubble from "@/components/bubbles/Act1FailBubble";
 
 const LANDING_VIDEO_ID = "aui-apollo";
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
@@ -209,11 +210,17 @@ export default function Chat() {
       ];
     }
 
-    for (const line of script) {
-      appendMessage({ id: crypto.randomUUID(), role: "system_log", text: line });
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-    }
+    const displayedScript = script.slice(0, 5);
+
+    appendMessage({
+      id: crypto.randomUUID(),
+      role: "widget",
+      type: "act1_fail",
+      script: displayedScript,
+    });
+
+    const sequenceDuration = Math.max(displayedScript.length - 1, 0) * 2200 + 600;
+    await new Promise((resolve) => setTimeout(resolve, sequenceDuration));
 
     const pivotLine = title
       ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`
@@ -312,6 +319,7 @@ export default function Chat() {
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "profile") return <ProfileBubble />;
+      if (msg.type === "act1_fail") return <Act1FailBubble script={msg.script} />;
     }
 
     const isUser = msg.role === "user";

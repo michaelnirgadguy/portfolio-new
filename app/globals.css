@@ -244,6 +244,11 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
+.hamster-wheel--tiny {
+  transform: scale(0.25);
+  transform-origin: top left;
+}
+
 /* Chat input – border sweep with a moving accent segment */
 /* Make the angle custom property smoothly animatable */
 @property --chat-pill-angle {

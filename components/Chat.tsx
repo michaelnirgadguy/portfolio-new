@@ -169,6 +169,25 @@ export default function Chat() {
     const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: idea };
     setMessages([userMessage]);
 
+    const lineDelayMs = 2200;
+    const widgetId = crypto.randomUUID();
+
+    const fallbackScript = [
+      `Generating idea: ${idea}`,
+      "Spinning hamster wheel...",
+      "Calibrating genius settings...",
+      "Rendering glorious cinematic sequence...",
+      "Error: video didn’t generate (hamster demanded a snack break)",
+    ];
+
+    appendMessage({
+      id: widgetId,
+      role: "widget",
+      type: "act1-fail",
+      script: fallbackScript,
+      lineDelayMs,
+    });
+
     let script: string[] = [];
     let title = "";
 
@@ -200,25 +219,19 @@ export default function Chat() {
       console.error("Act1 landing sequence failed", err);
     }
 
-    const failScript = script.length
-      ? script
-      : [
-          `Generating idea: ${idea}`,
-          "Spinning hamster wheel...",
-          "Calibrating genius settings...",
-          "Rendering glorious cinematic sequence...",
-          "Error: video didn’t generate (hamster demanded a snack break)",
-        ];
+    const failScript = script.length ? script : fallbackScript;
 
-    appendMessage({
-      id: crypto.randomUUID(),
-      role: "widget",
-      type: "act1-fail",
-      script: failScript,
-      lineDelayMs: 2200,
-    });
+    if (failScript !== fallbackScript) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === widgetId && msg.role === "widget" && msg.type === "act1-fail"
+            ? { ...msg, script: failScript, lineDelayMs }
+            : msg,
+        ),
+      );
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 2200 * failScript.length));
+    await new Promise((resolve) => setTimeout(resolve, lineDelayMs * failScript.length));
 
     const pivotLine = title
       ? `I tried to make "${title}" and failed. ${ACT1_INVITE}`

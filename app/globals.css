@@ -244,11 +244,7 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
-.hamster-wheel--act1 {
-  width: 40px;
-  height: 40px;
-  background-size: 240px 40px; 
-}
+
 
 /* Chat input – border sweep with a moving accent segment */
 /* Make the angle custom property smoothly animatable */

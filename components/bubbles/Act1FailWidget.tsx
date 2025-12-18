@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -34,7 +35,8 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="border-b border-border text-sm text-muted-foreground">
+      {/* header (no separator line under it) */}
+      <div className="text-sm text-muted-foreground">
         <div className="flex items-center px-3 py-1" aria-label="hamster wheel spinning">
           <div className="h-10 w-10 overflow-hidden">
             <div className="hamster-wheel hamster-wheel--small" />
@@ -43,7 +45,8 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
       </div>
 
       <div className="grid gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
-        <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black">
+        {/* square player (fills width like before, uses more vertical space) */}
+        <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-black">
           {showVideo ? (
             <video
               src="/vid/diffusion.mp4"
@@ -78,3 +81,4 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
     </div>
   );
 }
+

@@ -314,6 +314,16 @@ export default function Chat() {
     }, 300);
   };
 
+  // Debug: auto-show contact card when landing is skipped via mode=chat. Remove once not needed.
+  const hasInjectedDebugContactCardRef = useRef(false);
+  useEffect(() => {
+    const isChatMode = searchParams?.get("mode")?.toLowerCase() === "chat";
+    if (phase === "chat" && isChatMode && !hasInjectedDebugContactCardRef.current) {
+      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
+      hasInjectedDebugContactCardRef.current = true;
+    }
+  }, [phase, searchParams, appendMessage]);
+
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
       return <SystemLogBubble text={msg.text} />;

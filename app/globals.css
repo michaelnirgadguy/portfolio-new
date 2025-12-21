@@ -59,9 +59,6 @@
   /* Background veil over hero image */
   --background-veil-strong: 0 0% 99%;
   --background-veil-strong-alpha: 0.62;
-  --background-veil-soft: 210 16% 94%;
-  --background-veil-soft-edge-alpha: 0;
-  --background-veil-soft-mid-alpha: 0.55;
 
   /* Subtle, consistent shadows */
   --shadow-sm: 0 6px 14px rgba(15, 23, 42, 0.06);
@@ -119,9 +116,6 @@
 
   --background-veil-strong: 224 14% 6%;
   --background-veil-strong-alpha: 0.55;
-  --background-veil-soft: 224 14% 10%;
-  --background-veil-soft-edge-alpha: 0;
-  --background-veil-soft-mid-alpha: 0.36;
 
   --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.32);
   --shadow-md: 0 14px 36px rgba(0, 0, 0, 0.42);
@@ -144,14 +138,9 @@
     background-image:
     radial-gradient(
       ellipse at center,
-      /* 0% to 28%: Solid Center (Strong Color) */
       hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 0%,
       hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 28%,
-
-      /* 28% to 68%: Fading Out */
       hsl(var(--background-veil-strong) / 0) 68%,
-
-      /* 68% to 100%: Completely Transparent */
       hsl(var(--background-veil-strong) / 0) 100%
     ),
       url('/BG2.png');

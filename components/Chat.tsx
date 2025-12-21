@@ -114,6 +114,10 @@ export default function Chat() {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
   };
 
+  const handleShowContactCard = () => {
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
+  };
+
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
 
@@ -122,7 +126,15 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -140,6 +152,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       handleShowVideos([video.id]);
@@ -256,7 +272,15 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: trimmed,
       });
@@ -277,6 +301,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       for (const ids of pendingVideoQueues) {

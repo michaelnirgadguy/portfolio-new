@@ -150,7 +150,7 @@
         hsl(var(--background-veil-soft) / var(--background-veil-soft-mid-alpha)) 82%,
         hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 100%
       ),
-      url('/BG2.png');
+      url('/bg-test.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

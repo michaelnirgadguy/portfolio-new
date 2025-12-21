@@ -38,9 +38,25 @@ export async function POST(req: NextRequest) {
       to: RECIPIENT,
     };
 
+    const origin = req.headers.get("origin") ?? undefined;
+    const referer = req.headers.get("referer") ?? undefined;
+
+    const forwardHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    if (origin) {
+      forwardHeaders.Origin = origin;
+    }
+
+    if (referer) {
+      forwardHeaders.Referer = referer;
+    }
+
     const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: forwardHeaders,
       body: JSON.stringify(payload),
     });
 

@@ -38,23 +38,34 @@ export async function POST(req: NextRequest) {
       to: RECIPIENT,
     };
 
-    const origin = req.headers.get("origin") || undefined;
-    const referer = req.headers.get("referer") || undefined;
+    const originHeader = req.headers.get("origin")?.trim() || "";
+    const refererHeader = req.headers.get("referer")?.trim() || "";
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const fallbackOrigin = host ? `${proto}://${host}` : "";
+    const inferredOrigin = originHeader || (refererHeader ? new URL(refererHeader).origin : "") || fallbackOrigin;
+
     const web3formsHeaders: HeadersInit = {
       Accept: "application/json",
       "Content-Type": "application/json",
     };
 
-    if (origin) {
-      web3formsHeaders["Origin"] = origin;
-    } else if (referer) {
-      web3formsHeaders["Referer"] = referer;
+    if (inferredOrigin) {
+      web3formsHeaders["Origin"] = inferredOrigin;
     }
+    if (refererHeader || inferredOrigin) {
+      web3formsHeaders["Referer"] = refererHeader || inferredOrigin;
+    }
+    const userAgent = req.headers.get("user-agent");
+    if (userAgent) web3formsHeaders["User-Agent"] = userAgent;
 
     const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
       headers: web3formsHeaders,
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        from_url: refererHeader || inferredOrigin || fallbackOrigin || "unknown",
+      }),
       cache: "no-store",
     });
 

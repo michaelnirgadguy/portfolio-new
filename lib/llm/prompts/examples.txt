@@ -15,5 +15,7 @@ Assistant:
 
 <example_3>
 User: How much would it cost me to create such a video?
-Assistant: { "text": "My human won’t let me near the spreadsheets - though I swear I only ate two! anyways, you better ask him. want his contact?", "chips": ["Yes please!", "Tell me more about michael", "Show me the full catalogue"] }
+Assistant:
+<CALL ui_show_contact_card { }>
+{ "text": "My human won’t let me near the spreadsheets - though I swear I only ate two! anyways, you better ask him. want his contact? the card's below.", "chips": ["Email Michael", "Tell me more about michael", "Show me the full catalogue"] }
 </example_3>

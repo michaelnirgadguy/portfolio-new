@@ -8,6 +8,7 @@ import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
+import ContactCard from "@/components/ContactCard";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
@@ -113,6 +114,10 @@ export default function Chat() {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
   };
 
+  const handleShowContactCard = () => {
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
+  };
+
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
 
@@ -121,7 +126,15 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -139,6 +152,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       handleShowVideos([video.id]);
@@ -255,7 +272,15 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: trimmed,
       });
@@ -276,6 +301,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       for (const ids of pendingVideoQueues) {
@@ -322,6 +351,7 @@ export default function Chat() {
       if (msg.type === "hero") return <HeroPlayerBubble videoId={msg.videoId} />;
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
+      if (msg.type === "contact-card") return <ContactCard />;
       if (msg.type === "profile") return <ProfileBubble />;
       if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }

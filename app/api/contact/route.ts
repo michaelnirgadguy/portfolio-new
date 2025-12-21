@@ -38,10 +38,24 @@ export async function POST(req: NextRequest) {
       to: RECIPIENT,
     };
 
+    const origin = req.headers.get("origin") || undefined;
+    const referer = req.headers.get("referer") || undefined;
+    const web3formsHeaders: HeadersInit = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
+
+    if (origin) {
+      web3formsHeaders["Origin"] = origin;
+    } else if (referer) {
+      web3formsHeaders["Referer"] = referer;
+    }
+
     const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: web3formsHeaders,
       body: JSON.stringify(payload),
+      cache: "no-store",
     });
 
     const data = await response.json().catch(() => ({}));

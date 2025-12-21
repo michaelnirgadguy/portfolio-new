@@ -56,4 +56,19 @@ export const TOOLS = [
       required: ["enabled"],
     },
   },
+
+  // show contact card
+  {
+    type: "function" as const,
+    name: "ui_show_contact_card",
+    description:
+      "Reveal the contact card so the visitor can email or call Michael. Use when the user asks how to reach him or requests contact options.",
+    strict: true,
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+      required: [],
+    },
+  },
 ];

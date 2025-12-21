@@ -114,6 +114,10 @@ export default function Chat() {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
   };
 
+  const handleShowContactCard = () => {
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
+  };
+
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
 
@@ -122,7 +126,15 @@ export default function Chat() {
     setIsTyping(true);
 
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: "User opened a video from the gallery.",
         syntheticAfterUser: syntheticMessage,
@@ -140,6 +152,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       handleShowVideos([video.id]);
@@ -256,7 +272,15 @@ export default function Chat() {
 
     setIsTyping(true);
     try {
-      const { text, chips, nextLog, pendingVideoQueues, showAllVideos, darkModeEnabled } = await sendTurn({
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
         log,
         userText: trimmed,
       });
@@ -277,6 +301,10 @@ export default function Chat() {
 
       if (typeof darkModeEnabled === "boolean") {
         setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
       }
 
       for (const ids of pendingVideoQueues) {
@@ -313,16 +341,6 @@ export default function Chat() {
       submitMessage(chip);
     }, 300);
   };
-
-  // Debug: auto-show contact card when landing is skipped via mode=chat. Remove once not needed.
-  const hasInjectedDebugContactCardRef = useRef(false);
-  useEffect(() => {
-    const isChatMode = searchParams?.get("mode")?.toLowerCase() === "chat";
-    if (phase === "chat" && isChatMode && !hasInjectedDebugContactCardRef.current) {
-      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
-      hasInjectedDebugContactCardRef.current = true;
-    }
-  }, [phase, searchParams, appendMessage]);
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {

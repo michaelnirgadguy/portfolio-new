@@ -142,23 +142,18 @@
     text-rendering: optimizeLegibility;
     background-color: hsl(var(--background));
     background-image:
-     linear-gradient(
-    90deg,
-    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 0%,
-    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 15%,
+    radial-gradient(
+      ellipse at center,
+      /* 0% to 28%: Solid Center (Strong Color) */
+      hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 0%,
+      hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 28%,
 
+      /* 28% to 68%: Fading Out */
+      hsl(var(--background-veil-strong) / 0) 68%,
 
-    hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 35%,
-
- 
-    hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 65%,
-
-
-    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 85%,
-
-  
-    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 100%
-  ),
+      /* 68% to 100%: Completely Transparent */
+      hsl(var(--background-veil-strong) / 0) 100%
+    ),
       url('/BG2.png');
     background-size: cover;
     background-position: center;

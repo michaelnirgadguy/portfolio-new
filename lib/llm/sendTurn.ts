@@ -8,6 +8,7 @@ export type SendTurnResult = {
   pendingVideoQueues: string[][];
   showAllVideos: boolean;
   darkModeEnabled: boolean | null;
+  showContactCard: boolean;
   responseStatus: string;
   statusDetails?: unknown;
 };
@@ -16,6 +17,7 @@ enum ToolName {
   ShowVideos = "ui_show_videos",
   ShowAllVideos = "ui_show_all_videos",
   SetDarkMode = "ui_set_dark_mode",
+  ShowContactCard = "ui_show_contact_card",
 }
 
 const FALLBACK_ERROR_TEXT = "Mimsy got shy. Mind trying again?";
@@ -82,6 +84,7 @@ export async function sendTurn(opts: {
   const pendingVideoQueues: string[][] = [];
   let shouldShowAllVideos = false;
   let darkModeEnabled: boolean | null = null;
+  let shouldShowContactCard = false;
   for (const item of output) {
     if (item?.type !== "function_call") continue;
 
@@ -139,6 +142,23 @@ export async function sendTurn(opts: {
       continue;
     }
 
+    // ui_show_contact_card()
+    if (item.name === ToolName.ShowContactCard) {
+      shouldShowContactCard = true;
+
+      toolOutputs.push({
+        type: "function_call_output",
+        call_id: item.call_id,
+        output: JSON.stringify({
+          ok: true,
+          kind: "contact_card",
+          message: "Contact card displayed.",
+        }),
+      });
+
+      continue;
+    }
+
     // ui_set_dark_mode({ enabled: boolean })
     if (item.name === ToolName.SetDarkMode) {
       let enabled = true;
@@ -173,6 +193,7 @@ export async function sendTurn(opts: {
       pendingVideoQueues,
       showAllVideos: shouldShowAllVideos,
       darkModeEnabled,
+      showContactCard: shouldShowContactCard,
       responseStatus: primaryPayload.status ?? "unknown",
       statusDetails: primaryPayload.statusDetails,
     };
@@ -197,6 +218,7 @@ export async function sendTurn(opts: {
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,
     darkModeEnabled,
+    showContactCard: shouldShowContactCard,
     responseStatus:
       followPayload.status ?? primaryPayload.status ?? "unknown",
     statusDetails: followPayload.statusDetails ?? primaryPayload.statusDetails,

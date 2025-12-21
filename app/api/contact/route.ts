@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 const RECIPIENT = "michael.nirgadguy@gmail.com";
+const DEFAULT_WEB3FORMS_KEY = "c54fcf1d-f6e6-4319-99bc-4f4160d6d7e6";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,50 +23,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
     }
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const fromAddress = process.env.CONTACT_FROM_EMAIL;
+    const web3formsKey = process.env.WEB3FORMS_ACCESS_KEY || DEFAULT_WEB3FORMS_KEY;
 
-    if (!resendApiKey || !fromAddress) {
-      return NextResponse.json(
-        {
-          error: "Email service is not configured. Please set RESEND_API_KEY and CONTACT_FROM_EMAIL.",
-        },
-        { status: 500 },
-      );
+    if (!web3formsKey) {
+      return NextResponse.json({ error: "Email service is not configured." }, { status: 500 });
     }
 
-    const lines = [
-      `Name: ${name || "(not provided)"}`,
-      `Email: ${email}`,
-      "",
-      message || "(no message provided)",
-    ];
-
     const payload = {
-      from: fromAddress,
-      to: RECIPIENT,
+      access_key: web3formsKey,
+      name: name || "Portfolio visitor",
+      email,
       subject,
-      reply_to: email,
-      text: lines.join("\n"),
+      message: message || "(no message provided)",
+      to: RECIPIENT,
     };
 
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
+    if (!response.ok || data?.success === false) {
       console.error("Failed to send contact email", data);
-      return NextResponse.json({ error: data?.message || "Failed to send email." }, { status: response.status });
+      return NextResponse.json(
+        { error: data?.message || "Failed to send email." },
+        { status: response.ok ? 400 : response.status },
+      );
     }
 
-    return NextResponse.json({ id: data?.id ?? null });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Unexpected error while sending contact email", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

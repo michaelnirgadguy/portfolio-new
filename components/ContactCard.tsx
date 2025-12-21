@@ -97,29 +97,31 @@ export default function ContactCard({ className }: ContactCardProps) {
     }
 
     setError(null);
-
     setIsSubmitting(true);
     setStatus("idle");
 
     try {
-      const resp = await fetch("/api/contact", {
+      const formData = new FormData();
+      formData.append("access_key", "c54fcf1d-f6e6-4319-99bc-4f4160d6d7e6");
+      formData.append("name", name.trim() || "Portfolio visitor");
+      formData.append("email", email.trim());
+      formData.append("subject", subject);
+      formData.append("message", message.trim() || "(no message provided)");
+
+      const resp = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          message: message.trim(),
-          subject,
-        }),
+        body: formData,
       });
 
       const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        throw new Error(data?.error || "Failed to send your message. Please try again.");
+      if (!data?.success) {
+        throw new Error(data?.message || "Failed to send your message. Please try again.");
       }
 
       setStatus("sent");
       setMessage("");
+      setName("");
+      setEmail("");
     } catch (err: any) {
       console.error(err);
       setStatus("error");

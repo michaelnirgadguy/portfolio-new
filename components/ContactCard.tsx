@@ -102,18 +102,18 @@ export default function ContactCard({ className }: ContactCardProps) {
     <div className={cn("w-full rounded-xl border border-border bg-card shadow-sm overflow-hidden", className)}>
       <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-y-0 md:divide-x">
         <div className="relative flex flex-col gap-4 p-6 bg-background/50">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Talk to me here</p>
-            <h3 className="text-xl font-semibold text-foreground">Form-first, no pressure</h3>
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-            <img
-              src="/pointing.png"
-              alt="Michael pointing down toward the form"
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-foreground">Talk to me here</h3>
+            </div>
+            <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/30">
+              <img
+                src="/pointing.png"
+                alt="Michael pointing toward the form"
+                loading="lazy"
+                className="h-auto w-full object-cover"
+              />
+            </div>
           </div>
 
           <form className="space-y-3" onSubmit={handleSubmit}>
@@ -171,18 +171,18 @@ export default function ContactCard({ className }: ContactCardProps) {
         </div>
 
         <div className="flex flex-col gap-4 bg-muted/40 p-6">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Talk to me there</p>
-            <h3 className="text-xl font-semibold text-foreground">Direct line, zero fuss</h3>
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/50">
-            <img
-              src="/talking.png"
-              alt="Michael on the phone"
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-foreground">Talk to me there</h3>
+            </div>
+            <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/50">
+              <img
+                src="/talking.png"
+                alt="Michael on the phone"
+                loading="lazy"
+                className="h-auto w-full object-cover"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -209,20 +209,13 @@ export default function ContactCard({ className }: ContactCardProps) {
                       <span className="text-[hsl(var(--accent))]">Copied</span>
                     </>
                   ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      <span className="hidden text-xs font-medium sm:inline">Click to copy</span>
-                    </>
+                    <Copy className="h-4 w-4" />
                   )}
                 </div>
               </button>
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            ICQ button gives you the classic “uh-oh” tone while copying. The email and phone lines copy instantly
-            so you can paste wherever you’re working.
-          </p>
         </div>
       </div>
     </div>

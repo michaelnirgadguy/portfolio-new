@@ -58,7 +58,7 @@
 
   /* Background veil over hero image */
   --background-veil-strong: 0 0% 99%;
-  --background-veil-strong-alpha: 0.5;
+  --background-veil-strong-alpha: 0.6;
   --background-veil-soft: 210 16% 94%;
   --background-veil-soft-edge-alpha: 0;
   --background-veil-soft-mid-alpha: 0.55;
@@ -142,14 +142,24 @@
     text-rendering: optimizeLegibility;
     background-color: hsl(var(--background));
     background-image:
-      linear-gradient(
-        90deg,
-        hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 0%,
-        hsl(var(--background-veil-soft) / var(--background-veil-soft-mid-alpha)) 18%,
-        hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 50%,
-        hsl(var(--background-veil-soft) / var(--background-veil-soft-mid-alpha)) 82%,
-        hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 100%
-      ),
+     linear-gradient(
+    90deg,
+    /* 0% to 15%: Completely Transparent (Pure Image) */
+    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 0%,
+    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 15%,
+
+    /* 15% to 40%: Fading In */
+    hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 40%,
+
+    /* 40% to 60%: The "Table Top" (Solid Strong Color) */
+    hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 60%,
+
+    /* 60% to 85%: Fading Out */
+    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 85%,
+
+    /* 85% to 100%: Completely Transparent (Pure Image) */
+    hsl(var(--background-veil-soft) / var(--background-veil-soft-edge-alpha)) 100%
+  ),
       url('/bg-test.png');
     background-size: cover;
     background-position: center;

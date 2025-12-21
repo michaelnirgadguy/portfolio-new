@@ -8,6 +8,7 @@ import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
+import ContactCard from "@/components/ContactCard";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
@@ -313,6 +314,16 @@ export default function Chat() {
     }, 300);
   };
 
+  // Debug: auto-show contact card when landing is skipped via mode=chat. Remove once not needed.
+  const hasInjectedDebugContactCardRef = useRef(false);
+  useEffect(() => {
+    const isChatMode = searchParams?.get("mode")?.toLowerCase() === "chat";
+    if (phase === "chat" && isChatMode && !hasInjectedDebugContactCardRef.current) {
+      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
+      hasInjectedDebugContactCardRef.current = true;
+    }
+  }, [phase, searchParams, appendMessage]);
+
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
       return <SystemLogBubble text={msg.text} />;
@@ -322,6 +333,7 @@ export default function Chat() {
       if (msg.type === "hero") return <HeroPlayerBubble videoId={msg.videoId} />;
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
+      if (msg.type === "contact-card") return <ContactCard />;
       if (msg.type === "profile") return <ProfileBubble />;
       if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }

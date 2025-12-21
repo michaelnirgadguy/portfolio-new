@@ -118,7 +118,7 @@ export default function ContactCard({ className }: ContactCardProps) {
 
           <form className="space-y-3" onSubmit={handleSubmit}>
             <label className="block space-y-1 text-sm text-foreground">
-              <span className="font-medium">Name (optional)</span>
+              <span className="font-medium">Name</span>
               <input
                 type="text"
                 value={name}
@@ -129,7 +129,7 @@ export default function ContactCard({ className }: ContactCardProps) {
             </label>
 
             <label className="block space-y-1 text-sm text-foreground">
-              <span className="font-medium">Email (required)</span>
+              <span className="font-medium">Email*</span>
               <input
                 type="email"
                 required

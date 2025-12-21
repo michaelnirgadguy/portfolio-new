@@ -137,8 +137,8 @@ export default function ContactCard({ className }: ContactCardProps) {
             <div className="flex-1">
               <div className="flex items-center justify-center text-center">
                 <h3 className="text-3xl font-semibold leading-tight text-foreground">
-                  <span className="block">Talk to me</span>
-                  <span className="block">here</span>
+                  <span className="block">Talk to Me</span>
+                  <span className="block">Here</span>
                 </h3>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function ContactCard({ className }: ContactCardProps) {
 
           <form className="space-y-3" onSubmit={handleSubmit}>
             <label className="block space-y-1 text-sm text-foreground">
-              <span className="font-medium">Name (optional)</span>
+              <span className="font-medium">Name</span>
               <input
                 type="text"
                 value={name}
@@ -165,7 +165,7 @@ export default function ContactCard({ className }: ContactCardProps) {
             </label>
 
             <label className="block space-y-1 text-sm text-foreground">
-              <span className="font-medium">Email (required)</span>
+              <span className="font-medium">Email*</span>
               <input
                 type="email"
                 required
@@ -211,8 +211,8 @@ export default function ContactCard({ className }: ContactCardProps) {
             <div className="flex-1">
               <div className="flex items-center justify-center text-center">
                 <h3 className="text-3xl font-semibold leading-tight text-foreground">
-                  <span className="block">Talk to me</span>
-                  <span className="block">there</span>
+                  <span className="block">Talk to Me</span>
+                  <span className="block">There</span>
                 </h3>
               </div>
             </div>

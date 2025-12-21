@@ -1,16 +1,25 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { Check, Copy, Mail, MessageCircle, Phone } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Check, Mail, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const messagePlaceholder = "Hey Michael, cool hasmter! Anyways, i wanted to ask…";
 
-const CONTACTS = [
-  { label: "Email", value: "michael.nirgadguy@gmail.com", icon: Mail },
-  { label: "Phone", value: "+972 50 4441505", icon: Phone },
-  { label: "ICQ", value: "6170791", icon: MessageCircle, playTone: true },
+type ContactAction = "copy" | "tone";
+
+type ContactMethod = {
+  label: string;
+  value: string;
+  icon: typeof Mail;
+  action: ContactAction;
+};
+
+const CONTACTS: ContactMethod[] = [
+  { label: "Email", value: "michael.nirgadguy@gmail.com", icon: Mail, action: "copy" },
+  { label: "Phone", value: "+972 50 4441505", icon: Phone, action: "copy" },
+  { label: "ICQ", value: "6170791", icon: MessageCircle, action: "tone" },
 ];
 
 type Status = "idle" | "sent" | "error";
@@ -25,56 +34,60 @@ export default function ContactCard({ className }: ContactCardProps) {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [icqBuffer, setIcqBuffer] = useState<AudioBuffer | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const subject = useMemo(() => {
     return `New message from ${name?.trim() || "a friend"}`;
   }, [name]);
 
-  const playIcqTone = () => {
+  useEffect(() => {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
 
     const ctx = new AudioContext();
-    const now = ctx.currentTime;
+    audioContextRef.current = ctx;
 
-    const makeTone = (frequency: number, offset: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    fetch("/icq.mp3")
+      .then((res) => res.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data))
+      .then((buffer) => setIcqBuffer(buffer))
+      .catch((err) => console.error("Failed to load ICQ tone", err));
 
-      osc.type = "sine";
-      osc.frequency.value = frequency;
-
-      gain.gain.setValueAtTime(0.16, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.25);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.27);
+    return () => {
+      ctx.close();
     };
+  }, []);
 
-    makeTone(540, 0);
-    makeTone(420, 0.25);
+  const playIcqTone = async () => {
+    const ctx = audioContextRef.current;
+    if (!ctx || !icqBuffer) return;
+
+    if (ctx.state === "suspended") {
+      await ctx.resume().catch(() => {});
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = icqBuffer;
+    source.connect(ctx.destination);
+    source.start(0);
   };
 
-  const copyToClipboard = async (value: string, label: string, withTone?: boolean) => {
+  const copyToClipboard = async (value: string, label: string) => {
     try {
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
       }
       setCopied(label);
-      if (withTone) {
-        playIcqTone();
-      }
       setTimeout(() => setCopied((prev) => (prev === label ? null : prev)), 1600);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email.trim()) {
@@ -85,17 +98,35 @@ export default function ContactCard({ className }: ContactCardProps) {
 
     setError(null);
 
-    const lines = [
-      `Name: ${name || "(not provided)"}`,
-      `Email: ${email}`,
-      "",
-      message || "(no message)",
-    ];
+    setIsSubmitting(true);
+    setStatus("idle");
 
-    const mailto = `mailto:michael.nirgadguy@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
+    try {
+      const resp = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
+          subject,
+        }),
+      });
 
-    window.location.href = mailto;
-    setStatus("sent");
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data?.error || "Failed to send your message. Please try again.");
+      }
+
+      setStatus("sent");
+      setMessage("");
+    } catch (err: any) {
+      console.error(err);
+      setStatus("error");
+      setError(err?.message || "Unable to send message right now.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,7 +135,12 @@ export default function ContactCard({ className }: ContactCardProps) {
         <div className="relative flex flex-col gap-4 p-6 bg-background/50">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-foreground">Talk to me here</h3>
+              <div className="flex items-center justify-center text-center">
+                <h3 className="text-3xl font-semibold leading-tight text-foreground">
+                  <span className="block">Talk to me</span>
+                  <span className="block">here</span>
+                </h3>
+              </div>
             </div>
             <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/30">
               <img
@@ -152,8 +188,8 @@ export default function ContactCard({ className }: ContactCardProps) {
             </label>
 
             <div className="flex items-center gap-3">
-              <Button type="submit" className="rounded-full px-5 capitalize">
-                send
+              <Button type="submit" className="rounded-full px-5 capitalize" disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "send"}
               </Button>
               {status === "sent" && (
                 <div className="inline-flex items-center gap-1 text-sm font-medium text-[hsl(var(--accent))]" aria-live="polite">
@@ -173,7 +209,12 @@ export default function ContactCard({ className }: ContactCardProps) {
         <div className="flex flex-col gap-4 bg-muted/40 p-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-foreground">Talk to me there</h3>
+              <div className="flex items-center justify-center text-center">
+                <h3 className="text-3xl font-semibold leading-tight text-foreground">
+                  <span className="block">Talk to me</span>
+                  <span className="block">there</span>
+                </h3>
+              </div>
             </div>
             <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/50">
               <img
@@ -186,31 +227,31 @@ export default function ContactCard({ className }: ContactCardProps) {
           </div>
 
           <div className="space-y-2">
-            {CONTACTS.map(({ label, value, icon: Icon, playTone }) => (
+            {CONTACTS.map((contact) => (
               <button
-                key={label}
+                key={contact.label}
                 type="button"
-                onClick={() => copyToClipboard(value, label, playTone)}
+                onClick={() => {
+                  if (contact.action === "tone") {
+                    setCopied(null);
+                    playIcqTone();
+                    return;
+                  }
+                  copyToClipboard(contact.value, contact.label);
+                }}
                 className="group flex w-full items-center justify-between rounded-lg border border-transparent px-3 py-2 text-left transition hover:border-border hover:bg-background/70"
               >
                 <div className="flex items-center gap-3 text-foreground">
                   <div className="rounded-full bg-background p-2 shadow-sm ring-1 ring-border/60 transition group-hover:ring-[hsl(var(--accent))]/50">
-                    <Icon className="h-4 w-4" />
+                    <contact.icon className="h-4 w-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{label}</span>
-                    <span className="font-medium leading-tight">{value}</span>
+                    <span className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{contact.label}</span>
+                    <span className="font-medium leading-tight">{contact.value}</span>
+                    {contact.action === "copy" && copied === contact.label && (
+                      <span className="text-xs font-medium text-[hsl(var(--accent))]">Copied</span>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  {copied === label ? (
-                    <>
-                      <Check className="h-4 w-4 text-[hsl(var(--accent))]" />
-                      <span className="text-[hsl(var(--accent))]">Copied</span>
-                    </>
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
                 </div>
               </button>
             ))}

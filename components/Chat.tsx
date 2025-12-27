@@ -416,14 +416,14 @@ export default function Chat() {
                 className="mx-auto h-24 w-24"
               />
 
-              <p className="heading-primary">
+              <p className="text-xl md:text-2xl font-semibold text-foreground">
                 Hi, I’m Mimsy,
                 <br />
                 a hamster, a film creator, a genius!
               </p>
 
               <div className="space-y-4">
-                <p className="heading-secondary text-foreground/80">
+                <p className="text-base md:text-lg font-medium text-foreground/80 md:whitespace-nowrap">
                   Tell me your idea for a video - and I’ll generate it for you
                 </p>
 
@@ -445,7 +445,7 @@ export default function Chat() {
                         type="submit"
                         disabled={isTyping || isRunningAct1}
                         size="pill"
-                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[var(--shadow-md)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[var(--shadow-lg)]"
+                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)]"
                       >
                         Generate
                       </Button>

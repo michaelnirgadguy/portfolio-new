@@ -1,13 +1,14 @@
 // /components/VideoPlayer.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
 
 type Props = {
   url: string; // Bunny iframe URL or YouTube URL
   title?: string;
   className?: string;
   autoplay?: boolean;
+  playerId?: string;
 
   // STATE (live)
   onPlayingChange?: (isPlaying: boolean) => void;
@@ -42,6 +43,7 @@ export default function VideoPlayer({
   title,
   className,
   autoplay,
+  playerId,
   onPlayingChange,
   onPlayed10s,
   onReachedMidpoint,
@@ -49,7 +51,10 @@ export default function VideoPlayer({
   onEnded,
   onMutedChange,
 }: Props) {
+  const generatedId = useId();
+  const resolvedPlayerId = playerId ?? generatedId;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const bunnyPlayerRef = useRef<any | null>(null);
 
   // Internal refs for Bunny player state
   const durationRef = useRef<number | null>(null);
@@ -59,6 +64,15 @@ export default function VideoPlayer({
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
+
+  const emitGlobalPlay = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("mimsy:video:play", {
+        detail: { playerId: resolvedPlayerId },
+      })
+    );
+  }, [resolvedPlayerId]);
 
   // Build src
   let src: string | null = null;
@@ -72,9 +86,14 @@ export default function VideoPlayer({
   } else {
     const id = extractYouTubeId(url);
     if (!id) return null;
-    src = `https://www.youtube.com/embed/${id}${
-      autoplay ? "?autoplay=1&mute=1" : ""
-    }`;
+    const params = new URLSearchParams();
+    if (autoplay) {
+      params.set("autoplay", "1");
+      params.set("mute", "1");
+    }
+    params.set("enablejsapi", "1");
+    const query = params.toString();
+    src = `https://www.youtube.com/embed/${id}${query ? `?${query}` : ""}`;
   }
 
   // Reset internal refs when URL changes
@@ -126,11 +145,13 @@ export default function VideoPlayer({
       if (!w.playerjs || !w.playerjs.Player) return;
 
       player = new w.playerjs.Player(iframeRef.current);
+      bunnyPlayerRef.current = player;
 
       const handlePlayOrPlaying = () => {
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        emitGlobalPlay();
         onPlayingChange?.(true);
       };
 
@@ -233,6 +254,7 @@ export default function VideoPlayer({
     return () => {
       cancelled = true;
       try {
+        bunnyPlayerRef.current = null;
         if (player && typeof player.destroy === "function") {
           player.destroy();
         }
@@ -249,7 +271,84 @@ export default function VideoPlayer({
     onStoppedEarly,
     onEnded,
     onMutedChange,
+    emitGlobalPlay,
   ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleGlobalPlay = (event: Event) => {
+      const customEvent = event as CustomEvent<{ playerId?: string }>;
+      if (customEvent.detail?.playerId === resolvedPlayerId) return;
+
+      if (isBunny && bunnyPlayerRef.current?.pause) {
+        bunnyPlayerRef.current.pause();
+        return;
+      }
+
+      if (!isBunny && iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: "command",
+            func: "pauseVideo",
+            args: "",
+          }),
+          "*"
+        );
+      }
+    };
+
+    window.addEventListener("mimsy:video:play", handleGlobalPlay);
+    return () => {
+      window.removeEventListener("mimsy:video:play", handleGlobalPlay);
+    };
+  }, [isBunny, resolvedPlayerId]);
+
+  useEffect(() => {
+    if (isBunny) return;
+    if (typeof window === "undefined") return;
+
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+
+    const postMessage = (payload: Record<string, unknown>) => {
+      iframeWindow.postMessage(JSON.stringify(payload), "*");
+    };
+
+    postMessage({ event: "listening", id: resolvedPlayerId });
+    postMessage({
+      event: "command",
+      func: "addEventListener",
+      args: ["onStateChange"],
+    });
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeWindow) return;
+      if (typeof event.data !== "string") return;
+
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.event === "onStateChange" && data?.info === 1) {
+          emitGlobalPlay();
+          onPlayingChange?.(true);
+        }
+        if (data?.event === "onStateChange" && data?.info === 2) {
+          onPlayingChange?.(false);
+        }
+        if (data?.event === "onStateChange" && data?.info === 0) {
+          onPlayingChange?.(false);
+          onEnded?.();
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [emitGlobalPlay, isBunny, onEnded, onPlayingChange, resolvedPlayerId]);
 
   return (
     <div className={`w-full ${className ?? ""}`}>

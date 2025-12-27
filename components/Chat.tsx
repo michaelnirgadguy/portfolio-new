@@ -417,11 +417,13 @@ export default function Chat() {
               />
 
               <p className="heading-primary">
-                Hi, I’m Mimsy, a hamster, a film creator, a genius!
+                Hi, I’m Mimsy,
+                <br />
+                a hamster, a film creator, a genius!
               </p>
 
               <div className="space-y-3">
-                <p className="meta-secondary">
+                <p className="heading-secondary text-foreground/80">
                   Tell me your idea for a video - and I’ll generate it for you
                 </p>
 
@@ -436,15 +438,14 @@ export default function Chat() {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder='try "dogs dancing on the moon"'
                         disabled={isTyping || isRunningAct1}
-                        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
                       />
 
                       <Button
                         type="submit"
                         disabled={isTyping || isRunningAct1}
-                        variant="outlineAccent"
                         size="pill"
-                        className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+                        className="shrink-0 border border-transparent bg-[hsl(var(--accent))] text-white shadow-[var(--shadow-sm)] transition hover:bg-[hsl(var(--accent))]/90"
                       >
                         Generate
                       </Button>

@@ -409,11 +409,11 @@ export default function Chat() {
         <div className="w-full max-w-2xl">
           <div className="glass-surface relative overflow-hidden rounded-2xl border border-border/70 px-6 py-8 shadow-lg">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.12),transparent_60%)]" />
-            <div className="relative z-10 space-y-6 text-center">
+            <div className="relative z-10 space-y-8 text-center">
               <img
                 src="/tiny-Mimsy.png"
                 alt="Mimsy"
-                className="mx-auto h-20 w-20"
+                className="mx-auto h-24 w-24"
               />
 
               <p className="heading-primary">
@@ -422,7 +422,7 @@ export default function Chat() {
                 a hamster, a film creator, a genius!
               </p>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="heading-secondary text-foreground/80">
                   Tell me your idea for a video - and I’ll generate it for you
                 </p>
@@ -445,7 +445,7 @@ export default function Chat() {
                         type="submit"
                         disabled={isTyping || isRunningAct1}
                         size="pill"
-                        className="shrink-0 border border-transparent bg-[hsl(var(--accent))] text-white shadow-[var(--shadow-sm)] transition hover:bg-[hsl(var(--accent))]/90"
+                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[var(--shadow-md)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[var(--shadow-lg)]"
                       >
                         Generate
                       </Button>

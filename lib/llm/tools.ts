@@ -28,7 +28,7 @@ export const TOOLS = [
   {
     type: "function" as const,
     name: "ui_show_all_videos",
-    description: "Show the full video catalogue grid.",
+    description: "Show the full video catalogue grid. ONLY USE IF USER EXPLICITLY ASKS TO SEE ALL THE VIDEOS \ FULL CATALOG",
     strict: true,
     parameters: {
       type: "object",

@@ -406,46 +406,54 @@ export default function Chat() {
   if (phase === "landing") {
     return (
       <section className="min-h-[100svh] w-full grid place-items-center px-6">
-        <div className="w-full max-w-2xl space-y-6 text-center">
-          <img
-            src="/tiny-Mimsy.png"
-            alt="Mimsy"
-            className="mx-auto h-20 w-20"
-          />
+        <div className="w-full max-w-2xl">
+          <div className="glass-surface relative overflow-hidden rounded-2xl border border-border/70 px-6 py-8 shadow-lg">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.12),transparent_60%)]" />
+            <div className="relative z-10 space-y-8 text-center">
+              <img
+                src="/tiny-Mimsy.png"
+                alt="Mimsy"
+                className="mx-auto h-24 w-24"
+              />
 
-          <p className="text-[18px] font-semibold leading-7">
-            Hi, I’m Mimsy, a hamster, a film creator, a genius!
-          </p>
+              <p className="text-xl md:text-2xl font-semibold text-foreground">
+                Hi, I’m Mimsy,
+                <br />
+                a hamster, a film creator, a genius!
+              </p>
 
-          <div className="space-y-3">
-            <p className="text-[16px] leading-7">
-              Tell me your idea for a video - and I’ll generate it for you
-            </p>
+              <div className="space-y-4">
+                <p className="text-base md:text-lg font-medium text-foreground/80 md:whitespace-nowrap">
+                  Tell me your idea for a video - and I’ll generate it for you
+                </p>
 
-            <form
-              onSubmit={handleLandingSubmit}
-              className="flex items-center justify-center"
-            >
-              <div className="w-full">
-                <div className="relative w-full flex items-center gap-2 rounded-full border bg-card px-3 py-2 shadow-sm backdrop-blur">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder='try "dogs dancing on the moon"'
-                    disabled={isTyping || isRunningAct1}
-                    className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
-                  />
+                <form
+                  onSubmit={handleLandingSubmit}
+                  className="flex items-center justify-center"
+                >
+                  <div className="w-full">
+                    <div className="glass-surface flex w-full items-center gap-2 rounded-full px-3 py-2">
+                      <input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder='try "dogs dancing on the moon"'
+                        disabled={isTyping || isRunningAct1}
+                        className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
+                      />
 
-                  <Button
-                    type="submit"
-                    disabled={isTyping || isRunningAct1}
-                    className="shrink-0 rounded-full h-10 px-5 border border-transparent bg-[hsl(var(--accent))] text-sm font-medium text-white transition hover:bg-[hsl(var(--accent))]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  >
-                    Generate
-                  </Button>
-                </div>
+                      <Button
+                        type="submit"
+                        disabled={isTyping || isRunningAct1}
+                        size="pill"
+                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)]"
+                      >
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </section>

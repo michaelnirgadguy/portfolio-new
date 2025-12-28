@@ -16,7 +16,7 @@ export default function Header() {
           />
         </Link>
 
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+        <span className="flex-1 text-xs sm:text-sm text-muted-foreground leading-tight whitespace-normal sm:whitespace-nowrap">
           Michael Nirgad Guy&nbsp;|&nbsp;Interactive Video Portfolio
         </span>
       </div>

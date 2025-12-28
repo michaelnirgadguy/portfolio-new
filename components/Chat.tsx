@@ -376,7 +376,7 @@ export default function Chat() {
     if (isUser) {
       return (
         <div className="flex w-full justify-end">
-          <div className="max-w-[75%]">
+          <div className="max-w-full sm:max-w-[75%]">
             <div
               className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]"
             >
@@ -389,7 +389,7 @@ export default function Chat() {
 
     return (
       <div className="flex w-full justify-start">
-        <div className="flex items-start gap-3 max-w-[80%]">
+        <div className="flex items-start gap-3 max-w-full sm:max-w-[80%]">
           <img
             src="/bigger-avatar.png"
             alt="Mimsy"
@@ -463,7 +463,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-20 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-28 pt-6 md:px-6 md:pb-20 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -483,40 +483,42 @@ export default function Chat() {
 
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
         <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
-          <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
-            {activeChips.map((chip, index) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => handleChipClick(chip)}
-                className={`pointer-events-auto glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground ${animateAct1Chips ? "fade-in" : ""}`}
-                style={animateAct1Chips ? { animationDelay: `${index * 80}ms` } : undefined}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
-            <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder='Try "Show me a geeky video"'
-                disabled={isTyping || isRunningAct1}
-                className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!hasRunLanding || isTyping || isRunningAct1}
-                variant="outlineAccent"
-                className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
-              >
-                <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
-              </Button>
+          <div className="flex flex-col gap-3 md:block">
+            <div className="pointer-events-auto flex flex-col items-start gap-2 md:absolute md:bottom-1 md:left-0 md:-translate-x-full md:items-start md:-ml-3">
+              {activeChips.map((chip, index) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => handleChipClick(chip)}
+                  className={`pointer-events-auto glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground ${animateAct1Chips ? "fade-in" : ""}`}
+                  style={animateAct1Chips ? { animationDelay: `${index * 80}ms` } : undefined}
+                >
+                  {chip}
+                </button>
+              ))}
             </div>
-          </form>
+
+            <form onSubmit={handleSubmit} className="pointer-events-auto w-full max-w-3xl md:ml-auto md:mr-auto">
+              <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder='Try "Show me a geeky video"'
+                  disabled={isTyping || isRunningAct1}
+                  className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!hasRunLanding || isTyping || isRunningAct1}
+                  variant="outlineAccent"
+                  className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
+                >
+                  <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </section>

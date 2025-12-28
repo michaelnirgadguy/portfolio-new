@@ -135,7 +135,7 @@ export default function ContactCard({ className }: ContactCardProps) {
     <div className={cn("w-full rounded-xl border border-border bg-card shadow-sm overflow-hidden", className)}>
       <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-y-0 md:divide-x">
         <div className="relative flex flex-col gap-4 p-6 bg-background/50">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
             <div className="flex-1">
               <div className="flex items-center justify-center text-center">
                 <h3 className="text-3xl font-semibold leading-tight text-foreground">
@@ -144,7 +144,7 @@ export default function ContactCard({ className }: ContactCardProps) {
                 </h3>
               </div>
             </div>
-            <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/30">
+            <div className="w-full max-w-[200px] overflow-hidden rounded-lg border border-border/70 bg-muted/30 sm:w-1/2">
               <img
                 src="/pointing.png"
                 alt="Michael pointing toward the form"
@@ -209,7 +209,7 @@ export default function ContactCard({ className }: ContactCardProps) {
         </div>
 
         <div className="flex flex-col gap-4 bg-muted/40 p-6">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
             <div className="flex-1">
               <div className="flex items-center justify-center text-center">
                 <h3 className="text-3xl font-semibold leading-tight text-foreground">
@@ -218,7 +218,7 @@ export default function ContactCard({ className }: ContactCardProps) {
                 </h3>
               </div>
             </div>
-            <div className="w-1/2 max-w-[180px] overflow-hidden rounded-lg border border-border/70 bg-muted/50">
+            <div className="w-full max-w-[200px] overflow-hidden rounded-lg border border-border/70 bg-muted/50 sm:w-1/2">
               <img
                 src="/talking.png"
                 alt="Michael on the phone"

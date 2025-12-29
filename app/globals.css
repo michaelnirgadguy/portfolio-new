@@ -237,6 +237,25 @@
   transform-origin: top left; /* keeps it aligned correctly */
 }
 
+@media (max-width: 639px) {
+  .chip-scroll-hint {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 14px,
+      black calc(100% - 14px),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 14px,
+      black calc(100% - 14px),
+      transparent
+    );
+  }
+}
+
 
 
 /* Chat input – border sweep with a moving accent segment */

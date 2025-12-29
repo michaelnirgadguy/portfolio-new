@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import VideoCard from "@/components/VideoCard";
 import { renderMosaic } from "@/components/video-grid/mosaic";
 import { getAllVideos } from "@/lib/videos";
@@ -34,6 +35,14 @@ export default function GalleryBubble({
     if (video) onOpenVideo?.(video);
   };
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollByCards = (direction: "prev" | "next") => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const offset = Math.round(node.clientWidth * 0.7);
+    node.scrollBy({ left: direction === "next" ? offset : -offset, behavior: "auto" });
+  };
+
   if (videos.length <= 4) {
     if (videos.length === 4) {
       return (
@@ -55,16 +64,35 @@ export default function GalleryBubble({
       return (
         <div className="w-full rounded-xl border border-border bg-card p-4">
           <div className="relative">
-            <div className="flex max-h-[460px] gap-4 overflow-x-auto overflow-y-hidden pb-2 pr-8 scroll-auto snap-x snap-mandatory scroll-pl-4 scroll-pr-8 [scrollbar-gutter:stable]">
+            <div
+              ref={scrollRef}
+              className="flex max-h-[460px] gap-4 overflow-x-auto pb-2 pl-6 pr-14 scroll-auto snap-x snap-mandatory scroll-pl-6 scroll-pr-14 [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {videos.map((video) => (
                 <div
                   key={video.id}
-                  className="min-w-[56%] shrink-0 snap-start [scroll-snap-stop:always] sm:min-w-[52%]"
+                  className="min-w-[58%] max-w-[360px] shrink-0 snap-start [scroll-snap-stop:always] sm:min-w-[52%] sm:max-w-[320px]"
                 >
                   <VideoCard video={video} onSelect={() => handleClick(video.id)} />
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              aria-label="Scroll videos left"
+              onClick={() => scrollByCards("prev")}
+              className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-border bg-card/90 p-2 text-foreground shadow-sm transition hover:bg-card"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Scroll videos right"
+              onClick={() => scrollByCards("next")}
+              className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full border border-border bg-card/90 p-2 text-foreground shadow-sm transition hover:bg-card"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
             <div
               aria-hidden
               className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent"

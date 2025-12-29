@@ -35,13 +35,52 @@ export default function GalleryBubble({
   };
 
   if (videos.length <= 4) {
+    if (videos.length === 4) {
+      return (
+        <div className="w-full rounded-xl border border-border bg-card p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {videos.map((video) => (
+              <VideoCard
+                key={video.id}
+                video={video}
+                onSelect={() => handleClick(video.id)}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (videos.length >= 2) {
+      return (
+        <div className="w-full rounded-xl border border-border bg-card p-4">
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto pb-2 pr-6 snap-x snap-mandatory scroll-pl-4 [scrollbar-gutter:stable]">
+              {videos.map((video) => (
+                <div
+                  key={video.id}
+                  className="min-w-[70%] shrink-0 snap-start sm:min-w-[45%]"
+                >
+                  <VideoCard video={video} onSelect={() => handleClick(video.id)} />
+                </div>
+              ))}
+            </div>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent"
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="w-full rounded-xl border border-border bg-card p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} onSelect={() => handleClick(video.id)} />
-          ))}
-        </div>
+        <VideoCard video={videos[0]} onSelect={() => handleClick(videos[0].id)} />
       </div>
     );
   }

@@ -55,11 +55,11 @@ export default function GalleryBubble({
       return (
         <div className="w-full rounded-xl border border-border bg-card p-4">
           <div className="relative">
-            <div className="flex gap-4 overflow-x-auto pb-2 pr-6 snap-x snap-mandatory scroll-pl-4 [scrollbar-gutter:stable]">
+            <div className="flex max-h-[460px] gap-4 overflow-x-auto overflow-y-hidden pb-2 pr-8 scroll-auto snap-x snap-mandatory scroll-pl-4 scroll-pr-8 [scrollbar-gutter:stable]">
               {videos.map((video) => (
                 <div
                   key={video.id}
-                  className="min-w-[70%] shrink-0 snap-start sm:min-w-[45%]"
+                  className="min-w-[56%] shrink-0 snap-start [scroll-snap-stop:always] sm:min-w-[52%]"
                 >
                   <VideoCard video={video} onSelect={() => handleClick(video.id)} />
                 </div>

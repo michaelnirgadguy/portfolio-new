@@ -389,7 +389,7 @@ export default function Chat() {
 
     return (
       <div className="flex w-full justify-start">
-        <div className="flex items-start gap-3 max-w-[80%]">
+        <div className="flex items-start gap-3 max-w-[92%] sm:max-w-[80%]">
           <img
             src="/bigger-avatar.png"
             alt="Mimsy"
@@ -406,7 +406,7 @@ export default function Chat() {
   if (phase === "landing") {
     return (
       <section className="min-h-[100svh] w-full grid place-items-center px-6">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-[min(42rem,calc(100vw-3rem))]">
           <div className="glass-surface relative overflow-hidden rounded-2xl border border-border/70 px-6 py-8 shadow-lg">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.12),transparent_60%)]" />
             <div className="relative z-10 space-y-8 text-center">
@@ -416,7 +416,7 @@ export default function Chat() {
                 className="mx-auto h-24 w-24"
               />
 
-              <p className="text-xl md:text-2xl font-semibold text-foreground">
+              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-snug">
                 Hi, I’m Mimsy,
                 <br />
                 a hamster, a film creator, a genius!
@@ -444,10 +444,12 @@ export default function Chat() {
                       <Button
                         type="submit"
                         disabled={isTyping || isRunningAct1}
-                        size="pill"
-                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)]"
+                        size="icon"
+                        aria-label="Generate"
+                        className="relative z-10 h-10 w-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)] sm:h-10 sm:w-auto sm:px-4"
                       >
-                        Generate
+                        <span className="hidden sm:inline">Generate</span>
+                        <ArrowUp className="h-5 w-5 sm:hidden" strokeWidth={2.5} />
                       </Button>
                     </div>
                   </div>
@@ -463,7 +465,7 @@ export default function Chat() {
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-20 pt-6 md:px-6 space-y-4">
+        <div className="mx-auto flex h-full w-full max-w-[50rem] flex-col px-4 pb-28 pt-6 sm:pb-24 md:px-6 md:pb-20 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id}>{renderMessage(msg)}</div>
           ))}
@@ -482,14 +484,14 @@ export default function Chat() {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
-        <div className="relative mx-auto w-full max-w-[50rem] px-4 md:px-6">
-          <div className="pointer-events-auto absolute bottom-1 left-0 flex flex-col items-start gap-2 md:-translate-x-full md:items-start md:-ml-3">
+        <div className="relative mx-auto flex w-full max-w-[50rem] flex-col gap-3 px-4 md:block md:px-6">
+          <div className="chip-scroll-hint pointer-events-auto flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 md:absolute md:bottom-1 md:left-0 md:flex-col md:items-start md:overflow-visible md:pb-0 md:-translate-x-full md:-ml-3">
             {activeChips.map((chip, index) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className={`pointer-events-auto glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground ${animateAct1Chips ? "fade-in" : ""}`}
+                className={`pointer-events-auto shrink-0 glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground ${animateAct1Chips ? "fade-in" : ""}`}
                 style={animateAct1Chips ? { animationDelay: `${index * 80}ms` } : undefined}
               >
                 {chip}

@@ -47,7 +47,7 @@
   ],
   "long_description": null,
   "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-  "related_ids": "aui-apollo-intro"
+  "related_ids": ["aui-apollo-intro"]
 },
   {
     "id": "aui-apollo-intro",
@@ -71,7 +71,7 @@
     ],
     "long_description": null,
     "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-    "related_ids": "aui-apollo-animals"
+    "related_ids": ["aui-apollo-animals"]
   },
   {
     "id": "forter-hybrid-ai",
@@ -172,7 +172,7 @@
     ],
     "long_description": null,
     "display_credits": null,
-    "related_ids": "iia-autonomous-buses"
+    "related_ids": ["iia-autonomous-buses"]
   },
   {
     "id": "vaxa-microalgae",
@@ -343,7 +343,7 @@
     ],
     "long_description": null,
     "display_credits": null,
-    "related_ids": "music-of-spheres"
+    "related_ids": ["music-of-spheres"]
   },
   {
     "id": "jlm-kitaktika",

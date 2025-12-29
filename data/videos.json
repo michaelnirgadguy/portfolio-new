@@ -5,7 +5,7 @@
     "client": "Israel Innovation Authority",
     "url": "https://iframe.mediadelivery.net/embed/550694/ccd2faa5-9ca7-466e-8745-9e84732830f9",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ccd2faa5-9ca7-466e-8745-9e84732830f9/thumbnail_294e0144.jpg",
-    "description": "Climb aboard the future! This explainer takes viewers on a ride inside a real self-driving bus, mixing expert interviews, crisp narration, and playful animated segments to show how autonomous tech is steering us into tomorrow.",
+    "description": "a ride inside a real self-driving bus, mixing expert interviews, crisp narration, and playful animated segments to show how autonomous tech is steering us into tomorrow.",
     "language": "he",
     "duration_seconds": 340,
     "priority": "standard",
@@ -26,12 +26,37 @@
     "related_ids": null
   },
   {
-    "id": "aui-apollo",
-    "title": "Apollo",
+  "id": "aui-apollo-animals",
+  "title": "A New Species of AI",
+  "client": "AUI",
+  "url": "https://iframe.mediadelivery.net/embed/550694/21042ab5-d043-490a-a530-d77c5eeff40d",
+  "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/21042ab5-d043-490a-a530-d77c5eeff40d/thumbnail_a0630a36.jpg",
+  "description": "A founder-led, to-camera explainer with layered animations, unpacking Apollo-1—AUI’s neuro-symbolic foundation model enabling AI agents for businesses.",
+  "language": "en",
+  "duration_seconds": 194,
+  "priority": "standard",
+  "tags": [
+    "AI",
+    "explainer",
+    "founder video",
+    "tech",
+    "product"
+  ],
+  "my_roles": [
+    "writer"
+  ],
+  "long_description": null,
+  "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
+  "related_ids": "aui-apollo-intro"
+}
+
+  {
+    "id": "aui-apollo-intro",
+    "title": "Introducing Apollo-1",
     "client": "AUI",
     "url": "https://iframe.mediadelivery.net/embed/550694/1ebcd275-2f79-4fc1-9920-2f07476a5bd9",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/1ebcd275-2f79-4fc1-9920-2f07476a5bd9/thumbnail_132d446e.jpg",
-    "description": "A whirlwind one-minute script that unpacks Apollo’s cutting-edge Agentic AI: distilling dense tech into crisp, captivating storytelling. The challenge (and fun!) was translating a breakthrough in autonomous agents into something anyone can grasp—without losing the precision that makes it revolutionary.",
+    "description": "Typography-driven animation explaining briefly Apollo’s cutting-edge Agentic AI. The challenge: translating a breakthrough in autonomous agents into something anyone can grasp.",
     "language": "en",
     "duration_seconds": 81,
     "priority": "standard",
@@ -47,7 +72,7 @@
     ],
     "long_description": null,
     "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-    "related_ids": null
+    "related_ids": "aui-apollo-animals"
   },
   {
     "id": "forter-hybrid-ai",
@@ -55,7 +80,7 @@
     "client": "Forter",
     "url": "https://iframe.mediadelivery.net/embed/550694/b7f57067-c2f0-4f22-ab7d-584da168c3bf",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/b7f57067-c2f0-4f22-ab7d-584da168c3bf/thumbnail_37ac903b.jpg",
-    "description": "From Kasparov vs. Deep Blue to today’s battle against online fraud—this three-minute explainer zips through the story of AI. It contrasts rule-based logic with learning systems, then shows how Forter cleverly blends both into a hybrid shield that keeps fraudsters in check.",
+    "description": "From Kasparov vs. Deep Blue to today’s battle against online fraud—this explainer zips through the story of AI. It shows how Forter blends Rule-based and neural AI to keep fraudsters in check.",
     "language": "en",
     "duration_seconds": 190,
     "priority": "standard",
@@ -104,7 +129,7 @@
     "client": "Melio",
     "url": "https://iframe.mediadelivery.net/embed/550694/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc/thumbnail_f1b38082.jpg",
-    "description": "A musical journey into the future of finance: a straight-laced accountant is swept up by a dazzling, genie-like host who sings, dances, and whisks him through a whirlwind of change. The showy number turns spreadsheets into spectacle, inviting everyone to join the ride as accounting transforms before our eyes.",
+    "description": "A musical journey into the future of finance: a straight-laced accountant is swept up by a dazzling, genie-like host who sings, dances, and whisks him through a whirlwind of change.",
     "language": "en",
     "duration_seconds": 66,
     "priority": "standard",
@@ -129,7 +154,7 @@
     "client": "Israel Innovation Authority",
     "url": "https://iframe.mediadelivery.net/embed/550694/600e4f92-50bb-417e-98cb-39ec6029c725",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/600e4f92-50bb-417e-98cb-39ec6029c725/thumbnail_0af97dc3.jpg",
-    "description": "What makes quantum computers so powerful—and so hard to build? Through expert voices and enlightening animated scenes, this explainer unpacks the strange rules of qubits and superposition to show how quantum machines might one day transform our world.",
+    "description": "What makes quantum computers so powerful—and so hard to build? Through expert voices and enlightening animated scenes, this explainer unpacks the strange rules of qubits and superposition to show how quantum machines might transform our world.",
     "duration_seconds": 446,
     "priority": "standard",
     "tags": [
@@ -155,7 +180,7 @@
     "client": "Vaxa",
     "url": "https://iframe.mediadelivery.net/embed/550694/81933bab-8f62-4c49-a25f-5fa865072565",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/81933bab-8f62-4c49-a25f-5fa865072565/thumbnail_87bb4fc3.jpg",
-    "description": "From toxic primordial Earth to today’s climate challenges, this cinematic script reimagines microalgae as the tiny superheroes of our planet. Blending planetary drama with playful touches like “five-star algae getaways,” the film turns science into spectacle—showing how these ancient organisms may hold the key to our future.",
+    "description": "From toxic primordial Earth to today’s climate challenges, this cinematic script reimagines microalgae as the tiny superheroes of our planet. Blending planetary drama with playful touches.",
     "language": "en",
     "duration_seconds": 189,
     "priority": "standard",
@@ -182,7 +207,7 @@
     "client": "Jerusalem Muni",
     "url": "https://iframe.mediadelivery.net/embed/550694/cb2d2125-905e-4f53-a010-4efa89511298",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/cb2d2125-905e-4f53-a010-4efa89511298/thumbnail_e49190e5.jpg",
-    "description": "Three tender stories from Jerusalem’s schools shine a spotlight on “moments of light.” A 5-year-old speaks about the kindergarten teacher who raised her—and her parents too. A teacher recalls a student who cared for his family during reserve duty. And a teen shares how a teacher became like family after her father passed away. Gentle illustrations bring each story to life with warmth and heart.",
+    "description": "Three tender stories from Jerusalem’s schools. A 5-year-old speaks about the kindergarten teacher who raised her—and her parents too. A teacher recalls a student who cared for his family during reserve duty. And a teen shares how a teacher became like family after her father passed away. Gentle illustrations bring each story to life with warmth and heart.",
     "language": "he",
     "duration_seconds": 227,
     "priority": "standard",
@@ -296,7 +321,7 @@
     "client": "Passion Project",
     "url": "https://youtu.be/CWKcuH6ONRk",
     "thumbnail": "https://img.youtube.com/vi/CWKcuH6ONRk/hqdefault.jpg",
-    "description": "Order from chaos, creatures from code—this homemade explainer dives into Conway’s legendary ‘Game of Life,’ where just two simple rules give rise to infinite complexity. With lo-fi Paint-style animation and genuine curiosity, it shows how beauty can emerge from the simplest math.",
+    "description": "this explainer dives into Conway’s legendary ‘Game of Life’. With lo-fi Paint-style animation and genuine curiosity, it shows how beauty can emerge from the simplest math.",
     "language": "he",
     "duration_seconds": 746,
     "priority": "standard",
@@ -326,7 +351,7 @@
     "client": "Jerusalm Muni",
     "url": "https://iframe.mediadelivery.net/embed/550694/63255b81-656f-4951-81d8-5b103c9ba55b",
     "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/63255b81-656f-4951-81d8-5b103c9ba55b/thumbnail_6e9fa3ce.jpg",
-    "description": "A tense parent–teacher confrontation suddenly rewinds to reveal Kitaktika, a simulation center where teams rehearse real-world challenges in a safe, playful, and finely crafted environment. Through fast-motion gags, cinematic rewinds, and metaphorical set-pieces—from bomb-defusal to ballroom dance—the video shows how Kitaktika turns everyday workplace friction into a space for insight, practice, and growth.",
+    "description": "A tense parent–teacher confrontation suddenly rewinds to reveal Kitaktika, a simulation center where teams rehearse real-world challenges in a safe, playful, and finely crafted environment.",
     "language": "he",
     "duration_seconds": 135,
     "priority": "standard",

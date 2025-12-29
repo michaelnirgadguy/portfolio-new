@@ -406,7 +406,7 @@ export default function Chat() {
   if (phase === "landing") {
     return (
       <section className="min-h-[100svh] w-full grid place-items-center px-6">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-[min(42rem,calc(100vw-3rem))]">
           <div className="glass-surface relative overflow-hidden rounded-2xl border border-border/70 px-6 py-8 shadow-lg">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.12),transparent_60%)]" />
             <div className="relative z-10 space-y-8 text-center">
@@ -416,7 +416,7 @@ export default function Chat() {
                 className="mx-auto h-24 w-24"
               />
 
-              <p className="text-xl md:text-2xl font-semibold text-foreground">
+              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-snug">
                 Hi, I’m Mimsy,
                 <br />
                 a hamster, a film creator, a genius!
@@ -444,10 +444,12 @@ export default function Chat() {
                       <Button
                         type="submit"
                         disabled={isTyping || isRunningAct1}
-                        size="pill"
-                        className="relative z-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)]"
+                        size="icon"
+                        aria-label="Generate"
+                        className="relative z-10 h-10 w-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)] sm:h-10 sm:w-auto sm:px-4"
                       >
-                        Generate
+                        <span className="hidden sm:inline">Generate</span>
+                        <ArrowUp className="h-5 w-5 sm:hidden" strokeWidth={2.5} />
                       </Button>
                     </div>
                   </div>
@@ -483,7 +485,7 @@ export default function Chat() {
 
       <div className="pointer-events-none fixed inset-x-0 bottom-3 z-30">
         <div className="relative mx-auto flex w-full max-w-[50rem] flex-col gap-3 px-4 md:block md:px-6">
-          <div className="pointer-events-auto flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 md:absolute md:bottom-1 md:left-0 md:flex-col md:items-start md:overflow-visible md:pb-0 md:-translate-x-full md:-ml-3">
+          <div className="chip-scroll-hint pointer-events-auto flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 md:absolute md:bottom-1 md:left-0 md:flex-col md:items-start md:overflow-visible md:pb-0 md:-translate-x-full md:-ml-3">
             {activeChips.map((chip, index) => (
               <button
                 key={chip}

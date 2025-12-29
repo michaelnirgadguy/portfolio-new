@@ -252,11 +252,9 @@ export default function Chat() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
 
-    setLog((prev) => [
-      ...prev,
-      { role: "user", content: idea },
-      { role: "assistant", content: ACT1_FAIL_REACTION },
-      { role: "assistant", content: ACT1_OFFER },
+    setLog([
+      { role: "user", content: `generate for me: ${idea}` },
+      { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
     ]);
 
     setSuggestionChips(ACT1_CHIPS);

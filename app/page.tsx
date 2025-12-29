@@ -6,7 +6,7 @@ import Chat from "@/components/Chat";
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen flex-col">
+    <main className="relative flex min-h-screen flex-col overflow-x-hidden">
       <Header />
       <Suspense fallback={null}>
         <Chat />

@@ -147,7 +147,7 @@ export default function Chat() {
         showContactCard,
       } = await sendTurn({
         log,
-        userText: `<context> User opened video "${video.title}" (id: ${video.id}) from the gallery. </context>',
+        userText: `<context> User opened video "${video.title}" (id: ${video.id}) from the gallery. </context>`,
         syntheticAfterUser: syntheticMessage,
       });
 

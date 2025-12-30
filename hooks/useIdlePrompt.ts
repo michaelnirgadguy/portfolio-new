@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const IDLE_TIMEOUT_MS = 10000;
+const IDLE_PROMPT_SESSION_KEY = "mimsyIdlePromptSent";
 const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
   "mousemove",
   "mousedown",
@@ -32,6 +33,7 @@ export function useIdlePrompt({
   const isRunningAct1Ref = useRef(isRunningAct1);
   const isAnyVideoPlayingRef = useRef(isAnyVideoPlaying);
   const onIdleRef = useRef(onIdle);
+  const hasSentPromptRef = useRef(false);
   const videoPlayingMapRef = useRef<Map<string, boolean>>(new Map());
 
   const clearIdleTimer = useCallback(() => {
@@ -46,10 +48,16 @@ export function useIdlePrompt({
       !enabledRef.current ||
       isAnyVideoPlayingRef.current ||
       isTypingRef.current ||
-      isRunningAct1Ref.current
+      isRunningAct1Ref.current ||
+      hasSentPromptRef.current
     ) {
       scheduleIdleTimerRef.current();
       return;
+    }
+
+    hasSentPromptRef.current = true;
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(IDLE_PROMPT_SESSION_KEY, "true");
     }
 
     Promise.resolve(onIdleRef.current?.()).finally(() => {
@@ -94,6 +102,12 @@ export function useIdlePrompt({
   useEffect(() => {
     onIdleRef.current = onIdle;
   }, [onIdle]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    hasSentPromptRef.current =
+      window.sessionStorage.getItem(IDLE_PROMPT_SESSION_KEY) === "true";
+  }, []);
 
   useEffect(() => {
     scheduleIdleTimerRef.current = scheduleIdleTimer;

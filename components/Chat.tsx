@@ -10,6 +10,7 @@ import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import ContactCard from "@/components/ContactCard";
 import { usePendingDots } from "@/hooks/useChatHooks";
+import { useIdlePrompt } from "@/hooks/useIdlePrompt";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
@@ -46,6 +47,65 @@ export default function Chat() {
   const appendMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg]);
   }, []);
+
+  const handleIdleTimeout = useCallback(async () => {
+    setIsTyping(true);
+    try {
+      const {
+        text,
+        chips,
+        nextLog,
+        pendingVideoQueues,
+        showAllVideos,
+        darkModeEnabled,
+        showContactCard,
+      } = await sendTurn({
+        log,
+        userText: "<context> user idle for 10 seconds; no video playing </context>",
+        syntheticAfterUser:
+          "<instructions> prompt the user to explore a video or ask about Michael </instructions>",
+      });
+
+      if (text) {
+        appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
+      }
+
+      if (chips?.length) {
+        setSuggestionChips(chips);
+      } else {
+        setSuggestionChips(FALLBACK_CHIPS);
+      }
+
+      if (showAllVideos) {
+        handleShowAllVideos();
+      }
+
+      if (typeof darkModeEnabled === "boolean") {
+        setIsDarkMode(darkModeEnabled);
+      }
+
+      if (showContactCard) {
+        handleShowContactCard();
+      }
+
+      for (const ids of pendingVideoQueues) {
+        handleShowVideos(ids);
+      }
+
+      setLog(nextLog);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTyping(false);
+    }
+  }, [appendMessage, log]);
+
+  const { handleVideoPlayingChange } = useIdlePrompt({
+    enabled: hasRunLanding && phase === "chat",
+    isTyping,
+    isRunningAct1,
+    onIdle: handleIdleTimeout,
+  });
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -361,7 +421,9 @@ export default function Chat() {
     }
 
     if (msg.role === "widget") {
-      if (msg.type === "hero") return <HeroPlayerBubble videoId={msg.videoId} />;
+      if (msg.type === "hero") {
+        return <HeroPlayerBubble videoId={msg.videoId} onPlayingChange={handleVideoPlayingChange} />;
+      }
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
       if (msg.type === "contact-card") return <ContactCard />;

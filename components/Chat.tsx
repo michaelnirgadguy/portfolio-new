@@ -132,7 +132,7 @@ export default function Chat() {
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
 
-    const syntheticMessage = `User opened video "${video.title}" (id: ${video.id}). The video is already displaying with its title; do not call any tools to show it again and do not repeat the title. Provide one short, enthusiastic line reacting to their choice and keep the conversation moving.`;
+    const syntheticMessage = `<instructions> do not call any tools. do not repeat the title or client as they already appear on screen.. Provide one short, enthusiastic line reacting to their choice and keep the conversation moving. </instructions>`;
 
     setIsTyping(true);
 
@@ -147,7 +147,7 @@ export default function Chat() {
         showContactCard,
       } = await sendTurn({
         log,
-        userText: "User opened a video from the gallery.",
+        userText: `<context> User opened video "${video.title}" (id: ${video.id}) from the gallery. </context>',
         syntheticAfterUser: syntheticMessage,
       });
 

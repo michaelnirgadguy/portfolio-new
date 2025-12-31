@@ -1,24 +1,18 @@
-import { useMemo } from "react";
 import VideoCard from "@/components/VideoCard";
 import { renderMosaic } from "@/components/video-grid/mosaic";
-import { getAllVideos } from "@/lib/videos";
 import type { VideoItem } from "@/types/video";
 
 export default function GalleryBubble({
   videoIds,
+  videosById,
   onOpenVideo,
 }: {
   videoIds: string[];
+  videosById: Map<string, VideoItem>;
   onOpenVideo?: (video: VideoItem) => void;
 }) {
-  const byId = useMemo(() => {
-    const map = new Map<string, VideoItem>();
-    getAllVideos().forEach((v) => map.set(v.id, v));
-    return map;
-  }, []);
-
   const videos = videoIds
-    .map((id) => byId.get(id))
+    .map((id) => videosById.get(id))
     .filter(Boolean) as VideoItem[];
 
   if (!videos.length) {

@@ -80,16 +80,18 @@ export default function VideoPlayer({
   const isBunny = url.includes("iframe.mediadelivery.net");
 
   if (isBunny) {
-    src = url;
-    // If you want autoplay for Bunny later, you can add query params here.
-    // if (autoplay) src += (url.includes("?") ? "&" : "?") + "autoplay=1&muted=1";
+    if (autoplay) {
+      const separator = url.includes("?") ? "&" : "?";
+      src = `${url}${separator}autoplay=1&muted=0`;
+    } else {
+      src = url;
+    }
   } else {
     const id = extractYouTubeId(url);
     if (!id) return null;
     const params = new URLSearchParams();
     if (autoplay) {
       params.set("autoplay", "1");
-      params.set("mute", "1");
     }
     params.set("enablejsapi", "1");
     const query = params.toString();
@@ -226,6 +228,10 @@ export default function VideoPlayer({
 
       // On ready, detect autoplay & initial mute
       player.on("ready", () => {
+        if (autoplay && typeof player.play === "function") {
+          player.play();
+        }
+
         if (typeof player.getPaused === "function") {
           try {
             player.getPaused((paused: boolean) => {
@@ -263,6 +269,7 @@ export default function VideoPlayer({
       }
     };
   }, [
+    autoplay,
     isBunny,
     url,
     onPlayingChange,

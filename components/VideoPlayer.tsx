@@ -224,6 +224,33 @@ export default function VideoPlayer({
       player.on("ended", handleEnded);
       player.on("timeupdate", handleTimeUpdate);
 
+      const attemptAutoplay = () => {
+        if (!autoplay) return;
+        emitGlobalPlay();
+
+        if (typeof player.unmute === "function") {
+          try {
+            player.unmute();
+          } catch {
+            // ignore
+          }
+        } else if (typeof player.setMuted === "function") {
+          try {
+            player.setMuted(false);
+          } catch {
+            // ignore
+          }
+        }
+
+        if (typeof player.play === "function") {
+          try {
+            player.play();
+          } catch {
+            // ignore
+          }
+        }
+      };
+
       // On ready, detect autoplay & initial mute
       player.on("ready", () => {
         if (typeof player.getPaused === "function") {
@@ -248,6 +275,8 @@ export default function VideoPlayer({
             // ignore
           }
         }
+
+        attemptAutoplay();
       });
     });
 
@@ -265,6 +294,7 @@ export default function VideoPlayer({
   }, [
     isBunny,
     url,
+    autoplay,
     onPlayingChange,
     onPlayed10s,
     onReachedMidpoint,

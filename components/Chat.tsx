@@ -43,6 +43,7 @@ export default function Chat() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
+  const midpointTriggeredRef = useRef<Set<string>>(new Set());
 
   const appendMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg]);
@@ -249,6 +250,63 @@ export default function Chat() {
     }
   };
 
+  const handleVideoMidpoint = useCallback(
+    async (videoId: string) => {
+      if (midpointTriggeredRef.current.has(videoId)) return;
+      midpointTriggeredRef.current.add(videoId);
+
+      setIsTyping(true);
+
+      try {
+        const {
+          text,
+          chips,
+          nextLog,
+          pendingVideoQueues,
+          showAllVideos,
+          darkModeEnabled,
+          showContactCard,
+        } = await sendTurn({
+          log,
+          userText: `<context> video ${videoId} reached 50% playback </context>`,
+          syntheticAfterUser:
+            "<instructions> make a short mid-roll comment referencing the video content </instructions>",
+        });
+
+        if (text) {
+          appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
+        }
+
+        if (chips?.length) {
+          setSuggestionChips(chips);
+        }
+
+        if (showAllVideos) {
+          handleShowAllVideos();
+        }
+
+        if (typeof darkModeEnabled === "boolean") {
+          setIsDarkMode(darkModeEnabled);
+        }
+
+        if (showContactCard) {
+          handleShowContactCard();
+        }
+
+        for (const ids of pendingVideoQueues) {
+          handleShowVideos(ids);
+        }
+
+        setLog(nextLog);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [appendMessage, handleShowAllVideos, handleShowContactCard, handleShowVideos, log],
+  );
+
   const runLandingSequence = async (idea: string) => {
     setPhase("chat");
     setIsRunningAct1(true);
@@ -422,7 +480,13 @@ export default function Chat() {
 
     if (msg.role === "widget") {
       if (msg.type === "hero") {
-        return <HeroPlayerBubble videoId={msg.videoId} onPlayingChange={handleVideoPlayingChange} />;
+        return (
+          <HeroPlayerBubble
+            videoId={msg.videoId}
+            onPlayingChange={handleVideoPlayingChange}
+            onReachedMidpoint={handleVideoMidpoint}
+          />
+        );
       }
       if (msg.type === "gallery")
         return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;

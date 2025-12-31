@@ -60,22 +60,22 @@ export async function sendTurn(opts: {
 }): Promise<SendTurnResult> {
   const { log, userText, syntheticAfterUser } = opts;
 
-  // 1) Start log (real user message, then optional synthetic user message)
-  const turnStartLog = [
-    ...log,
-    { role: "user", content: userText },
-    ...(syntheticAfterUser ? [{ role: "user", content: syntheticAfterUser }] : []),
-  ];
+  // 1) Start logs (real user message, then optional synthetic user message)
+  const persistedLog = [...log, { role: "user", content: userText }];
+  const modelInputLog = syntheticAfterUser
+    ? [...persistedLog, { role: "user", content: syntheticAfterUser }]
+    : persistedLog;
 
   // 2) Primary call
   const res1 = await fetch("/api/route", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ input: turnStartLog }),
+    body: JSON.stringify({ input: modelInputLog }),
   });
   const data1 = await res1.json();
   const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
-  let afterModelLog = [...turnStartLog, ...output];
+  const persistedAfterModelLog = [...persistedLog, ...output];
+  const modelInputAfterLog = [...modelInputLog, ...output];
   const primaryPayload = normalizeAssistantPayload(data1);
   const primaryText = resolveAssistantText(primaryPayload);
 
@@ -189,7 +189,7 @@ export async function sendTurn(opts: {
     return {
       text: primaryText,
       chips: primaryPayload.chips,
-      nextLog: afterModelLog,
+      nextLog: persistedAfterModelLog,
       pendingVideoQueues,
       showAllVideos: shouldShowAllVideos,
       darkModeEnabled,
@@ -200,11 +200,12 @@ export async function sendTurn(opts: {
   }
 
   // 5) Second pass with function_call_output(s)
-  const logWithToolOutputs = [...afterModelLog, ...toolOutputs];
+  const modelLogWithToolOutputs = [...modelInputAfterLog, ...toolOutputs];
+  const persistedLogWithToolOutputs = [...persistedAfterModelLog, ...toolOutputs];
   const res2 = await fetch("/api/route", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ input: logWithToolOutputs }),
+    body: JSON.stringify({ input: modelLogWithToolOutputs }),
   });
   const data2 = await res2.json();
   const followPayload = normalizeAssistantPayload(data2);
@@ -214,7 +215,7 @@ export async function sendTurn(opts: {
   return {
     text: followText,
     chips: followPayload.chips,
-    nextLog: [...logWithToolOutputs, ...finalOutput],
+    nextLog: [...persistedLogWithToolOutputs, ...finalOutput],
     pendingVideoQueues,
     showAllVideos: shouldShowAllVideos,
     darkModeEnabled,

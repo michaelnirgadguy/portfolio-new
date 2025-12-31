@@ -65,6 +65,8 @@ export default function VideoPlayer({
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
   const lastTimeRef = useRef(0);
+  const pauseTimeoutRef = useRef<number | null>(null);
+  const suppressPauseRef = useRef(false);
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -107,6 +109,11 @@ export default function VideoPlayer({
     midpointRef.current = false;
     lastMutedRef.current = null;
     lastTimeRef.current = 0;
+    suppressPauseRef.current = false;
+    if (pauseTimeoutRef.current) {
+      window.clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -153,6 +160,10 @@ export default function VideoPlayer({
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = null;
+        }
         emitGlobalPlay();
         onPlayingChange?.(true);
       };
@@ -160,17 +171,31 @@ export default function VideoPlayer({
       const handlePause = () => {
         isPlayingRef.current = false;
         onPlayingChange?.(false);
+        if (suppressPauseRef.current) {
+          suppressPauseRef.current = false;
+          return;
+        }
 
         // "stopped early" = paused after playing started, before end
-        if (hasStartedRef.current && !endedRef.current) {
-          onStoppedEarly?.(lastTimeRef.current);
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
         }
+        pauseTimeoutRef.current = window.setTimeout(() => {
+          if (hasStartedRef.current && !endedRef.current && !isPlayingRef.current) {
+            onStoppedEarly?.(lastTimeRef.current);
+          }
+          pauseTimeoutRef.current = null;
+        }, 300);
       };
 
       const handleEnded = () => {
         isPlayingRef.current = false;
         endedRef.current = true;
         onPlayingChange?.(false);
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = null;
+        }
         onEnded?.();
       };
 
@@ -258,6 +283,10 @@ export default function VideoPlayer({
       cancelled = true;
       try {
         bunnyPlayerRef.current = null;
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = null;
+        }
         if (player && typeof player.destroy === "function") {
           player.destroy();
         }
@@ -285,6 +314,7 @@ export default function VideoPlayer({
       if (customEvent.detail?.playerId === resolvedPlayerId) return;
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
+        suppressPauseRef.current = true;
         bunnyPlayerRef.current.pause();
         return;
       }

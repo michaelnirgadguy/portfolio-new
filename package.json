@@ -6,6 +6,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@keystatic/core": "^0.5.1",
+    "@keystatic/next": "^0.5.1",
     "next": "16.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

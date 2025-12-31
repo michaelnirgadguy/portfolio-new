@@ -1,374 +1,383 @@
-[
-  {
-    "id": "iia-autonomous-buses",
-    "title": "Autonomous busses",
-    "client": "Israel Innovation Authority",
-    "url": "https://iframe.mediadelivery.net/embed/550694/ccd2faa5-9ca7-466e-8745-9e84732830f9",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ccd2faa5-9ca7-466e-8745-9e84732830f9/thumbnail_294e0144.jpg",
-    "description": "a ride inside a real self-driving bus, mixing expert interviews, crisp narration, and playful animated segments to show how autonomous tech is steering us into tomorrow.",
-    "language": "he",
-    "duration_seconds": 340,
-    "priority": "standard",
-    "tags": [
-      "explainer",
-      "autonomous vehicles",
-      "expert interviews",
-      "animation",
-      "technology"
-    ],
-    "my_roles": [
-      "writer",
-      "producer",
-      "director"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": null
-  },
-  {
-  "id": "aui-apollo-animals",
-  "title": "A New Species of AI",
-  "client": "AUI",
-  "url": "https://iframe.mediadelivery.net/embed/550694/21042ab5-d043-490a-a530-d77c5eeff40d",
-  "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/21042ab5-d043-490a-a530-d77c5eeff40d/thumbnail_a0630a36.jpg",
-  "description": "A founder-led, to-camera explainer with layered animations, unpacking Apollo-1—AUI’s neuro-symbolic foundation model enabling AI agents for businesses.",
-  "language": "en",
-  "duration_seconds": 194,
-  "priority": "standard",
-  "tags": [
-    "AI",
-    "explainer",
-    "founder video",
-    "tech",
-    "product"
-  ],
-  "my_roles": [
-    "writer"
-  ],
-  "long_description": null,
-  "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-  "related_ids": ["aui-apollo-intro"]
-},
-  {
-    "id": "aui-apollo-intro",
-    "title": "Introducing Apollo-1",
-    "client": "AUI",
-    "url": "https://iframe.mediadelivery.net/embed/550694/1ebcd275-2f79-4fc1-9920-2f07476a5bd9",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/1ebcd275-2f79-4fc1-9920-2f07476a5bd9/thumbnail_132d446e.jpg",
-    "description": "Typography-driven animation explaining briefly Apollo’s cutting-edge Agentic AI. The challenge: translating a breakthrough in autonomous agents into something anyone can grasp.",
-    "language": "en",
-    "duration_seconds": 81,
-    "priority": "standard",
-    "tags": [
-      "AI",
-      "explainer",
-      "innovation",
-      "tech",
-      "product"
-    ],
-    "my_roles": [
-      "writer"
-    ],
-    "long_description": null,
-    "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-    "related_ids": ["aui-apollo-animals"]
-  },
-  {
-    "id": "forter-hybrid-ai",
-    "title": "Fighting Fraud With Hybrid AI",
-    "client": "Forter",
-    "url": "https://iframe.mediadelivery.net/embed/550694/b7f57067-c2f0-4f22-ab7d-584da168c3bf",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/b7f57067-c2f0-4f22-ab7d-584da168c3bf/thumbnail_37ac903b.jpg",
-    "description": "From Kasparov vs. Deep Blue to today’s battle against online fraud—this explainer zips through the story of AI. It shows how Forter blends Rule-based and neural AI to keep fraudsters in check.",
-    "language": "en",
-    "duration_seconds": 190,
-    "priority": "standard",
-    "tags": [
-      "explainer",
-      "AI history",
-      "chess",
-      "fraud prevention",
-      "fintech"
-    ],
-    "my_roles": [
-      "writer"
-    ],
-    "long_description": null,
-    "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-    "related_ids": null
-  },
-  {
-    "id": "blings-next-gen-video",
-    "title": "The Next Generation Of Video",
-    "client": "Blings",
-    "url": "https://iframe.mediadelivery.net/embed/550694/23d1a6ed-30f1-450e-a0ff-cbcdb91ca128",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/23d1a6ed-30f1-450e-a0ff-cbcdb91ca128/thumbnail_3f73a8b6.jpg",
-    "description": "Aliens crash the marketing party to deliver one message: stop blasting, start engaging! This playful animated video introduces Blings’ dynamic, interactive video platform.",
-    "language": "en",
-    "duration_seconds": 53,
-    "priority": "standard",
-    "tags": [
-      "animation",
-      "aliens",
-      "marketing tech",
-      "playful",
-      "conversions",
-      "product"
-    ],
-    "my_roles": [
-      "writer"
-    ],
-    "long_description": null,
-    "display_credits": "Script: Michael Nirgad Guy\nProduced: Laserbee",
-    "related_ids": null
-  },
-  {
-    "id": "melio-musical",
-    "title": "Accounting Musical",
-    "client": "Melio",
-    "url": "https://iframe.mediadelivery.net/embed/550694/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc/thumbnail_f1b38082.jpg",
-    "description": "A musical journey into the future of finance: a straight-laced accountant is swept up by a dazzling, genie-like host who sings, dances, and whisks him through a whirlwind of change.",
-    "language": "en",
-    "duration_seconds": 66,
-    "priority": "standard",
-    "tags": [
-      "musical",
-      "fintech",
-      "humor",
-      "theatrical",
-      "playful",
-      "award-winning"
-    ],
-    "my_roles": [
-      "co-writer"
-    ],
-    "long_description": null,
-    "display_credits": "Co-written by Michael Nirgad Guy\nDirected & produced by Tomer Gerbi, Nua motion",
-    "related_ids": null
-  },
-  {
-    "id": "iia-quantum-computers",
-    "title": "Quantum Computers Explained",
-    "client": "Israel Innovation Authority",
-    "url": "https://iframe.mediadelivery.net/embed/550694/600e4f92-50bb-417e-98cb-39ec6029c725",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/600e4f92-50bb-417e-98cb-39ec6029c725/thumbnail_0af97dc3.jpg",
-    "description": "What makes quantum computers so powerful—and so hard to build? Through expert voices and enlightening animated scenes, this explainer unpacks the strange rules of qubits and superposition to show how quantum machines might transform our world.",
-    "language": "en",
-    "duration_seconds": 446,
-    "priority": "standard",
-    "tags": [
-      "explainer",
-      "quantum computing",
-      "science storytelling",
-      "technology",
-      "innovation",
-      "animation"
-    ],
-    "my_roles": [
-      "writer",
-      "director",
-      "producer"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": ["iia-autonomous-buses"]
-  },
-  {
-    "id": "vaxa-microalgae",
-    "title": "Microalgae Save The World",
-    "client": "Vaxa",
-    "url": "https://iframe.mediadelivery.net/embed/550694/81933bab-8f62-4c49-a25f-5fa865072565",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/81933bab-8f62-4c49-a25f-5fa865072565/thumbnail_87bb4fc3.jpg",
-    "description": "From toxic primordial Earth to today’s climate challenges, this cinematic script reimagines microalgae as the tiny superheroes of our planet. Blending planetary drama with playful touches.",
-    "language": "en",
-    "duration_seconds": 189,
-    "priority": "standard",
-    "tags": [
-      "science storytelling",
-      "microalgae",
-      "climate",
-      "explainer",
-      "cinematic",
-      "playful",
-      "educational",
-      "visitor center"
-    ],
-    "my_roles": [
-      "writer"
-    ],
-    "long_description": null,
-    "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
-    "related_ids": null
-  },
-  {
-    "id": "jlm-moments-of-light",
-    "title": "Moments Of Light",
-    "client": "Jerusalem Muni",
-    "url": "https://iframe.mediadelivery.net/embed/550694/cb2d2125-905e-4f53-a010-4efa89511298",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/cb2d2125-905e-4f53-a010-4efa89511298/thumbnail_e49190e5.jpg",
-    "description": "Three tender stories from Jerusalem’s schools. A 5-year-old speaks about the kindergarten teacher who raised her—and her parents too. A teacher recalls a student who cared for his family during reserve duty. And a teen shares how a teacher became like family after her father passed away. Gentle illustrations bring each story to life with warmth and heart.",
-    "language": "he",
-    "duration_seconds": 227,
-    "priority": "standard",
-    "tags": [
-      "heartfelt",
-      "education",
-      "Jerusalem",
-      "illustrated",
-      "emotional",
-      "inspirational"
-    ],
-    "my_roles": [
-      "concept",
-      "producer",
-      "director"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": null
-  },
-  {
-    "id": "jlm-heart-of",
-    "title": "Heart of Jerusalem",
-    "client": "Jerusalm Muni",
-    "url": "https://iframe.mediadelivery.net/embed/550694/91528890-19d9-4937-acec-a7a41edaa7f3",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/91528890-19d9-4937-acec-a7a41edaa7f3/thumbnail_476a5dae.jpg",
-    "description": "From preschool giggles to teen wisdom, Jerusalem’s students and teachers answer “Who’s in your heart?” in a cascade of short, moving stories—set inside dreamy, animated 3D rooms. A warm, city-proud opener made to light up the Jerusalem education awards night.",
-    "language": "he",
-    "duration_seconds": 228,
-    "priority": "standard",
-    "tags": [
-      "heartfelt",
-      "education",
-      "interviews",
-      "kids & teens",
-      "3D animation",
-      "inspirational",
-      "event opener",
-      "Jerusalem"
-    ],
-    "my_roles": [
-      "concept",
-      "producer",
-      "director"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": null
-  },
-  {
-    "id": "digital-leaders",
-    "title": "Digital leaders",
-    "client": "Time Travelling",
-    "url": "https://iframe.mediadelivery.net/embed/550694/6ad76381-1b4b-4ef7-a7e3-1c1108a95b5d",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/6ad76381-1b4b-4ef7-a7e3-1c1108a95b5d/thumbnail_77d41251.jpg",
-    "description": "A rapid zap through time—from punch cards and fax machines to AI avatars and digital agents. Jumping between eras and media styles the video uses AI-generated visuals to show how digital leaders connect past innovation to the future ahead.",
-    "language": "he",
-    "duration_seconds": 139,
-    "priority": "standard",
-    "tags": [
-      "AI-generated",
-      "event opener",
-      "Playful",
-      "futuristic",
-      "voiceover"
-    ],
-    "my_roles": [
-      "concept",
-      "producer",
-      "director",
-      "writer"
-    ],
-    "long_description": null,
-    "display_credits": "AI generations by Evyatar Halimi",
-    "related_ids": null
-  },
-
-  {
-    "id": "music-of-spheres",
-    "title": "Music of The Spheres",
-    "client": "Passion Project",
-    "url": "https://youtu.be/dliU3jfUtBc",
-    "thumbnail": "https://img.youtube.com/vi/dliU3jfUtBc/hqdefault.jpg",
-    "description": "From Pythagoras and Plato to Kepler—and even Queen’s Brian May—thinkers have dreamed of cosmic music hidden in the heavens. This self-made passion project asks: can we actually hear the secret symphony of the solar system? Written, researched, edited, and even “badly animated in Paint” by yours truely",
-    "language": "he",
-    "duration_seconds": 774,
-    "priority": "standard",
-    "tags": [
-      "science storytelling",
-      "astronomy",
-      "philosophy",
-      "DIY project",
-      "music & cosmos",
-      "playful",
-      "animation",
-      "passion project"
-    ],
-    "my_roles": [
-      "writer",
-      "producer",
-      "director",
-      "animator"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": null
-  },
-  {
-    "id": "conway-game-of-life",
-    "title": "Conway’s Game of Life",
-    "client": "Passion Project",
-    "url": "https://youtu.be/CWKcuH6ONRk",
-    "thumbnail": "https://img.youtube.com/vi/CWKcuH6ONRk/hqdefault.jpg",
-    "description": "this explainer dives into Conway’s legendary ‘Game of Life’. With lo-fi Paint-style animation and genuine curiosity, it shows how beauty can emerge from the simplest math.",
-    "language": "he",
-    "duration_seconds": 746,
-    "priority": "standard",
-    "tags": [
-      "math",
-      "science storytelling",
-      "cellular automata",
-      "DIY project",
-      "animation",
-      "playful",
-      "philosophy",
-      "passion project"
-    ],
-    "my_roles": [
-      "writer",
-      "producer",
-      "director",
-      "animator"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": ["music-of-spheres"]
-  },
-  {
-    "id": "jlm-kitaktika",
-    "title": "Kitaktika Simulation Center",
-    "client": "Jerusalm Muni",
-    "url": "https://iframe.mediadelivery.net/embed/550694/63255b81-656f-4951-81d8-5b103c9ba55b",
-    "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/63255b81-656f-4951-81d8-5b103c9ba55b/thumbnail_6e9fa3ce.jpg",
-    "description": "A tense parent–teacher confrontation suddenly rewinds to reveal Kitaktika, a simulation center where teams rehearse real-world challenges in a safe, playful, and finely crafted environment.",
-    "language": "he",
-    "duration_seconds": 135,
-    "priority": "standard",
-    "tags": [
-      "promotional",
-      "education",
-      "Jerusalem",
-      "playful",
-      "theatrical"
-    ],
-    "my_roles": [
-      "writer",
-      "producer",
-      "director"
-    ],
-    "long_description": null,
-    "display_credits": null,
-    "related_ids": null
-  }
-]
+{
+  "videos": [
+    {
+      "id": "iia-autonomous-buses",
+      "title": "Autonomous busses",
+      "client": "Israel Innovation Authority",
+      "url": "https://iframe.mediadelivery.net/embed/550694/ccd2faa5-9ca7-466e-8745-9e84732830f9",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ccd2faa5-9ca7-466e-8745-9e84732830f9/thumbnail_294e0144.jpg",
+      "description": "a ride inside a real self-driving bus, mixing expert interviews, crisp narration, and playful animated segments to show how autonomous tech is steering us into tomorrow.",
+      "language": "he",
+      "duration_seconds": 340,
+      "priority": "standard",
+      "tags": [
+        "explainer",
+        "autonomous vehicles",
+        "expert interviews",
+        "animation",
+        "technology"
+      ],
+      "my_roles": [
+        "writer",
+        "producer",
+        "director"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": null
+    },
+    {
+      "id": "aui-apollo-animals",
+      "title": "A New Species of AI",
+      "client": "AUI",
+      "url": "https://iframe.mediadelivery.net/embed/550694/21042ab5-d043-490a-a530-d77c5eeff40d",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/21042ab5-d043-490a-a530-d77c5eeff40d/thumbnail_a0630a36.jpg",
+      "description": "A founder-led, to-camera explainer with layered animations, unpacking Apollo-1—AUI’s neuro-symbolic foundation model enabling AI agents for businesses.",
+      "language": "en",
+      "duration_seconds": 194,
+      "priority": "standard",
+      "tags": [
+        "AI",
+        "explainer",
+        "founder video",
+        "tech",
+        "product"
+      ],
+      "my_roles": [
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
+      "related_ids": [
+        "aui-apollo-intro"
+      ]
+    },
+    {
+      "id": "aui-apollo-intro",
+      "title": "Introducing Apollo-1",
+      "client": "AUI",
+      "url": "https://iframe.mediadelivery.net/embed/550694/1ebcd275-2f79-4fc1-9920-2f07476a5bd9",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/1ebcd275-2f79-4fc1-9920-2f07476a5bd9/thumbnail_132d446e.jpg",
+      "description": "Typography-driven animation explaining briefly Apollo’s cutting-edge Agentic AI. The challenge: translating a breakthrough in autonomous agents into something anyone can grasp.",
+      "language": "en",
+      "duration_seconds": 81,
+      "priority": "standard",
+      "tags": [
+        "AI",
+        "explainer",
+        "innovation",
+        "tech",
+        "product"
+      ],
+      "my_roles": [
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
+      "related_ids": [
+        "aui-apollo-animals"
+      ]
+    },
+    {
+      "id": "forter-hybrid-ai",
+      "title": "Fighting Fraud With Hybrid AI",
+      "client": "Forter",
+      "url": "https://iframe.mediadelivery.net/embed/550694/b7f57067-c2f0-4f22-ab7d-584da168c3bf",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/b7f57067-c2f0-4f22-ab7d-584da168c3bf/thumbnail_37ac903b.jpg",
+      "description": "From Kasparov vs. Deep Blue to today’s battle against online fraud—this explainer zips through the story of AI. It shows how Forter blends Rule-based and neural AI to keep fraudsters in check.",
+      "language": "en",
+      "duration_seconds": 190,
+      "priority": "standard",
+      "tags": [
+        "explainer",
+        "AI history",
+        "chess",
+        "fraud prevention",
+        "fintech"
+      ],
+      "my_roles": [
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
+      "related_ids": null
+    },
+    {
+      "id": "blings-next-gen-video",
+      "title": "The Next Generation Of Video",
+      "client": "Blings",
+      "url": "https://iframe.mediadelivery.net/embed/550694/23d1a6ed-30f1-450e-a0ff-cbcdb91ca128",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/23d1a6ed-30f1-450e-a0ff-cbcdb91ca128/thumbnail_3f73a8b6.jpg",
+      "description": "Aliens crash the marketing party to deliver one message: stop blasting, start engaging! This playful animated video introduces Blings’ dynamic, interactive video platform.",
+      "language": "en",
+      "duration_seconds": 53,
+      "priority": "standard",
+      "tags": [
+        "animation",
+        "aliens",
+        "marketing tech",
+        "playful",
+        "conversions",
+        "product"
+      ],
+      "my_roles": [
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "Script: Michael Nirgad Guy\nProduced: Laserbee",
+      "related_ids": null
+    },
+    {
+      "id": "melio-musical",
+      "title": "Accounting Musical",
+      "client": "Melio",
+      "url": "https://iframe.mediadelivery.net/embed/550694/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/ece32d7b-aa3a-4f44-8bca-84fd0ed088cc/thumbnail_f1b38082.jpg",
+      "description": "A musical journey into the future of finance: a straight-laced accountant is swept up by a dazzling, genie-like host who sings, dances, and whisks him through a whirlwind of change.",
+      "language": "en",
+      "duration_seconds": 66,
+      "priority": "standard",
+      "tags": [
+        "musical",
+        "fintech",
+        "humor",
+        "theatrical",
+        "playful",
+        "award-winning"
+      ],
+      "my_roles": [
+        "co-writer"
+      ],
+      "long_description": null,
+      "display_credits": "Co-written by Michael Nirgad Guy\nDirected & produced by Tomer Gerbi, Nua motion",
+      "related_ids": null
+    },
+    {
+      "id": "iia-quantum-computers",
+      "title": "Quantum Computers Explained",
+      "client": "Israel Innovation Authority",
+      "url": "https://iframe.mediadelivery.net/embed/550694/600e4f92-50bb-417e-98cb-39ec6029c725",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/600e4f92-50bb-417e-98cb-39ec6029c725/thumbnail_0af97dc3.jpg",
+      "description": "What makes quantum computers so powerful—and so hard to build? Through expert voices and enlightening animated scenes, this explainer unpacks the strange rules of qubits and superposition to show how quantum machines might transform our world.",
+      "language": "en",
+      "duration_seconds": 446,
+      "priority": "standard",
+      "tags": [
+        "explainer",
+        "quantum computing",
+        "science storytelling",
+        "technology",
+        "innovation",
+        "animation"
+      ],
+      "my_roles": [
+        "writer",
+        "director",
+        "producer"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": [
+        "iia-autonomous-buses"
+      ]
+    },
+    {
+      "id": "vaxa-microalgae",
+      "title": "Microalgae Save The World",
+      "client": "Vaxa",
+      "url": "https://iframe.mediadelivery.net/embed/550694/81933bab-8f62-4c49-a25f-5fa865072565",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/81933bab-8f62-4c49-a25f-5fa865072565/thumbnail_87bb4fc3.jpg",
+      "description": "From toxic primordial Earth to today’s climate challenges, this cinematic script reimagines microalgae as the tiny superheroes of our planet. Blending planetary drama with playful touches.",
+      "language": "en",
+      "duration_seconds": 189,
+      "priority": "standard",
+      "tags": [
+        "science storytelling",
+        "microalgae",
+        "climate",
+        "explainer",
+        "cinematic",
+        "playful",
+        "educational",
+        "visitor center"
+      ],
+      "my_roles": [
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "Script: Michael Nirgad Guy\nDirected & Produced: Liat Yoffe, SpaceCat",
+      "related_ids": null
+    },
+    {
+      "id": "jlm-moments-of-light",
+      "title": "Moments Of Light",
+      "client": "Jerusalem Muni",
+      "url": "https://iframe.mediadelivery.net/embed/550694/cb2d2125-905e-4f53-a010-4efa89511298",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/cb2d2125-905e-4f53-a010-4efa89511298/thumbnail_e49190e5.jpg",
+      "description": "Three tender stories from Jerusalem’s schools. A 5-year-old speaks about the kindergarten teacher who raised her—and her parents too. A teacher recalls a student who cared for his family during reserve duty. And a teen shares how a teacher became like family after her father passed away. Gentle illustrations bring each story to life with warmth and heart.",
+      "language": "he",
+      "duration_seconds": 227,
+      "priority": "standard",
+      "tags": [
+        "heartfelt",
+        "education",
+        "Jerusalem",
+        "illustrated",
+        "emotional",
+        "inspirational"
+      ],
+      "my_roles": [
+        "concept",
+        "producer",
+        "director"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": null
+    },
+    {
+      "id": "jlm-heart-of",
+      "title": "Heart of Jerusalem",
+      "client": "Jerusalm Muni",
+      "url": "https://iframe.mediadelivery.net/embed/550694/91528890-19d9-4937-acec-a7a41edaa7f3",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/91528890-19d9-4937-acec-a7a41edaa7f3/thumbnail_476a5dae.jpg",
+      "description": "From preschool giggles to teen wisdom, Jerusalem’s students and teachers answer “Who’s in your heart?” in a cascade of short, moving stories—set inside dreamy, animated 3D rooms. A warm, city-proud opener made to light up the Jerusalem education awards night.",
+      "language": "he",
+      "duration_seconds": 228,
+      "priority": "standard",
+      "tags": [
+        "heartfelt",
+        "education",
+        "interviews",
+        "kids & teens",
+        "3D animation",
+        "inspirational",
+        "event opener",
+        "Jerusalem"
+      ],
+      "my_roles": [
+        "concept",
+        "producer",
+        "director"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": null
+    },
+    {
+      "id": "digital-leaders",
+      "title": "Digital leaders",
+      "client": "Time Travelling",
+      "url": "https://iframe.mediadelivery.net/embed/550694/6ad76381-1b4b-4ef7-a7e3-1c1108a95b5d",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/6ad76381-1b4b-4ef7-a7e3-1c1108a95b5d/thumbnail_77d41251.jpg",
+      "description": "A rapid zap through time—from punch cards and fax machines to AI avatars and digital agents. Jumping between eras and media styles the video uses AI-generated visuals to show how digital leaders connect past innovation to the future ahead.",
+      "language": "he",
+      "duration_seconds": 139,
+      "priority": "standard",
+      "tags": [
+        "AI-generated",
+        "event opener",
+        "Playful",
+        "futuristic",
+        "voiceover"
+      ],
+      "my_roles": [
+        "concept",
+        "producer",
+        "director",
+        "writer"
+      ],
+      "long_description": null,
+      "display_credits": "AI generations by Evyatar Halimi",
+      "related_ids": null
+    },
+    {
+      "id": "music-of-spheres",
+      "title": "Music of The Spheres",
+      "client": "Passion Project",
+      "url": "https://youtu.be/dliU3jfUtBc",
+      "thumbnail": "https://img.youtube.com/vi/dliU3jfUtBc/hqdefault.jpg",
+      "description": "From Pythagoras and Plato to Kepler—and even Queen’s Brian May—thinkers have dreamed of cosmic music hidden in the heavens. This self-made passion project asks: can we actually hear the secret symphony of the solar system? Written, researched, edited, and even “badly animated in Paint” by yours truely",
+      "language": "he",
+      "duration_seconds": 774,
+      "priority": "standard",
+      "tags": [
+        "science storytelling",
+        "astronomy",
+        "philosophy",
+        "DIY project",
+        "music & cosmos",
+        "playful",
+        "animation",
+        "passion project"
+      ],
+      "my_roles": [
+        "writer",
+        "producer",
+        "director",
+        "animator"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": null
+    },
+    {
+      "id": "conway-game-of-life",
+      "title": "Conway’s Game of Life",
+      "client": "Passion Project",
+      "url": "https://youtu.be/CWKcuH6ONRk",
+      "thumbnail": "https://img.youtube.com/vi/CWKcuH6ONRk/hqdefault.jpg",
+      "description": "this explainer dives into Conway’s legendary ‘Game of Life’. With lo-fi Paint-style animation and genuine curiosity, it shows how beauty can emerge from the simplest math.",
+      "language": "he",
+      "duration_seconds": 746,
+      "priority": "standard",
+      "tags": [
+        "math",
+        "science storytelling",
+        "cellular automata",
+        "DIY project",
+        "animation",
+        "playful",
+        "philosophy",
+        "passion project"
+      ],
+      "my_roles": [
+        "writer",
+        "producer",
+        "director",
+        "animator"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": [
+        "music-of-spheres"
+      ]
+    },
+    {
+      "id": "jlm-kitaktika",
+      "title": "Kitaktika Simulation Center",
+      "client": "Jerusalm Muni",
+      "url": "https://iframe.mediadelivery.net/embed/550694/63255b81-656f-4951-81d8-5b103c9ba55b",
+      "thumbnail": "https://vz-eeb62365-65f.b-cdn.net/63255b81-656f-4951-81d8-5b103c9ba55b/thumbnail_6e9fa3ce.jpg",
+      "description": "A tense parent–teacher confrontation suddenly rewinds to reveal Kitaktika, a simulation center where teams rehearse real-world challenges in a safe, playful, and finely crafted environment.",
+      "language": "he",
+      "duration_seconds": 135,
+      "priority": "standard",
+      "tags": [
+        "promotional",
+        "education",
+        "Jerusalem",
+        "playful",
+        "theatrical"
+      ],
+      "my_roles": [
+        "writer",
+        "producer",
+        "director"
+      ],
+      "long_description": null,
+      "display_credits": null,
+      "related_ids": null
+    }
+  ]
+}

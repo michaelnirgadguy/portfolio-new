@@ -44,6 +44,7 @@ export default function Chat() {
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
   const midpointTriggeredRef = useRef<Set<string>>(new Set());
+  const pauseTriggeredRef = useRef<Set<string>>(new Set());
 
   const appendMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg]);
@@ -252,6 +253,7 @@ export default function Chat() {
 
   const handleVideoMidpoint = useCallback(
     async (videoId: string) => {
+      if (pauseTriggeredRef.current.has(videoId)) return;
       if (midpointTriggeredRef.current.has(videoId)) return;
       midpointTriggeredRef.current.add(videoId);
 
@@ -271,6 +273,66 @@ export default function Chat() {
           userText: `<context> video ${videoId} reached 50% playback </context>`,
           syntheticAfterUser:
             "<instructions> make a short mid-roll comment referencing the video content </instructions>",
+        });
+
+        if (text) {
+          appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
+        }
+
+        if (chips?.length) {
+          setSuggestionChips(chips);
+        }
+
+        if (showAllVideos) {
+          handleShowAllVideos();
+        }
+
+        if (typeof darkModeEnabled === "boolean") {
+          setIsDarkMode(darkModeEnabled);
+        }
+
+        if (showContactCard) {
+          handleShowContactCard();
+        }
+
+        for (const ids of pendingVideoQueues) {
+          handleShowVideos(ids);
+        }
+
+        setLog(nextLog);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [appendMessage, handleShowAllVideos, handleShowContactCard, handleShowVideos, log],
+  );
+
+  const handleVideoPause = useCallback(
+    async (videoId: string, seconds: number) => {
+      if (midpointTriggeredRef.current.has(videoId)) return;
+      if (pauseTriggeredRef.current.has(videoId)) return;
+      pauseTriggeredRef.current.add(videoId);
+
+      setIsTyping(true);
+
+      const roundedSeconds = Math.max(0, Math.round(seconds));
+
+      try {
+        const {
+          text,
+          chips,
+          nextLog,
+          pendingVideoQueues,
+          showAllVideos,
+          darkModeEnabled,
+          showContactCard,
+        } = await sendTurn({
+          log,
+          userText: `<context> user paused the video ${videoId} after ${roundedSeconds} seconds </context>`,
+          syntheticAfterUser:
+            "<instructions> make a witty comment about impatience, referencing the video content </instructions>",
         });
 
         if (text) {
@@ -485,6 +547,7 @@ export default function Chat() {
             videoId={msg.videoId}
             onPlayingChange={handleVideoPlayingChange}
             onReachedMidpoint={handleVideoMidpoint}
+            onStoppedEarly={handleVideoPause}
           />
         );
       }

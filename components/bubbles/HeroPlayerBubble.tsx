@@ -6,10 +6,12 @@ export default function HeroPlayerBubble({
   videoId,
   onPlayingChange,
   onReachedMidpoint,
+  onStoppedEarly,
 }: {
   videoId: string;
   onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
   onReachedMidpoint?: (videoId: string) => void;
+  onStoppedEarly?: (videoId: string, seconds: number) => void;
 }) {
   const video = getVideoById(videoId);
   const handlePlayingChange = useCallback(
@@ -21,6 +23,12 @@ export default function HeroPlayerBubble({
   const handleReachedMidpoint = useCallback(() => {
     onReachedMidpoint?.(videoId);
   }, [onReachedMidpoint, videoId]);
+  const handleStoppedEarly = useCallback(
+    (seconds: number) => {
+      onStoppedEarly?.(videoId, seconds);
+    },
+    [onStoppedEarly, videoId]
+  );
 
   useEffect(() => {
     return () => onPlayingChange?.(videoId, false);
@@ -43,6 +51,7 @@ export default function HeroPlayerBubble({
         autoplay
         onPlayingChange={handlePlayingChange}
         onReachedMidpoint={handleReachedMidpoint}
+        onStoppedEarly={handleStoppedEarly}
       />
 
       <div className="p-4 sm:p-5">

@@ -16,7 +16,7 @@ type Props = {
   // EVENTS (one-off / edge transitions)
   onPlayed10s?: () => void;
   onReachedMidpoint?: () => void;
-  onStoppedEarly?: () => void;
+  onStoppedEarly?: (seconds: number) => void;
   onEnded?: () => void;
   onMutedChange?: (muted: boolean) => void;
 };
@@ -64,6 +64,7 @@ export default function VideoPlayer({
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
+  const lastTimeRef = useRef(0);
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -105,6 +106,7 @@ export default function VideoPlayer({
     played10Ref.current = false;
     midpointRef.current = false;
     lastMutedRef.current = null;
+    lastTimeRef.current = 0;
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -161,7 +163,7 @@ export default function VideoPlayer({
 
         // "stopped early" = paused after playing started, before end
         if (hasStartedRef.current && !endedRef.current) {
-          onStoppedEarly?.();
+          onStoppedEarly?.(lastTimeRef.current);
         }
       };
 
@@ -175,6 +177,7 @@ export default function VideoPlayer({
       const handleTimeUpdate = (data: any) => {
         if (!data || typeof data.seconds !== "number") return;
         const seconds = data.seconds as number;
+        lastTimeRef.current = seconds;
 
         // Track duration if provided
         if (typeof data.duration === "number" && data.duration > 0) {

@@ -1,8 +1,25 @@
+import { useCallback, useEffect } from "react";
 import VideoPlayer from "@/components/VideoPlayer";
 import { getVideoById } from "@/lib/videos";
 
-export default function HeroPlayerBubble({ videoId }: { videoId: string }) {
+export default function HeroPlayerBubble({
+  videoId,
+  onPlayingChange,
+}: {
+  videoId: string;
+  onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
+}) {
   const video = getVideoById(videoId);
+  const handlePlayingChange = useCallback(
+    (isPlaying: boolean) => {
+      onPlayingChange?.(videoId, isPlaying);
+    },
+    [onPlayingChange, videoId]
+  );
+
+  useEffect(() => {
+    return () => onPlayingChange?.(videoId, false);
+  }, [onPlayingChange, videoId]);
 
   if (!video) {
     return (
@@ -14,7 +31,13 @@ export default function HeroPlayerBubble({ videoId }: { videoId: string }) {
 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <VideoPlayer url={video.url} title={video.title} className="bg-black" autoplay />
+      <VideoPlayer
+        url={video.url}
+        title={video.title}
+        className="bg-black"
+        autoplay
+        onPlayingChange={handlePlayingChange}
+      />
 
       <div className="p-4 sm:p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">

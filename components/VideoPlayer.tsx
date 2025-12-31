@@ -65,6 +65,36 @@ export default function VideoPlayer({
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
 
+  const setGlobalPlayback = useCallback(
+    (isPlaying: boolean) => {
+      if (typeof window === "undefined") return;
+      const w = window as any;
+      if (isPlaying) {
+        w.__mimsyActivePlayerId = resolvedPlayerId;
+        return;
+      }
+      if (w.__mimsyActivePlayerId === resolvedPlayerId) {
+        w.__mimsyActivePlayerId = null;
+      }
+    },
+    [resolvedPlayerId]
+  );
+
+  const setAutoplayTarget = useCallback(
+    (isTarget: boolean) => {
+      if (typeof window === "undefined") return;
+      const w = window as any;
+      if (isTarget) {
+        w.__mimsyAutoplayTargetId = resolvedPlayerId;
+        return;
+      }
+      if (w.__mimsyAutoplayTargetId === resolvedPlayerId) {
+        w.__mimsyAutoplayTargetId = null;
+      }
+    },
+    [resolvedPlayerId]
+  );
+
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
@@ -73,6 +103,12 @@ export default function VideoPlayer({
       })
     );
   }, [resolvedPlayerId]);
+
+  useEffect(() => {
+    if (!autoplay) return;
+    setAutoplayTarget(true);
+    return () => setAutoplayTarget(false);
+  }, [autoplay, setAutoplayTarget]);
 
   // Build src
   let src: string | null = null;
@@ -151,12 +187,14 @@ export default function VideoPlayer({
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        setGlobalPlayback(true);
         emitGlobalPlay();
         onPlayingChange?.(true);
       };
 
       const handlePause = () => {
         isPlayingRef.current = false;
+        setGlobalPlayback(false);
         onPlayingChange?.(false);
 
         // "stopped early" = paused after playing started, before end
@@ -168,6 +206,7 @@ export default function VideoPlayer({
       const handleEnded = () => {
         isPlayingRef.current = false;
         endedRef.current = true;
+        setGlobalPlayback(false);
         onPlayingChange?.(false);
         onEnded?.();
       };
@@ -226,6 +265,25 @@ export default function VideoPlayer({
 
       // On ready, detect autoplay & initial mute
       player.on("ready", () => {
+        const w = window as any;
+        const autoplayTargetId = w.__mimsyAutoplayTargetId as string | null | undefined;
+        if (autoplay && autoplayTargetId === resolvedPlayerId) {
+          if (typeof player.setMuted === "function") {
+            try {
+              player.setMuted(false);
+            } catch {
+              // ignore
+            }
+          }
+          if (typeof player.play === "function") {
+            try {
+              player.play();
+            } catch {
+              // ignore
+            }
+          }
+        }
+
         if (typeof player.getPaused === "function") {
           try {
             player.getPaused((paused: boolean) => {
@@ -255,6 +313,7 @@ export default function VideoPlayer({
       cancelled = true;
       try {
         bunnyPlayerRef.current = null;
+        setGlobalPlayback(false);
         if (player && typeof player.destroy === "function") {
           player.destroy();
         }
@@ -272,6 +331,7 @@ export default function VideoPlayer({
     onEnded,
     onMutedChange,
     emitGlobalPlay,
+    setGlobalPlayback,
   ]);
 
   useEffect(() => {
@@ -329,13 +389,16 @@ export default function VideoPlayer({
       try {
         const data = JSON.parse(event.data);
         if (data?.event === "onStateChange" && data?.info === 1) {
+          setGlobalPlayback(true);
           emitGlobalPlay();
           onPlayingChange?.(true);
         }
         if (data?.event === "onStateChange" && data?.info === 2) {
+          setGlobalPlayback(false);
           onPlayingChange?.(false);
         }
         if (data?.event === "onStateChange" && data?.info === 0) {
+          setGlobalPlayback(false);
           onPlayingChange?.(false);
           onEnded?.();
         }
@@ -348,7 +411,14 @@ export default function VideoPlayer({
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [emitGlobalPlay, isBunny, onEnded, onPlayingChange, resolvedPlayerId]);
+  }, [
+    emitGlobalPlay,
+    isBunny,
+    onEnded,
+    onPlayingChange,
+    resolvedPlayerId,
+    setGlobalPlayback,
+  ]);
 
   return (
     <div className={`w-full ${className ?? ""}`}>

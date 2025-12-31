@@ -226,6 +226,27 @@ export default function VideoPlayer({
 
       // On ready, detect autoplay & initial mute
       player.on("ready", () => {
+        if (autoplay) {
+          emitGlobalPlay();
+          try {
+            if (typeof player.setMuted === "function") {
+              player.setMuted(false);
+            } else if (typeof player.unmute === "function") {
+              player.unmute();
+            }
+          } catch {
+            // ignore
+          }
+
+          try {
+            if (typeof player.play === "function") {
+              player.play();
+            }
+          } catch {
+            // ignore
+          }
+        }
+
         if (typeof player.getPaused === "function") {
           try {
             player.getPaused((paused: boolean) => {

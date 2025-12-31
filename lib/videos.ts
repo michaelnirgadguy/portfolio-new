@@ -1,11 +1,13 @@
+import "server-only";
 
-import videos from "@/data/videos.json";
 import type { VideoItem } from "@/types/video";
+import { getVideoCatalog } from "@/lib/videoCatalog";
 
-export function getAllVideos(): VideoItem[] {
-  return videos as VideoItem[];
+export async function getAllVideos(): Promise<VideoItem[]> {
+  return getVideoCatalog();
 }
 
-export function getVideoById(id: string): VideoItem | undefined {
-  return (videos as VideoItem[]).find((v) => v.id === id);
+export async function getVideoById(id: string): Promise<VideoItem | undefined> {
+  const videos = await getVideoCatalog();
+  return videos.find((v) => v.id === id);
 }

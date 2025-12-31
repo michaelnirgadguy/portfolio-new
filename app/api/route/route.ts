@@ -4,7 +4,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
-import videos from "@/data/videos.json";
+import { getVideoCatalog } from "@/lib/videoCatalog";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     const system = await loadSystemPrompt();
     const examples = await loadExamplesPrompt();
 
+    const videos = await getVideoCatalog();
     const thinCatalog = videos.map(({ url, thumbnail, ...rest }) => rest);
 
     const catalogBlock = `

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -12,7 +12,6 @@ import ContactCard from "@/components/ContactCard";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { useIdlePrompt } from "@/hooks/useIdlePrompt";
 import { sendTurn } from "@/lib/llm/sendTurn";
-import { getAllVideos } from "@/lib/videos";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 import { useSearchParams } from "next/navigation";
@@ -27,7 +26,7 @@ const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "W
 
 type Phase = "landing" | "chat";
 
-export default function Chat() {
+export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [log, setLog] = useState<any[]>([]);
@@ -43,6 +42,7 @@ export default function Chat() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
+  const videosById = useMemo(() => new Map(initialVideos.map((video) => [video.id, video])), [initialVideos]);
 
   const appendMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg]);
@@ -179,7 +179,7 @@ export default function Chat() {
   };
 
   const handleShowAllVideos = () => {
-    const allIds = getAllVideos().map((video) => video.id);
+    const allIds = initialVideos.map((video) => video.id);
     if (!allIds.length) return;
 
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
@@ -422,10 +422,21 @@ export default function Chat() {
 
     if (msg.role === "widget") {
       if (msg.type === "hero") {
-        return <HeroPlayerBubble videoId={msg.videoId} onPlayingChange={handleVideoPlayingChange} />;
+        return (
+          <HeroPlayerBubble
+            video={videosById.get(msg.videoId)}
+            onPlayingChange={handleVideoPlayingChange}
+          />
+        );
       }
       if (msg.type === "gallery")
-        return <GalleryBubble videoIds={msg.videoIds} onOpenVideo={(video) => handleOpenVideo(video)} />;
+        return (
+          <GalleryBubble
+            videoIds={msg.videoIds}
+            videosById={videosById}
+            onOpenVideo={(video) => handleOpenVideo(video)}
+          />
+        );
       if (msg.type === "contact-card") return <ContactCard />;
       if (msg.type === "profile") return <ProfileBubble />;
       if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;

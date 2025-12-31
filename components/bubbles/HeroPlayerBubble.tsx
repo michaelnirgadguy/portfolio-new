@@ -1,23 +1,25 @@
 import { useCallback, useEffect } from "react";
 import VideoPlayer from "@/components/VideoPlayer";
-import { getVideoById } from "@/lib/videos";
+import type { VideoItem } from "@/types/video";
 
 export default function HeroPlayerBubble({
-  videoId,
+  video,
   onPlayingChange,
 }: {
-  videoId: string;
+  video?: VideoItem;
   onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
 }) {
-  const video = getVideoById(videoId);
+  const videoId = video?.id ?? "";
   const handlePlayingChange = useCallback(
     (isPlaying: boolean) => {
+      if (!videoId) return;
       onPlayingChange?.(videoId, isPlaying);
     },
     [onPlayingChange, videoId]
   );
 
   useEffect(() => {
+    if (!videoId) return;
     return () => onPlayingChange?.(videoId, false);
   }, [onPlayingChange, videoId]);
 

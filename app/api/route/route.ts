@@ -4,7 +4,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { client } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
-import videos from "@/data/videos.json";
+import videosData from "@/data/videos.json";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const system = await loadSystemPrompt();
     const examples = await loadExamplesPrompt();
 
-    const thinCatalog = videos.map(({ url, thumbnail, ...rest }) => rest);
+    const thinCatalog = videosData.videos.map(({ url, thumbnail, ...rest }) => rest);
 
     const catalogBlock = `
 # Full video catalog (use ONLY these ids)

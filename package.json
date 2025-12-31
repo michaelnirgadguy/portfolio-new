@@ -8,6 +8,7 @@
   "dependencies": {
     "@keystatic/core": "^0.5.26",
     "@keystatic/next": "^0.5.9",
+    "@markdoc/markdoc": "^0.3.5",
     "next": "16.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

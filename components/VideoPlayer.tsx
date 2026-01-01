@@ -65,6 +65,7 @@ export default function VideoPlayer({
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+  const lastTimeUpdateAtRef = useRef<number | null>(null);
   const nearEndRef = useRef(false);
   const autoPausedRef = useRef(false);
   const scrubbedAtRef = useRef<number | null>(null);
@@ -131,6 +132,7 @@ export default function VideoPlayer({
     midpointRef.current = false;
     lastMutedRef.current = null;
     lastTimeRef.current = null;
+    lastTimeUpdateAtRef.current = null;
     nearEndRef.current = false;
     autoPausedRef.current = false;
     scrubbedAtRef.current = null;
@@ -254,17 +256,25 @@ export default function VideoPlayer({
           emitDebugEvent("near-end");
         }
 
+        const now = Date.now();
         if (lastTimeRef.current !== null) {
           const delta = seconds - lastTimeRef.current;
-          if (delta >= 5) {
-            scrubbedAtRef.current = Date.now();
+          const lastUpdateAt = lastTimeUpdateAtRef.current;
+          const elapsed =
+            typeof lastUpdateAt === "number" ? (now - lastUpdateAt) / 1000 : null;
+          const isScrub =
+            typeof elapsed === "number" &&
+            (delta < -0.35 || delta > elapsed + 0.35);
+          if (isScrub && delta > 0) {
+            scrubbedAtRef.current = now;
             emitDebugEvent("scrub-forward", { delta, seconds });
-          } else if (delta <= -5) {
-            scrubbedAtRef.current = Date.now();
+          } else if (isScrub && delta < 0) {
+            scrubbedAtRef.current = now;
             emitDebugEvent("scrub-backward", { delta, seconds });
           }
         }
         lastTimeRef.current = seconds;
+        lastTimeUpdateAtRef.current = now;
 
         // Poll mute state (Bunny doesn't emit mute events)
         if (typeof player.getMuted === "function") {

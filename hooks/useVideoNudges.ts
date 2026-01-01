@@ -6,6 +6,9 @@ type SessionNudgeType = "mute" | "scrub-forward" | "scrub-backward" | "binge" | 
 type NudgeState = {
   sentNudgeByVideoId: Set<string>;
   scrubbedByVideoId: Set<string>;
+  muteNudgeByVideoId: Set<string>;
+  stopNudgeByVideoId: Set<string>;
+  finishedNudgeByVideoId: Set<string>;
   muteNudgeSent: boolean;
   scrubForwardNudgeSent: boolean;
   scrubBackwardNudgeSent: boolean;
@@ -85,6 +88,12 @@ const buildMidpointTurn = (videoId: string): NudgeTurn => ({
     "<instructions> make a short comment on the content of the video to keep the user engaged </instructions>",
 });
 
+const buildFinishedTurn = (videoId: string): NudgeTurn => ({
+  userText: `<context> user finished watchin the video ${videoId} </context>`,
+  syntheticAfterUser:
+    "<instructions> roast the user for watching the entire video, implying you, Mimsy, are too important or impatient for that sort of stuff, refrencing the video content. This message can be a bit longer. </instructions>",
+});
+
 const buildMuteTurn = (videoId: string): NudgeTurn => ({
   userText: `<context> user muted video ${videoId} </context>`,
   syntheticAfterUser:
@@ -129,6 +138,9 @@ export function useVideoNudges({
   const nudgeStateRef = useRef<NudgeState>({
     sentNudgeByVideoId: new Set<string>(),
     scrubbedByVideoId: new Set<string>(),
+    muteNudgeByVideoId: new Set<string>(),
+    stopNudgeByVideoId: new Set<string>(),
+    finishedNudgeByVideoId: new Set<string>(),
     muteNudgeSent: false,
     scrubForwardNudgeSent: false,
     scrubBackwardNudgeSent: false,
@@ -229,6 +241,12 @@ export function useVideoNudges({
 
       runNudgeTurn(turnBuilder());
       state.sentNudgeByVideoId.add(videoId);
+      if (type === "mute") {
+        state.muteNudgeByVideoId.add(videoId);
+      }
+      if (type === "stop") {
+        state.stopNudgeByVideoId.add(videoId);
+      }
       state[sentKey] = true;
       state[pendingKey] = false;
     },
@@ -274,6 +292,19 @@ export function useVideoNudges({
     [runNudgeTurn]
   );
 
+  const handleReachedNearEnd = useCallback(
+    (videoId: string) => {
+      const state = nudgeStateRef.current;
+      if (state.scrubbedByVideoId.has(videoId)) return;
+      if (state.muteNudgeByVideoId.has(videoId)) return;
+      if (state.stopNudgeByVideoId.has(videoId)) return;
+      if (state.finishedNudgeByVideoId.has(videoId)) return;
+      runNudgeTurn(buildFinishedTurn(videoId));
+      state.finishedNudgeByVideoId.add(videoId);
+    },
+    [runNudgeTurn]
+  );
+
   const handlePlayed10s = useCallback(
     (videoId: string) => {
       bingeVideoIdsRef.current.add(videoId);
@@ -297,6 +328,7 @@ export function useVideoNudges({
     handleScrubForward,
     handleScrubBackward,
     handleReachedMidpoint,
+    handleReachedNearEnd,
     handlePlayed10s,
     handleStoppedEarly,
   };

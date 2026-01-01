@@ -64,6 +64,9 @@ export default function VideoPlayer({
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const nearEndRef = useRef(false);
+  const autoPausedRef = useRef(false);
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -73,6 +76,25 @@ export default function VideoPlayer({
       })
     );
   }, [resolvedPlayerId]);
+
+  const emitDebugEvent = useCallback(
+    (type: string, data?: Record<string, unknown>) => {
+      if (!isBunny) return;
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent("mimsy:bunny:debug", {
+          detail: {
+            type,
+            playerId: resolvedPlayerId,
+            title: title ?? "Untitled Bunny Video",
+            url,
+            ...data,
+          },
+        })
+      );
+    },
+    [isBunny, resolvedPlayerId, title, url]
+  );
 
   // Build src
   let src: string | null = null;
@@ -105,6 +127,9 @@ export default function VideoPlayer({
     played10Ref.current = false;
     midpointRef.current = false;
     lastMutedRef.current = null;
+    lastTimeRef.current = null;
+    nearEndRef.current = false;
+    autoPausedRef.current = false;
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -148,11 +173,16 @@ export default function VideoPlayer({
       bunnyPlayerRef.current = player;
 
       const handlePlayOrPlaying = () => {
+        const wasPlaying = isPlayingRef.current;
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        autoPausedRef.current = false;
         emitGlobalPlay();
         onPlayingChange?.(true);
+        if (!wasPlaying) {
+          emitDebugEvent("play");
+        }
       };
 
       const handlePause = () => {
@@ -160,8 +190,11 @@ export default function VideoPlayer({
         onPlayingChange?.(false);
 
         // "stopped early" = paused after playing started, before end
-        if (hasStartedRef.current && !endedRef.current) {
+        const wasAutoPaused = autoPausedRef.current;
+        autoPausedRef.current = false;
+        if (hasStartedRef.current && !endedRef.current && !wasAutoPaused) {
           onStoppedEarly?.();
+          emitDebugEvent("manual-stop");
         }
       };
 
@@ -170,6 +203,7 @@ export default function VideoPlayer({
         endedRef.current = true;
         onPlayingChange?.(false);
         onEnded?.();
+        emitDebugEvent("ended");
       };
 
       const handleTimeUpdate = (data: any) => {
@@ -185,6 +219,7 @@ export default function VideoPlayer({
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
           onPlayed10s?.();
+          emitDebugEvent("played-10s");
         }
 
         // Event: reached midpoint (fire once)
@@ -197,7 +232,23 @@ export default function VideoPlayer({
         ) {
           midpointRef.current = true;
           onReachedMidpoint?.();
+          emitDebugEvent("midpoint");
         }
+
+        if (duration && duration > 2 && !nearEndRef.current && seconds >= duration - 2) {
+          nearEndRef.current = true;
+          emitDebugEvent("near-end");
+        }
+
+        if (lastTimeRef.current !== null) {
+          const delta = seconds - lastTimeRef.current;
+          if (delta >= 5) {
+            emitDebugEvent("scrub-forward", { delta, seconds });
+          } else if (delta <= -5) {
+            emitDebugEvent("scrub-backward", { delta, seconds });
+          }
+        }
+        lastTimeRef.current = seconds;
 
         // Poll mute state (Bunny doesn't emit mute events)
         if (typeof player.getMuted === "function") {
@@ -209,6 +260,7 @@ export default function VideoPlayer({
               } else if (lastMutedRef.current !== muted) {
                 lastMutedRef.current = muted;
                 onMutedChange?.(muted);
+                emitDebugEvent(muted ? "muted" : "unmuted");
               }
             });
           } catch {
@@ -282,6 +334,9 @@ export default function VideoPlayer({
       if (customEvent.detail?.playerId === resolvedPlayerId) return;
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
+        if (isPlayingRef.current) {
+          autoPausedRef.current = true;
+        }
         bunnyPlayerRef.current.pause();
         return;
       }

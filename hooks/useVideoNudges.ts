@@ -88,25 +88,25 @@ const buildMidpointTurn = (videoId: string): NudgeTurn => ({
 const buildMuteTurn = (videoId: string): NudgeTurn => ({
   userText: `<context> user muted video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a sarcastic/funny comment about why you too found this too noisy, referencing the video's content </instructions>",
+    "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content </instructions>",
 });
 
 const buildScrubForwardTurn = (videoId: string, seconds: number): NudgeTurn => ({
   userText: `<context> user skipped ${seconds} ahead on video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a funny comment remark why you would also skip the boring parts referencing the video's content </instructions>",
+    "<instructions> make a funny remark why you would also skip the boring parts, referencing the video's content </instructions>",
 });
 
 const buildScrubBackwardTurn = (videoId: string, seconds: number): NudgeTurn => ({
   userText: `<context> user rewinded ${seconds} on video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a funny comment remark why you also like to re-watch stuff in this video referencing the video's content </instructions>",
+    "<instructions> make a funny remark why you also like to re-watch stuff in this video, referencing the video's content </instructions>",
 });
 
 const buildBingeTurn = (videoId: string, nth: number): NudgeTurn => ({
   userText: `<context> user is now watching ${videoId} - his ${nth} video on the site </context>`,
   syntheticAfterUser:
-    "<instructions> roast this video referencing its content. imply that you keep telling michael what to do but he never listens to you because you're a tiny hamster. suggest that maybe the user can talk some sense to michael, and ask if they would like to contact him </instructions>",
+    "<instructions> roast this video referencing its content. imply that you keep telling michael what to do but he never listens to you because you're a tiny hamster. suggest that maybe the user can talk some sense to michael, and ask if they would like to contact him. this can be a somewhat longer message </instructions>",
 });
 
 export function useVideoNudges({

@@ -68,6 +68,8 @@ export default function VideoPlayer({
   const nearEndRef = useRef(false);
   const autoPausedRef = useRef(false);
 
+  const isBunny = url.includes("iframe.mediadelivery.net");
+
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
@@ -98,8 +100,6 @@ export default function VideoPlayer({
 
   // Build src
   let src: string | null = null;
-
-  const isBunny = url.includes("iframe.mediadelivery.net");
 
   if (isBunny) {
     src = url;

@@ -235,6 +235,32 @@ export default function VideoPlayer({
           durationRef.current = data.duration;
         }
 
+        const now = Date.now();
+        const duration = durationRef.current;
+        let scrubbedNow = false;
+        if (lastTimeRef.current !== null) {
+          const delta = seconds - lastTimeRef.current;
+          const lastUpdateAt = lastTimeUpdateAtRef.current;
+          const elapsed =
+            typeof lastUpdateAt === "number" ? (now - lastUpdateAt) / 1000 : null;
+          const isScrub =
+            typeof elapsed === "number" &&
+            (delta < -0.35 || delta > elapsed + 0.35);
+          if (isScrub && delta > 0) {
+            scrubbedNow = true;
+            scrubbedAtRef.current = now;
+            emitDebugEvent("scrub-forward", { delta, seconds });
+            onScrubForward?.();
+          } else if (isScrub && delta < 0) {
+            scrubbedNow = true;
+            scrubbedAtRef.current = now;
+            emitDebugEvent("scrub-backward", { delta, seconds });
+            onScrubBackward?.();
+          }
+        }
+        lastTimeRef.current = seconds;
+        lastTimeUpdateAtRef.current = now;
+
         // Event: played at least 10s (fire once)
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
@@ -243,10 +269,10 @@ export default function VideoPlayer({
         }
 
         // Event: reached midpoint (fire once)
-        const duration = durationRef.current;
         if (
           duration &&
           duration > 0 &&
+          !scrubbedNow &&
           !midpointRef.current &&
           seconds >= duration / 2
         ) {
@@ -259,28 +285,6 @@ export default function VideoPlayer({
           nearEndRef.current = true;
           emitDebugEvent("near-end");
         }
-
-        const now = Date.now();
-        if (lastTimeRef.current !== null) {
-          const delta = seconds - lastTimeRef.current;
-          const lastUpdateAt = lastTimeUpdateAtRef.current;
-          const elapsed =
-            typeof lastUpdateAt === "number" ? (now - lastUpdateAt) / 1000 : null;
-          const isScrub =
-            typeof elapsed === "number" &&
-            (delta < -0.35 || delta > elapsed + 0.35);
-          if (isScrub && delta > 0) {
-            scrubbedAtRef.current = now;
-            emitDebugEvent("scrub-forward", { delta, seconds });
-            onScrubForward?.();
-          } else if (isScrub && delta < 0) {
-            scrubbedAtRef.current = now;
-            emitDebugEvent("scrub-backward", { delta, seconds });
-            onScrubBackward?.();
-          }
-        }
-        lastTimeRef.current = seconds;
-        lastTimeUpdateAtRef.current = now;
 
         // Poll mute state (Bunny doesn't emit mute events)
         if (typeof player.getMuted === "function") {

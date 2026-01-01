@@ -10,6 +10,7 @@ export default function HeroPlayerBubble({
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
+  onStoppedEarly,
 }: {
   video?: VideoItem;
   onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
@@ -18,6 +19,7 @@ export default function HeroPlayerBubble({
   onPlayed10s?: (videoId: string) => void;
   onScrubForward?: (videoId: string) => void;
   onScrubBackward?: (videoId: string) => void;
+  onStoppedEarly?: (videoId: string) => void;
 }) {
   const videoId = video?.id ?? "";
   const handlePlayingChange = useCallback(
@@ -50,6 +52,10 @@ export default function HeroPlayerBubble({
     if (!videoId) return;
     onScrubBackward?.(videoId);
   }, [onScrubBackward, videoId]);
+  const handleStoppedEarly = useCallback(() => {
+    if (!videoId) return;
+    onStoppedEarly?.(videoId);
+  }, [onStoppedEarly, videoId]);
 
   useEffect(() => {
     if (!videoId) return;
@@ -77,6 +83,7 @@ export default function HeroPlayerBubble({
         onPlayed10s={handlePlayed10s}
         onScrubForward={handleScrubForward}
         onScrubBackward={handleScrubBackward}
+        onStoppedEarly={handleStoppedEarly}
       />
 
       <div className="p-4 sm:p-5">

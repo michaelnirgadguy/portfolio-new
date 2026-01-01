@@ -29,11 +29,12 @@ const NUDGE_MESSAGES = {
   scrubForward: "Skipped ahead—there are some gems earlier too.",
   scrubBackward: "Rewinding? This one is worth a rewatch.",
   binge: "On a roll? Want another video lined up?",
+  stop: "Stopped early? Want another pick instead?",
   midpoint: "Halfway through this one.",
 };
 
 type Phase = "landing" | "chat";
-type SessionNudgeType = "mute" | "scrub-forward" | "scrub-backward" | "binge";
+type SessionNudgeType = "mute" | "scrub-forward" | "scrub-backward" | "binge" | "stop";
 type NudgeState = {
   sentNudgeByVideoId: Set<string>;
   scrubbedByVideoId: Set<string>;
@@ -41,22 +42,26 @@ type NudgeState = {
   scrubForwardNudgeSent: boolean;
   scrubBackwardNudgeSent: boolean;
   bingeNudgeSent: boolean;
+  stopNudgeSent: boolean;
   pendingMuteNudge: boolean;
   pendingScrubForwardNudge: boolean;
   pendingScrubBackwardNudge: boolean;
   pendingBingeNudge: boolean;
+  pendingStopNudge: boolean;
 };
 type SessionNudgeConfig = {
   sentKey:
     | "muteNudgeSent"
     | "scrubForwardNudgeSent"
     | "scrubBackwardNudgeSent"
-    | "bingeNudgeSent";
+    | "bingeNudgeSent"
+    | "stopNudgeSent";
   pendingKey:
     | "pendingMuteNudge"
     | "pendingScrubForwardNudge"
     | "pendingScrubBackwardNudge"
-    | "pendingBingeNudge";
+    | "pendingBingeNudge"
+    | "pendingStopNudge";
   text: string;
 };
 
@@ -80,6 +85,11 @@ const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
     sentKey: "bingeNudgeSent",
     pendingKey: "pendingBingeNudge",
     text: NUDGE_MESSAGES.binge,
+  },
+  stop: {
+    sentKey: "stopNudgeSent",
+    pendingKey: "pendingStopNudge",
+    text: NUDGE_MESSAGES.stop,
   },
 };
 
@@ -107,10 +117,12 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     scrubForwardNudgeSent: false,
     scrubBackwardNudgeSent: false,
     bingeNudgeSent: false,
+    stopNudgeSent: false,
     pendingMuteNudge: false,
     pendingScrubForwardNudge: false,
     pendingScrubBackwardNudge: false,
     pendingBingeNudge: false,
+    pendingStopNudge: false,
   });
   const bingeVideoIdsRef = useRef<Set<string>>(new Set());
 
@@ -185,8 +197,15 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
   const handlePlayed10s = useCallback(
     (videoId: string) => {
       bingeVideoIdsRef.current.add(videoId);
-      if (bingeVideoIdsRef.current.size < 2) return;
+      if (bingeVideoIdsRef.current.size < 3) return;
       handleSessionNudge("binge", videoId);
+    },
+    [handleSessionNudge]
+  );
+
+  const handleStoppedEarly = useCallback(
+    (videoId: string) => {
+      handleSessionNudge("stop", videoId);
     },
     [handleSessionNudge]
   );
@@ -574,6 +593,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
             onPlayed10s={handlePlayed10s}
             onScrubForward={handleScrubForward}
             onScrubBackward={handleScrubBackward}
+            onStoppedEarly={handleStoppedEarly}
           />
         );
       }

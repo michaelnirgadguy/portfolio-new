@@ -19,6 +19,8 @@ type Props = {
   onStoppedEarly?: () => void;
   onEnded?: () => void;
   onMutedChange?: (muted: boolean) => void;
+  onScrubForward?: () => void;
+  onScrubBackward?: () => void;
 };
 
 function extractYouTubeId(url: string): string | null {
@@ -50,6 +52,8 @@ export default function VideoPlayer({
   onStoppedEarly,
   onEnded,
   onMutedChange,
+  onScrubForward,
+  onScrubBackward,
 }: Props) {
   const generatedId = useId();
   const resolvedPlayerId = playerId ?? generatedId;
@@ -268,9 +272,11 @@ export default function VideoPlayer({
           if (isScrub && delta > 0) {
             scrubbedAtRef.current = now;
             emitDebugEvent("scrub-forward", { delta, seconds });
+            onScrubForward?.();
           } else if (isScrub && delta < 0) {
             scrubbedAtRef.current = now;
             emitDebugEvent("scrub-backward", { delta, seconds });
+            onScrubBackward?.();
           }
         }
         lastTimeRef.current = seconds;
@@ -349,6 +355,8 @@ export default function VideoPlayer({
     onStoppedEarly,
     onEnded,
     onMutedChange,
+    onScrubForward,
+    onScrubBackward,
     emitGlobalPlay,
   ]);
 

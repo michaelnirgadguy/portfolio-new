@@ -66,7 +66,7 @@ export default function VideoPlayer({
   const lastMutedRef = useRef<boolean | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const nearEndRef = useRef(false);
-  const autoPausedRef = useRef(false);
+  const autoPausedAtRef = useRef<number | null>(null);
 
   const isBunny = url.includes("iframe.mediadelivery.net");
 
@@ -129,7 +129,7 @@ export default function VideoPlayer({
     lastMutedRef.current = null;
     lastTimeRef.current = null;
     nearEndRef.current = false;
-    autoPausedRef.current = false;
+    autoPausedAtRef.current = null;
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -177,7 +177,7 @@ export default function VideoPlayer({
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
-        autoPausedRef.current = false;
+        autoPausedAtRef.current = null;
         emitGlobalPlay();
         onPlayingChange?.(true);
         if (!wasPlaying) {
@@ -190,9 +190,10 @@ export default function VideoPlayer({
         onPlayingChange?.(false);
 
         // "stopped early" = paused after playing started, before end
-        const wasAutoPaused = autoPausedRef.current;
-        autoPausedRef.current = false;
-        if (hasStartedRef.current && !endedRef.current && !wasAutoPaused) {
+        const autoPausedAt = autoPausedAtRef.current;
+        const isAutoPaused =
+          typeof autoPausedAt === "number" && Date.now() - autoPausedAt < 1000;
+        if (hasStartedRef.current && !endedRef.current && !isAutoPaused) {
           onStoppedEarly?.();
           emitDebugEvent("manual-stop");
         }
@@ -335,7 +336,7 @@ export default function VideoPlayer({
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
         if (isPlayingRef.current) {
-          autoPausedRef.current = true;
+          autoPausedAtRef.current = Date.now();
         }
         bunnyPlayerRef.current.pause();
         return;

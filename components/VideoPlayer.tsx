@@ -335,14 +335,14 @@ export default function VideoPlayer({
       if (customEvent.detail?.playerId === resolvedPlayerId) return;
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
-        if (isPlayingRef.current) {
-          autoPausedRef.current = true;
-        }
+        if (!isPlayingRef.current) return;
+        autoPausedRef.current = true;
         bunnyPlayerRef.current.pause();
         return;
       }
 
       if (!isBunny && iframeRef.current?.contentWindow) {
+        if (!isPlayingRef.current) return;
         iframeRef.current.contentWindow.postMessage(
           JSON.stringify({
             event: "command",

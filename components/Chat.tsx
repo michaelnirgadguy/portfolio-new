@@ -24,8 +24,74 @@ const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
 const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
 const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
+const NUDGE_MESSAGES = {
+  mute: "Need the audio? Try unmuting this video.",
+  scrubForward: "Skipped ahead—there are some gems earlier too.",
+  scrubBackward: "Rewinding? This one is worth a rewatch.",
+  binge: "On a roll? Want another video lined up?",
+  stop: "Stopped early? Want another pick instead?",
+  midpoint: "Halfway through this one.",
+};
 
 type Phase = "landing" | "chat";
+type SessionNudgeType = "mute" | "scrub-forward" | "scrub-backward" | "binge" | "stop";
+type NudgeState = {
+  sentNudgeByVideoId: Set<string>;
+  scrubbedByVideoId: Set<string>;
+  muteNudgeSent: boolean;
+  scrubForwardNudgeSent: boolean;
+  scrubBackwardNudgeSent: boolean;
+  bingeNudgeSent: boolean;
+  stopNudgeSent: boolean;
+  pendingMuteNudge: boolean;
+  pendingScrubForwardNudge: boolean;
+  pendingScrubBackwardNudge: boolean;
+  pendingBingeNudge: boolean;
+  pendingStopNudge: boolean;
+};
+type SessionNudgeConfig = {
+  sentKey:
+    | "muteNudgeSent"
+    | "scrubForwardNudgeSent"
+    | "scrubBackwardNudgeSent"
+    | "bingeNudgeSent"
+    | "stopNudgeSent";
+  pendingKey:
+    | "pendingMuteNudge"
+    | "pendingScrubForwardNudge"
+    | "pendingScrubBackwardNudge"
+    | "pendingBingeNudge"
+    | "pendingStopNudge";
+  text: string;
+};
+
+const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
+  mute: {
+    sentKey: "muteNudgeSent",
+    pendingKey: "pendingMuteNudge",
+    text: NUDGE_MESSAGES.mute,
+  },
+  "scrub-forward": {
+    sentKey: "scrubForwardNudgeSent",
+    pendingKey: "pendingScrubForwardNudge",
+    text: NUDGE_MESSAGES.scrubForward,
+  },
+  "scrub-backward": {
+    sentKey: "scrubBackwardNudgeSent",
+    pendingKey: "pendingScrubBackwardNudge",
+    text: NUDGE_MESSAGES.scrubBackward,
+  },
+  binge: {
+    sentKey: "bingeNudgeSent",
+    pendingKey: "pendingBingeNudge",
+    text: NUDGE_MESSAGES.binge,
+  },
+  stop: {
+    sentKey: "stopNudgeSent",
+    pendingKey: "pendingStopNudge",
+    text: NUDGE_MESSAGES.stop,
+  },
+};
 
 export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -44,10 +110,105 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
   const videosById = useMemo(() => new Map(initialVideos.map((video) => [video.id, video])), [initialVideos]);
+  const nudgeStateRef = useRef<NudgeState>({
+    sentNudgeByVideoId: new Set<string>(),
+    scrubbedByVideoId: new Set<string>(),
+    muteNudgeSent: false,
+    scrubForwardNudgeSent: false,
+    scrubBackwardNudgeSent: false,
+    bingeNudgeSent: false,
+    stopNudgeSent: false,
+    pendingMuteNudge: false,
+    pendingScrubForwardNudge: false,
+    pendingScrubBackwardNudge: false,
+    pendingBingeNudge: false,
+    pendingStopNudge: false,
+  });
+  const bingeVideoIdsRef = useRef<Set<string>>(new Set());
 
   const appendMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg]);
   }, []);
+
+  const sendNudgeMessage = useCallback(
+    (text: string) => {
+      appendMessage({ id: crypto.randomUUID(), role: "system_log", text });
+    },
+    [appendMessage]
+  );
+
+  const handleSessionNudge = useCallback(
+    (type: SessionNudgeType, videoId: string) => {
+      if (!videoId) return;
+      const state = nudgeStateRef.current;
+      const { sentKey, pendingKey, text } = SESSION_NUDGE_CONFIG[type];
+
+      if (state[sentKey]) return;
+      if (state.sentNudgeByVideoId.has(videoId)) {
+        state[pendingKey] = true;
+        return;
+      }
+
+      sendNudgeMessage(text);
+      state.sentNudgeByVideoId.add(videoId);
+      state[sentKey] = true;
+      state[pendingKey] = false;
+    },
+    [sendNudgeMessage]
+  );
+
+  const handleMutedChange = useCallback(
+    (videoId: string, muted: boolean) => {
+      if (!muted) return;
+      handleSessionNudge("mute", videoId);
+    },
+    [handleSessionNudge]
+  );
+
+  const handleScrubForward = useCallback(
+    (videoId: string) => {
+      const state = nudgeStateRef.current;
+      state.scrubbedByVideoId.add(videoId);
+      handleSessionNudge("scrub-forward", videoId);
+    },
+    [handleSessionNudge]
+  );
+
+  const handleScrubBackward = useCallback(
+    (videoId: string) => {
+      const state = nudgeStateRef.current;
+      state.scrubbedByVideoId.add(videoId);
+      handleSessionNudge("scrub-backward", videoId);
+    },
+    [handleSessionNudge]
+  );
+
+  const handleReachedMidpoint = useCallback(
+    (videoId: string) => {
+      const state = nudgeStateRef.current;
+      if (state.scrubbedByVideoId.has(videoId)) return;
+      if (state.sentNudgeByVideoId.has(videoId)) return;
+      sendNudgeMessage(NUDGE_MESSAGES.midpoint);
+      state.sentNudgeByVideoId.add(videoId);
+    },
+    [sendNudgeMessage]
+  );
+
+  const handlePlayed10s = useCallback(
+    (videoId: string) => {
+      bingeVideoIdsRef.current.add(videoId);
+      if (bingeVideoIdsRef.current.size < 3) return;
+      handleSessionNudge("binge", videoId);
+    },
+    [handleSessionNudge]
+  );
+
+  const handleStoppedEarly = useCallback(
+    (videoId: string) => {
+      handleSessionNudge("stop", videoId);
+    },
+    [handleSessionNudge]
+  );
 
   const handleIdleTimeout = useCallback(async () => {
     setIsTyping(true);
@@ -427,6 +588,12 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
           <HeroPlayerBubble
             video={videosById.get(msg.videoId)}
             onPlayingChange={handleVideoPlayingChange}
+            onMutedChange={handleMutedChange}
+            onReachedMidpoint={handleReachedMidpoint}
+            onPlayed10s={handlePlayed10s}
+            onScrubForward={handleScrubForward}
+            onScrubBackward={handleScrubBackward}
+            onStoppedEarly={handleStoppedEarly}
           />
         );
       }

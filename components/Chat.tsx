@@ -196,6 +196,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     handleScrubForward,
     handleScrubBackward,
     handleReachedMidpoint,
+    handleReachedNearEnd,
     handlePlayed10s,
     handleStoppedEarly,
   } = useVideoNudges({
@@ -452,6 +453,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
             onPlayingChange={handleVideoPlayingChange}
             onMutedChange={handleMutedChange}
             onReachedMidpoint={handleReachedMidpoint}
+            onReachedNearEnd={handleReachedNearEnd}
             onPlayed10s={handlePlayed10s}
             onScrubForward={handleScrubForward}
             onScrubBackward={handleScrubBackward}

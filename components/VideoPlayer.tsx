@@ -16,11 +16,11 @@ type Props = {
   // EVENTS (one-off / edge transitions)
   onPlayed10s?: () => void;
   onReachedMidpoint?: () => void;
-  onStoppedEarly?: () => void;
   onEnded?: () => void;
   onMutedChange?: (muted: boolean) => void;
-  onScrubForward?: () => void;
-  onScrubBackward?: () => void;
+  onScrubForward?: (deltaSeconds: number) => void;
+  onScrubBackward?: (deltaSeconds: number) => void;
+  onStoppedEarly?: (seconds: number) => void;
 };
 
 function extractYouTubeId(url: string): string | null {
@@ -213,7 +213,8 @@ export default function VideoPlayer({
           return;
         }
         if (hasStartedRef.current && !endedRef.current) {
-          onStoppedEarly?.();
+          const seconds = lastTimeRef.current ?? 0;
+          onStoppedEarly?.(seconds);
           emitDebugEvent("manual-stop");
         }
       };
@@ -250,12 +251,12 @@ export default function VideoPlayer({
             scrubbedNow = true;
             scrubbedAtRef.current = now;
             emitDebugEvent("scrub-forward", { delta, seconds });
-            onScrubForward?.();
+            onScrubForward?.(delta);
           } else if (isScrub && delta < 0) {
             scrubbedNow = true;
             scrubbedAtRef.current = now;
             emitDebugEvent("scrub-backward", { delta, seconds });
-            onScrubBackward?.();
+            onScrubBackward?.(delta);
           }
         }
         lastTimeRef.current = seconds;

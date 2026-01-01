@@ -64,6 +64,9 @@ export default function VideoPlayer({
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
+  const lastSecondsRef = useRef<number | null>(null);
+  const nearEndRef = useRef(false);
+  const autoPausedRef = useRef(false);
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -73,6 +76,30 @@ export default function VideoPlayer({
       })
     );
   }, [resolvedPlayerId]);
+
+  const emitDebugEvent = useCallback(
+    (detail: {
+      type: string;
+      reason?: string;
+      muted?: boolean;
+      seconds?: number;
+      delta?: number;
+    }) => {
+      if (typeof window === "undefined") return;
+      if (!isBunny) return;
+      window.dispatchEvent(
+        new CustomEvent("mimsy:video:debug", {
+          detail: {
+            ...detail,
+            playerId: resolvedPlayerId,
+            title,
+            url,
+          },
+        })
+      );
+    },
+    [isBunny, resolvedPlayerId, title, url]
+  );
 
   // Build src
   let src: string | null = null;
@@ -105,6 +132,9 @@ export default function VideoPlayer({
     played10Ref.current = false;
     midpointRef.current = false;
     lastMutedRef.current = null;
+    lastSecondsRef.current = null;
+    nearEndRef.current = false;
+    autoPausedRef.current = false;
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -151,8 +181,10 @@ export default function VideoPlayer({
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        autoPausedRef.current = false;
         emitGlobalPlay();
         onPlayingChange?.(true);
+        emitDebugEvent({ type: "play" });
       };
 
       const handlePause = () => {
@@ -160,7 +192,11 @@ export default function VideoPlayer({
         onPlayingChange?.(false);
 
         // "stopped early" = paused after playing started, before end
-        if (hasStartedRef.current && !endedRef.current) {
+        const wasAutoPause = autoPausedRef.current;
+        autoPausedRef.current = false;
+        emitDebugEvent({ type: "pause", reason: wasAutoPause ? "auto" : "manual" });
+
+        if (hasStartedRef.current && !endedRef.current && !wasAutoPause) {
           onStoppedEarly?.();
         }
       };
@@ -169,12 +205,23 @@ export default function VideoPlayer({
         isPlayingRef.current = false;
         endedRef.current = true;
         onPlayingChange?.(false);
+        emitDebugEvent({ type: "ended" });
         onEnded?.();
       };
 
       const handleTimeUpdate = (data: any) => {
         if (!data || typeof data.seconds !== "number") return;
         const seconds = data.seconds as number;
+        const lastSeconds = lastSecondsRef.current;
+        if (typeof lastSeconds === "number") {
+          const delta = seconds - lastSeconds;
+          if (delta >= 5) {
+            emitDebugEvent({ type: "scrub-forward", delta });
+          } else if (delta <= -5) {
+            emitDebugEvent({ type: "scrub-backward", delta });
+          }
+        }
+        lastSecondsRef.current = seconds;
 
         // Track duration if provided
         if (typeof data.duration === "number" && data.duration > 0) {
@@ -184,6 +231,7 @@ export default function VideoPlayer({
         // Event: played at least 10s (fire once)
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
+          emitDebugEvent({ type: "played-10s", seconds });
           onPlayed10s?.();
         }
 
@@ -196,7 +244,18 @@ export default function VideoPlayer({
           seconds >= duration / 2
         ) {
           midpointRef.current = true;
+          emitDebugEvent({ type: "midpoint", seconds });
           onReachedMidpoint?.();
+        }
+
+        if (
+          duration &&
+          duration > 0 &&
+          !nearEndRef.current &&
+          seconds >= Math.max(duration - 2, 0)
+        ) {
+          nearEndRef.current = true;
+          emitDebugEvent({ type: "near-end", seconds });
         }
 
         // Poll mute state (Bunny doesn't emit mute events)
@@ -206,9 +265,11 @@ export default function VideoPlayer({
               if (lastMutedRef.current === null) {
                 lastMutedRef.current = muted;
                 onMutedChange?.(muted);
+                emitDebugEvent({ type: "muted-change", muted });
               } else if (lastMutedRef.current !== muted) {
                 lastMutedRef.current = muted;
                 onMutedChange?.(muted);
+                emitDebugEvent({ type: "muted-change", muted });
               }
             });
           } catch {
@@ -243,6 +304,7 @@ export default function VideoPlayer({
             player.getMuted((muted: boolean) => {
               lastMutedRef.current = muted;
               onMutedChange?.(muted);
+              emitDebugEvent({ type: "muted-change", muted });
             });
           } catch {
             // ignore
@@ -272,6 +334,7 @@ export default function VideoPlayer({
     onEnded,
     onMutedChange,
     emitGlobalPlay,
+    emitDebugEvent,
   ]);
 
   useEffect(() => {
@@ -282,6 +345,7 @@ export default function VideoPlayer({
       if (customEvent.detail?.playerId === resolvedPlayerId) return;
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
+        autoPausedRef.current = true;
         bunnyPlayerRef.current.pause();
         return;
       }

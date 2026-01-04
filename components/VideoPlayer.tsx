@@ -16,6 +16,7 @@ type Props = {
   // EVENTS (one-off / edge transitions)
   onPlayed10s?: () => void;
   onReachedMidpoint?: () => void;
+  onReachedNearEnd?: () => void;
   onEnded?: () => void;
   onMutedChange?: (muted: boolean) => void;
   onScrubForward?: (deltaSeconds: number) => void;
@@ -49,6 +50,7 @@ export default function VideoPlayer({
   onPlayingChange,
   onPlayed10s,
   onReachedMidpoint,
+  onReachedNearEnd,
   onStoppedEarly,
   onEnded,
   onMutedChange,
@@ -285,6 +287,7 @@ export default function VideoPlayer({
         if (duration && duration > 2 && !nearEndRef.current && seconds >= duration - 2) {
           nearEndRef.current = true;
           emitDebugEvent("near-end");
+          onReachedNearEnd?.();
         }
 
         // Poll mute state (Bunny doesn't emit mute events)
@@ -357,6 +360,7 @@ export default function VideoPlayer({
     onPlayingChange,
     onPlayed10s,
     onReachedMidpoint,
+    onReachedNearEnd,
     onStoppedEarly,
     onEnded,
     onMutedChange,

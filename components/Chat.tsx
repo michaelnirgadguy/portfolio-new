@@ -9,7 +9,6 @@ import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import ContactCard from "@/components/ContactCard";
-import VideoDebugPanel from "@/components/VideoDebugPanel";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { useIdlePrompt } from "@/hooks/useIdlePrompt";
 import { useVideoNudges } from "@/hooks/useVideoNudges";
@@ -625,7 +624,6 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
         </div>
       </div>
 
-      <VideoDebugPanel />
     </section>
   );
 }

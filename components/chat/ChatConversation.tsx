@@ -28,13 +28,13 @@ type ChatConversationProps = {
   onChipClick: (chip: string) => void;
   onOpenVideo: (video: VideoItem) => void;
   onPlayingChange: (videoId: string, isPlaying: boolean) => void;
-  onMutedChange: (muted: boolean) => void;
-  onReachedMidpoint: () => void;
-  onReachedNearEnd: () => void;
-  onPlayed10s: () => void;
-  onScrubForward: () => void;
-  onScrubBackward: () => void;
-  onStoppedEarly: () => void;
+  onMutedChange: (videoId: string, muted: boolean) => void;
+  onReachedMidpoint: (videoId: string) => void;
+  onReachedNearEnd: (videoId: string) => void;
+  onPlayed10s: (videoId: string) => void;
+  onScrubForward: (videoId: string, deltaSeconds: number) => void;
+  onScrubBackward: (videoId: string, deltaSeconds: number) => void;
+  onStoppedEarly: (videoId: string, seconds: number) => void;
 };
 
 export default function ChatConversation({

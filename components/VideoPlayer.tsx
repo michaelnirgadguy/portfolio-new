@@ -16,9 +16,12 @@ type Props = {
   // EVENTS (one-off / edge transitions)
   onPlayed10s?: () => void;
   onReachedMidpoint?: () => void;
-  onStoppedEarly?: () => void;
+  onReachedNearEnd?: () => void;
   onEnded?: () => void;
   onMutedChange?: (muted: boolean) => void;
+  onScrubForward?: (deltaSeconds: number) => void;
+  onScrubBackward?: (deltaSeconds: number) => void;
+  onStoppedEarly?: (seconds: number) => void;
 };
 
 function extractYouTubeId(url: string): string | null {
@@ -47,9 +50,12 @@ export default function VideoPlayer({
   onPlayingChange,
   onPlayed10s,
   onReachedMidpoint,
+  onReachedNearEnd,
   onStoppedEarly,
   onEnded,
   onMutedChange,
+  onScrubForward,
+  onScrubBackward,
 }: Props) {
   const generatedId = useId();
   const resolvedPlayerId = playerId ?? generatedId;
@@ -64,6 +70,15 @@ export default function VideoPlayer({
   const played10Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const lastTimeUpdateAtRef = useRef<number | null>(null);
+  const nearEndRef = useRef(false);
+  const autoPausedRef = useRef(false);
+  const scrubbedAtRef = useRef<number | null>(null);
+
+  const SCRUB_SUPPRESS_MS = 800;
+
+  const isBunny = url.includes("iframe.mediadelivery.net");
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -74,10 +89,27 @@ export default function VideoPlayer({
     );
   }, [resolvedPlayerId]);
 
+  const emitDebugEvent = useCallback(
+    (type: string, data?: Record<string, unknown>) => {
+      if (!isBunny) return;
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent("mimsy:bunny:debug", {
+          detail: {
+            type,
+            playerId: resolvedPlayerId,
+            title: title ?? "Untitled Bunny Video",
+            url,
+            ...data,
+          },
+        })
+      );
+    },
+    [isBunny, resolvedPlayerId, title, url]
+  );
+
   // Build src
   let src: string | null = null;
-
-  const isBunny = url.includes("iframe.mediadelivery.net");
 
   if (isBunny) {
     src = url;
@@ -105,6 +137,11 @@ export default function VideoPlayer({
     played10Ref.current = false;
     midpointRef.current = false;
     lastMutedRef.current = null;
+    lastTimeRef.current = null;
+    lastTimeUpdateAtRef.current = null;
+    nearEndRef.current = false;
+    autoPausedRef.current = false;
+    scrubbedAtRef.current = null;
     onPlayingChange?.(false);
   }, [url, onPlayingChange]);
 
@@ -148,11 +185,19 @@ export default function VideoPlayer({
       bunnyPlayerRef.current = player;
 
       const handlePlayOrPlaying = () => {
+        const wasPlaying = isPlayingRef.current;
         hasStartedRef.current = true;
         isPlayingRef.current = true;
         endedRef.current = false;
+        autoPausedRef.current = false;
         emitGlobalPlay();
         onPlayingChange?.(true);
+        const scrubbedAt = scrubbedAtRef.current;
+        const suppressPlay =
+          typeof scrubbedAt === "number" && Date.now() - scrubbedAt < SCRUB_SUPPRESS_MS;
+        if (!wasPlaying && !suppressPlay) {
+          emitDebugEvent("play");
+        }
       };
 
       const handlePause = () => {
@@ -160,8 +205,19 @@ export default function VideoPlayer({
         onPlayingChange?.(false);
 
         // "stopped early" = paused after playing started, before end
+        if (autoPausedRef.current) {
+          return;
+        }
+        const scrubbedAt = scrubbedAtRef.current;
+        const suppressPause =
+          typeof scrubbedAt === "number" && Date.now() - scrubbedAt < SCRUB_SUPPRESS_MS;
+        if (suppressPause) {
+          return;
+        }
         if (hasStartedRef.current && !endedRef.current) {
-          onStoppedEarly?.();
+          const seconds = lastTimeRef.current ?? 0;
+          onStoppedEarly?.(seconds);
+          emitDebugEvent("manual-stop");
         }
       };
 
@@ -170,6 +226,7 @@ export default function VideoPlayer({
         endedRef.current = true;
         onPlayingChange?.(false);
         onEnded?.();
+        emitDebugEvent("ended");
       };
 
       const handleTimeUpdate = (data: any) => {
@@ -181,22 +238,56 @@ export default function VideoPlayer({
           durationRef.current = data.duration;
         }
 
+        const now = Date.now();
+        const duration = durationRef.current;
+        let scrubbedNow = false;
+        if (lastTimeRef.current !== null) {
+          const delta = seconds - lastTimeRef.current;
+          const lastUpdateAt = lastTimeUpdateAtRef.current;
+          const elapsed =
+            typeof lastUpdateAt === "number" ? (now - lastUpdateAt) / 1000 : null;
+          const isScrub =
+            typeof elapsed === "number" &&
+            (delta < -0.35 || delta > elapsed + 0.35);
+          if (isScrub && delta > 0) {
+            scrubbedNow = true;
+            scrubbedAtRef.current = now;
+            emitDebugEvent("scrub-forward", { delta, seconds });
+            onScrubForward?.(delta);
+          } else if (isScrub && delta < 0) {
+            scrubbedNow = true;
+            scrubbedAtRef.current = now;
+            emitDebugEvent("scrub-backward", { delta, seconds });
+            onScrubBackward?.(delta);
+          }
+        }
+        lastTimeRef.current = seconds;
+        lastTimeUpdateAtRef.current = now;
+
         // Event: played at least 10s (fire once)
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
           onPlayed10s?.();
+          emitDebugEvent("played-10s");
         }
 
         // Event: reached midpoint (fire once)
-        const duration = durationRef.current;
         if (
           duration &&
           duration > 0 &&
+          !scrubbedNow &&
           !midpointRef.current &&
           seconds >= duration / 2
         ) {
           midpointRef.current = true;
           onReachedMidpoint?.();
+          emitDebugEvent("midpoint");
+        }
+
+        if (duration && duration > 2 && !nearEndRef.current && seconds >= duration - 2) {
+          nearEndRef.current = true;
+          emitDebugEvent("near-end");
+          onReachedNearEnd?.();
         }
 
         // Poll mute state (Bunny doesn't emit mute events)
@@ -209,6 +300,7 @@ export default function VideoPlayer({
               } else if (lastMutedRef.current !== muted) {
                 lastMutedRef.current = muted;
                 onMutedChange?.(muted);
+                emitDebugEvent(muted ? "muted" : "unmuted");
               }
             });
           } catch {
@@ -268,9 +360,12 @@ export default function VideoPlayer({
     onPlayingChange,
     onPlayed10s,
     onReachedMidpoint,
+    onReachedNearEnd,
     onStoppedEarly,
     onEnded,
     onMutedChange,
+    onScrubForward,
+    onScrubBackward,
     emitGlobalPlay,
   ]);
 
@@ -282,11 +377,14 @@ export default function VideoPlayer({
       if (customEvent.detail?.playerId === resolvedPlayerId) return;
 
       if (isBunny && bunnyPlayerRef.current?.pause) {
+        if (!isPlayingRef.current) return;
+        autoPausedRef.current = true;
         bunnyPlayerRef.current.pause();
         return;
       }
 
       if (!isBunny && iframeRef.current?.contentWindow) {
+        if (!isPlayingRef.current) return;
         iframeRef.current.contentWindow.postMessage(
           JSON.stringify({
             event: "command",

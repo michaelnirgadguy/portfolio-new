@@ -11,6 +11,7 @@ import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import ContactCard from "@/components/ContactCard";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { useIdlePrompt } from "@/hooks/useIdlePrompt";
+import { useVideoNudges } from "@/hooks/useVideoNudges";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
@@ -188,6 +189,29 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
   const handleShowContactCard = () => {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
   };
+
+  const {
+    handleMutedChange,
+    handleScrubForward,
+    handleScrubBackward,
+    handleReachedMidpoint,
+    handleReachedNearEnd,
+    handlePlayed10s,
+    handleStoppedEarly,
+  } = useVideoNudges({
+    log,
+    setLog,
+    appendMessage,
+    setSuggestionChips,
+    setIsTyping,
+    isTyping,
+    isRunningAct1,
+    handleShowAllVideos,
+    handleShowContactCard,
+    handleShowVideos,
+    setIsDarkMode,
+    fallbackChips: FALLBACK_CHIPS,
+  });
 
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
@@ -426,6 +450,13 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
           <HeroPlayerBubble
             video={videosById.get(msg.videoId)}
             onPlayingChange={handleVideoPlayingChange}
+            onMutedChange={handleMutedChange}
+            onReachedMidpoint={handleReachedMidpoint}
+            onReachedNearEnd={handleReachedNearEnd}
+            onPlayed10s={handlePlayed10s}
+            onScrubForward={handleScrubForward}
+            onScrubBackward={handleScrubBackward}
+            onStoppedEarly={handleStoppedEarly}
           />
         );
       }
@@ -592,6 +623,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
           </form>
         </div>
       </div>
+
     </section>
   );
 }

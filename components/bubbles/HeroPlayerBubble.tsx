@@ -5,9 +5,23 @@ import type { VideoItem } from "@/types/video";
 export default function HeroPlayerBubble({
   video,
   onPlayingChange,
+  onMutedChange,
+  onReachedMidpoint,
+  onReachedNearEnd,
+  onPlayed10s,
+  onScrubForward,
+  onScrubBackward,
+  onStoppedEarly,
 }: {
   video?: VideoItem;
   onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
+  onMutedChange?: (videoId: string, muted: boolean) => void;
+  onReachedMidpoint?: (videoId: string) => void;
+  onReachedNearEnd?: (videoId: string) => void;
+  onPlayed10s?: (videoId: string) => void;
+  onScrubForward?: (videoId: string, deltaSeconds: number) => void;
+  onScrubBackward?: (videoId: string, deltaSeconds: number) => void;
+  onStoppedEarly?: (videoId: string, seconds: number) => void;
 }) {
   const videoId = video?.id ?? "";
   const handlePlayingChange = useCallback(
@@ -16,6 +30,46 @@ export default function HeroPlayerBubble({
       onPlayingChange?.(videoId, isPlaying);
     },
     [onPlayingChange, videoId]
+  );
+  const handleMutedChange = useCallback(
+    (muted: boolean) => {
+      if (!videoId) return;
+      onMutedChange?.(videoId, muted);
+    },
+    [onMutedChange, videoId]
+  );
+  const handleReachedMidpoint = useCallback(() => {
+    if (!videoId) return;
+    onReachedMidpoint?.(videoId);
+  }, [onReachedMidpoint, videoId]);
+  const handleReachedNearEnd = useCallback(() => {
+    if (!videoId) return;
+    onReachedNearEnd?.(videoId);
+  }, [onReachedNearEnd, videoId]);
+  const handlePlayed10s = useCallback(() => {
+    if (!videoId) return;
+    onPlayed10s?.(videoId);
+  }, [onPlayed10s, videoId]);
+  const handleScrubForward = useCallback(
+    (deltaSeconds: number) => {
+      if (!videoId) return;
+      onScrubForward?.(videoId, deltaSeconds);
+    },
+    [onScrubForward, videoId]
+  );
+  const handleScrubBackward = useCallback(
+    (deltaSeconds: number) => {
+      if (!videoId) return;
+      onScrubBackward?.(videoId, deltaSeconds);
+    },
+    [onScrubBackward, videoId]
+  );
+  const handleStoppedEarly = useCallback(
+    (seconds: number) => {
+      if (!videoId) return;
+      onStoppedEarly?.(videoId, seconds);
+    },
+    [onStoppedEarly, videoId]
   );
 
   useEffect(() => {
@@ -39,6 +93,13 @@ export default function HeroPlayerBubble({
         className="bg-black"
         autoplay
         onPlayingChange={handlePlayingChange}
+        onMutedChange={handleMutedChange}
+        onReachedMidpoint={handleReachedMidpoint}
+        onReachedNearEnd={handleReachedNearEnd}
+        onPlayed10s={handlePlayed10s}
+        onScrubForward={handleScrubForward}
+        onScrubBackward={handleScrubBackward}
+        onStoppedEarly={handleStoppedEarly}
       />
 
       <div className="p-4 sm:p-5">

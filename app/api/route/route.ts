@@ -8,6 +8,20 @@ import { getVideoCatalog } from "@/lib/videoCatalog";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
+const OPENAI_TIMEOUT_MS = 20000;
+
+function isTimeoutError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const err = error as { name?: string; code?: string; message?: string };
+  return (
+    err.name === "AbortError" ||
+    err.code === "ETIMEDOUT" ||
+    Boolean(err.message && err.message.toLowerCase().includes("timeout"))
+  );
+}
 
 // Load system prompt
 async function loadSystemPrompt(): Promise<string> {
@@ -75,22 +89,54 @@ ${examples}
     }
 
     // Call the model using the running log + tools
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      tools: TOOLS,
-      tool_choice: "auto",
-      parallel_tool_calls: false,
-      instructions: fullInstructions,
-      input: input_list,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "assistant_reply",
-          strict: true,
-          schema: assistantReplySchema,
+    let resp: Awaited<ReturnType<typeof client.responses.create>>;
+    const openAiController = new AbortController();
+    const openAiTimeout = setTimeout(
+      () => openAiController.abort(),
+      OPENAI_TIMEOUT_MS
+    );
+
+    try {
+      resp = await client.responses.create(
+        {
+          model: "gpt-4.1-mini",
+          tools: TOOLS,
+          tool_choice: "auto",
+          parallel_tool_calls: false,
+          instructions: fullInstructions,
+          input: input_list,
+          text: {
+            format: {
+              type: "json_schema",
+              name: "assistant_reply",
+              strict: true,
+              schema: assistantReplySchema,
+            },
+          },
         },
-      },
-    });
+        {
+          timeout: OPENAI_TIMEOUT_MS,
+          signal: openAiController.signal,
+        }
+      );
+    } catch (err: any) {
+      if (isTimeoutError(err)) {
+        console.warn(
+          `⏱️ Timeout while calling OpenAI responses.create after ${OPENAI_TIMEOUT_MS}ms`
+        );
+        return new Response(
+          JSON.stringify({
+            error: "Upstream Timeout",
+            dependency: "openai",
+            timeoutMs: OPENAI_TIMEOUT_MS,
+          }),
+          { status: 504, headers: { "content-type": "application/json" } }
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(openAiTimeout);
+    }
 
     // Expose both human text and raw tool calls
     const output = (resp as any)?.output ?? [];

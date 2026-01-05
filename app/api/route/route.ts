@@ -23,6 +23,91 @@ function isTimeoutError(error: unknown): boolean {
   );
 }
 
+function extractFirstJsonObject(raw: string): string | null {
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let start: number | null = null;
+
+  for (let i = 0; i < raw.length; i += 1) {
+    const char = raw[i];
+
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (char === "\\") {
+        escape = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") {
+      if (depth === 0) {
+        start = i;
+      }
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0 && start !== null) {
+        return raw.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractFirstAssistantMessage(output: any[]): {
+  parsed: any | null;
+  rawText: string | null;
+} {
+  if (!Array.isArray(output)) {
+    return { parsed: null, rawText: null };
+  }
+
+  const firstAssistant = output.find(
+    (item: any) => item?.type === "message" && item?.role === "assistant"
+  );
+
+  if (!firstAssistant) {
+    return { parsed: null, rawText: null };
+  }
+
+  if (firstAssistant?.parsed) {
+    return { parsed: firstAssistant.parsed, rawText: null };
+  }
+
+  const content = firstAssistant?.content;
+  if (typeof content === "string") {
+    return { parsed: null, rawText: content };
+  }
+
+  if (Array.isArray(content)) {
+    const firstTextPart = content.find(
+      (part: any) => part?.type === "output_text" && typeof part?.text === "string"
+    );
+    if (firstTextPart?.text) {
+      return { parsed: null, rawText: firstTextPart.text };
+    }
+  }
+
+  return { parsed: null, rawText: null };
+}
+
 // Load system prompt
 async function loadSystemPrompt(): Promise<string> {
   const p = path.join(process.cwd(), "lib", "llm", "prompts", "system.txt");
@@ -141,6 +226,11 @@ ${examples}
     // Expose both human text and raw tool calls
     const output = (resp as any)?.output ?? [];
     let parsed = (resp as any)?.output_parsed ?? null;
+    const firstAssistantMessage = extractFirstAssistantMessage(output);
+
+    if (!parsed && firstAssistantMessage.parsed) {
+      parsed = firstAssistantMessage.parsed ?? null;
+    }
 
     if (!parsed && Array.isArray(output)) {
       const parsedItem = output.find(
@@ -165,16 +255,20 @@ ${examples}
     }
 
     if (!text) {
-      const raw = (resp as any)?.output_text;
+      const raw =
+        typeof firstAssistantMessage.rawText === "string"
+          ? firstAssistantMessage.rawText
+          : (resp as any)?.output_text;
       if (typeof raw === "string") {
         const trimmed = raw.trim();
+        const firstJson = extractFirstJsonObject(trimmed);
 
         try {
-          const fallback = JSON.parse(trimmed);
+          const fallback = JSON.parse(firstJson ?? trimmed);
           if (typeof fallback?.text === "string") {
             text = fallback.text.trim();
           } else {
-            text = trimmed;
+            text = (firstJson ?? trimmed).trim();
           }
 
           if (!chips.length && Array.isArray(fallback?.chips)) {
@@ -185,7 +279,7 @@ ${examples}
               .filter(Boolean);
           }
         } catch {
-          text = trimmed;
+          text = (firstJson ?? trimmed).trim();
         }
       }
     }

@@ -8,6 +8,7 @@ import { getVideoCatalog } from "@/lib/videoCatalog";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
+const OPENAI_TIMEOUT_MS = 20000;
 
 // Load system prompt
 async function loadSystemPrompt(): Promise<string> {
@@ -75,22 +76,49 @@ ${examples}
     }
 
     // Call the model using the running log + tools
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      tools: TOOLS,
-      tool_choice: "auto",
-      parallel_tool_calls: false,
-      instructions: fullInstructions,
-      input: input_list,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "assistant_reply",
-          strict: true,
-          schema: assistantReplySchema,
+    const controller = new AbortController();
+    let didTimeout = false;
+    const timeoutId = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, OPENAI_TIMEOUT_MS);
+
+    let resp: Awaited<ReturnType<typeof client.responses.create>>;
+
+    try {
+      resp = await client.responses.create({
+        model: "gpt-4.1-mini",
+        tools: TOOLS,
+        tool_choice: "auto",
+        parallel_tool_calls: false,
+        instructions: fullInstructions,
+        input: input_list,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "assistant_reply",
+            strict: true,
+            schema: assistantReplySchema,
+          },
         },
-      },
-    });
+        signal: controller.signal,
+      });
+    } catch (err: any) {
+      if (didTimeout || err?.name === "AbortError") {
+        console.warn("⏱️ OpenAI responses.create timed out.");
+        return new Response(
+          JSON.stringify({
+            error: "Upstream timeout",
+            dependency: "openai",
+          }),
+          { status: 504, headers: { "content-type": "application/json" } }
+        );
+      }
+
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     // Expose both human text and raw tool calls
     const output = (resp as any)?.output ?? [];

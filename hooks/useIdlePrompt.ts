@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const IDLE_TIMEOUT_MS = 10000;
+const IDLE_TIMEOUT_MS = 20000;
 const IDLE_PROMPT_SESSION_KEY = "mimsyIdlePromptSent";
 const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
   "mousemove",

@@ -77,9 +77,9 @@ const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
 };
 
 const buildManualStopTurn = (videoId: string, seconds: number): NudgeTurn => ({
-  userText: `<context> user paused the video ${videoId} after ${seconds} </context>`,
+  userText: `<context> user paused\stopped the video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a witty comment about why you would also lose interest with that video, referencing its content </instructions>",
+    "<instructions> make a witty comment about why you would also lose interest in that video, referencing its content </instructions>",
 });
 
 const buildMidpointTurn = (videoId: string): NudgeTurn => ({

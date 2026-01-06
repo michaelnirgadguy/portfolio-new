@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
-import GalleryBubble from "@/components/bubbles/GalleryBubble";
-import ContactCard from "@/components/ContactCard";
+import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ChatConversation from "@/components/chat/ChatConversation";
+import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 
 const TOKEN_GROUPS = [
@@ -81,15 +81,18 @@ const toPublicUrl = (filePath: string) =>
 type DesignLabClientProps = {
   videos: VideoItem[];
   backgroundImages: string[];
+  children?: ReactNode;
 };
 
 type TokenValues = Record<string, string>;
 
-export default function DesignLabClient({ videos, backgroundImages }: DesignLabClientProps) {
+export default function DesignLabClient({ videos, backgroundImages, children }: DesignLabClientProps) {
   const [tokenValues, setTokenValues] = useState<TokenValues>({});
   const [defaultTokens, setDefaultTokens] = useState<TokenValues>({});
   const [selectedBg, setSelectedBg] = useState(backgroundImages[0] ?? "");
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const computed = getComputedStyle(document.documentElement);
@@ -124,6 +127,43 @@ export default function DesignLabClient({ videos, backgroundImages }: DesignLabC
   const galleryVideos = videos.slice(1, 6);
   const galleryIds = galleryVideos.map((video) => video.id);
   const videosById = useMemo(() => new Map(videos.map((video) => [video.id, video])), [videos]);
+  const messages = useMemo<Message[]>(() => {
+    const items: Message[] = [
+      {
+        id: "assistant-1",
+        role: "assistant",
+        text:
+          "Welcome to the design lab! This is where we tweak the vibe before the hamster declares it perfect.",
+      },
+      {
+        id: "user-1",
+        role: "user",
+        text: "I want to test gradients, shadows, and background moods.",
+      },
+      {
+        id: "assistant-2",
+        role: "assistant",
+        text: "Feast your eyes on the hero video, a gallery, and the contact card—wired to your live tokens.",
+      },
+    ];
+
+    if (heroVideo?.id) {
+      items.push({ id: "hero-video", role: "widget", type: "hero", videoId: heroVideo.id });
+    }
+
+    if (galleryIds.length) {
+      items.push({ id: "gallery", role: "widget", type: "gallery", videoIds: galleryIds });
+    }
+
+    items.push({ id: "contact-card", role: "widget", type: "contact-card" });
+    items.push({
+      id: "user-2",
+      role: "user",
+      text: "Once the look feels right, I will copy the values into globals.css.",
+    });
+
+    return items;
+  }, [galleryIds, heroVideo?.id]);
 
   const handleTokenChange = (name: string, value: string) => {
     setTokenValues((prev) => ({ ...prev, [name]: value }));
@@ -134,78 +174,32 @@ export default function DesignLabClient({ videos, backgroundImages }: DesignLabC
   };
 
   return (
-    <div className="min-h-screen" style={{ ...variableStyles, ...backgroundStyle }}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
-        <section className="glass-surface flex min-h-[720px] flex-1 flex-col overflow-hidden">
-          <header className="flex items-center justify-between border-b border-[hsl(var(--surface-border-soft))] px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Mimsy Chat Preview</p>
-              <p className="text-xs text-muted-foreground">Design sandbox · static messages</p>
-            </div>
-            <span className="rounded-full border border-[hsl(var(--surface-border-soft))] bg-[hsl(var(--surface-1))] px-3 py-1 text-xs text-muted-foreground">
-              Live styling
-            </span>
-          </header>
-
-          <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-10 pt-6">
-            <div className="flex w-full justify-start">
-              <div className="flex items-start gap-3 max-w-[92%] sm:max-w-[80%]">
-                <img src="/bigger-avatar.png" alt="Mimsy" className="mt-1 h-10 w-10 rounded-full shrink-0" />
-                <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-soft)] bg-[linear-gradient(145deg,hsl(var(--bubble-assistant-from)),hsl(var(--bubble-assistant-to)))] text-[hsl(var(--bubble-assistant-foreground))] border-[hsl(var(--bubble-assistant-border))]">
-                  Welcome to the design lab! This is where we tweak the vibe before the hamster declares it perfect.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex w-full justify-end">
-              <div className="max-w-[75%]">
-                <div className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]">
-                  I want to test gradients, shadows, and background moods.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex w-full justify-start">
-              <div className="flex items-start gap-3 max-w-[92%] sm:max-w-[80%]">
-                <img src="/bigger-avatar.png" alt="Mimsy" className="mt-1 h-10 w-10 rounded-full shrink-0" />
-                <div className="flex-1 px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-soft)] bg-[linear-gradient(145deg,hsl(var(--bubble-assistant-from)),hsl(var(--bubble-assistant-to)))] text-[hsl(var(--bubble-assistant-foreground))] border-[hsl(var(--bubble-assistant-border))]">
-                  Feast your eyes on a hero video, a gallery, and the contact card—all wired to your live tokens.
-                </div>
-              </div>
-            </div>
-
-            <HeroPlayerBubble video={heroVideo} />
-
-            <GalleryBubble videoIds={galleryIds} videosById={videosById} />
-
-            <ContactCard />
-
-            <div className="flex w-full justify-end">
-              <div className="max-w-[75%]">
-                <div className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]">
-                  Once the look feels right, I will copy the values into globals.css.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pointer-events-none border-t border-[hsl(var(--surface-border-soft))] px-4 py-4">
-            <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
-              <input
-                disabled
-                placeholder='Try "Show me a geeky video"'
-                className="flex-1 bg-transparent px-2 py-1 text-sm text-muted-foreground outline-none"
-              />
-              <button
-                type="button"
-                className="shrink-0 rounded-full border border-[hsl(var(--surface-border-soft))] px-3 py-1 text-xs text-muted-foreground"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden" style={{ ...variableStyles, ...backgroundStyle }}>
+      {children}
+      <ChatConversation
+        messages={messages}
+        input={input}
+        isTyping={false}
+        isRunningAct1={false}
+        hasRunLanding
+        activeChips={[]}
+        animateAct1Chips={false}
+        dots={0}
+        scrollRef={scrollRef}
+        videosById={videosById}
+        onInputChange={setInput}
+        onSubmit={(event) => event.preventDefault()}
+        onChipClick={() => {}}
+        onOpenVideo={() => {}}
+        onPlayingChange={() => {}}
+        onMutedChange={() => {}}
+        onReachedMidpoint={() => {}}
+        onReachedNearEnd={() => {}}
+        onPlayed10s={() => {}}
+        onScrubForward={() => {}}
+        onScrubBackward={() => {}}
+        onStoppedEarly={() => {}}
+      />
 
       <div className="fixed bottom-6 right-6 z-40 w-[320px] sm:w-[360px]">
         <div className="glass-surface overflow-hidden">

@@ -1,5 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
+import Header from "@/components/Header";
 import DesignLabClient from "./DesignLabClient";
 import type { VideoItem } from "@/types/video";
 import videos from "@/data/videos.json";
@@ -37,9 +38,8 @@ export default async function DesignLabPage() {
   const backgroundImages = await listPublicImages(publicDir);
 
   return (
-    <DesignLabClient
-      videos={videos as VideoItem[]}
-      backgroundImages={backgroundImages}
-    />
+    <DesignLabClient videos={videos as VideoItem[]} backgroundImages={backgroundImages}>
+      <Header />
+    </DesignLabClient>
   );
 }

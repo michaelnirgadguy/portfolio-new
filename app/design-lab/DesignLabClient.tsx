@@ -6,42 +6,74 @@ import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ContactCard from "@/components/ContactCard";
 import type { VideoItem } from "@/types/video";
 
-const TOKEN_NAMES = [
-  "--background",
-  "--foreground",
-  "--muted",
-  "--muted-foreground",
-  "--card",
-  "--card-foreground",
-  "--border",
-  "--primary",
-  "--primary-foreground",
-  "--secondary",
-  "--secondary-foreground",
-  "--accent",
-  "--accent-foreground",
-  "--ring",
-  "--radius",
-  "--surface-1",
-  "--surface-2",
-  "--surface-border-soft",
-  "--surface-border-strong",
-  "--bubble-assistant-from",
-  "--bubble-assistant-to",
-  "--bubble-assistant-border",
-  "--bubble-assistant-foreground",
-  "--bubble-user-from",
-  "--bubble-user-to",
-  "--bubble-user-border",
-  "--bubble-user-foreground",
-  "--bubble-shadow-soft",
-  "--bubble-shadow-strong",
-  "--background-veil-strong",
-  "--background-veil-strong-alpha",
-  "--shadow-sm",
-  "--shadow-md",
-  "--shadow-lg",
+const TOKEN_GROUPS = [
+  {
+    label: "Core surfaces & text",
+    description: "Base palette used for the page background, cards, and global text colors.",
+    tokens: [
+      "--background",
+      "--foreground",
+      "--muted",
+      "--muted-foreground",
+      "--card",
+      "--card-foreground",
+      "--border",
+    ],
+  },
+  {
+    label: "Brand accents & radii",
+    description: "Accent colors for highlights, focus rings, and general rounding.",
+    tokens: [
+      "--primary",
+      "--primary-foreground",
+      "--secondary",
+      "--secondary-foreground",
+      "--accent",
+      "--accent-foreground",
+      "--ring",
+      "--radius",
+    ],
+  },
+  {
+    label: "Glass surfaces",
+    description: "Translucent layers used for glass-surface panels and borders.",
+    tokens: [
+      "--surface-1",
+      "--surface-2",
+      "--surface-border-soft",
+      "--surface-border-strong",
+    ],
+  },
+  {
+    label: "Chat bubbles",
+    description: "Gradients, borders, and text colors for Mimsy + user chat bubbles.",
+    tokens: [
+      "--bubble-assistant-from",
+      "--bubble-assistant-to",
+      "--bubble-assistant-border",
+      "--bubble-assistant-foreground",
+      "--bubble-user-from",
+      "--bubble-user-to",
+      "--bubble-user-border",
+      "--bubble-user-foreground",
+    ],
+  },
+  {
+    label: "Shadows & background veil",
+    description: "Shadow depth + the translucent overlay that softens the hero background.",
+    tokens: [
+      "--bubble-shadow-soft",
+      "--bubble-shadow-strong",
+      "--background-veil-strong",
+      "--background-veil-strong-alpha",
+      "--shadow-sm",
+      "--shadow-md",
+      "--shadow-lg",
+    ],
+  },
 ];
+
+const TOKEN_NAMES = TOKEN_GROUPS.flatMap((group) => group.tokens);
 
 const toPublicUrl = (filePath: string) =>
   `/${filePath.split("/").map(encodeURIComponent).join("/")}`;
@@ -57,6 +89,7 @@ export default function DesignLabClient({ videos, backgroundImages }: DesignLabC
   const [tokenValues, setTokenValues] = useState<TokenValues>({});
   const [defaultTokens, setDefaultTokens] = useState<TokenValues>({});
   const [selectedBg, setSelectedBg] = useState(backgroundImages[0] ?? "");
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   useEffect(() => {
     const computed = getComputedStyle(document.documentElement);
@@ -102,7 +135,7 @@ export default function DesignLabClient({ videos, backgroundImages }: DesignLabC
 
   return (
     <div className="min-h-screen" style={{ ...variableStyles, ...backgroundStyle }}>
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 xl:flex-row">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
         <section className="glass-surface flex min-h-[720px] flex-1 flex-col overflow-hidden">
           <header className="flex items-center justify-between border-b border-[hsl(var(--surface-border-soft))] px-4 py-3">
             <div>
@@ -172,66 +205,96 @@ export default function DesignLabClient({ videos, backgroundImages }: DesignLabC
             </div>
           </div>
         </section>
+      </div>
 
-        <aside className="glass-surface w-full shrink-0 space-y-6 p-5 xl:w-[360px]">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground">Choose BG image</h2>
-              <span className="text-xs text-muted-foreground">{backgroundImages.length} assets</span>
+      <div className="fixed bottom-6 right-6 z-40 w-[320px] sm:w-[360px]">
+        <div className="glass-surface overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[hsl(var(--surface-border-soft))] px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Design controls</p>
+              <p className="text-xs text-muted-foreground">Live tokens + background</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {backgroundImages.map((image) => {
-                const isActive = image === selectedBg;
-                const src = toPublicUrl(image);
-                return (
+            <button
+              type="button"
+              onClick={() => setIsPanelOpen((prev) => !prev)}
+              className="rounded-full border border-[hsl(var(--surface-border-soft))] px-2 py-1 text-xs text-muted-foreground"
+            >
+              {isPanelOpen ? "Minimize" : "Expand"}
+            </button>
+          </div>
+
+          {isPanelOpen && (
+            <div className="max-h-[70vh] space-y-6 overflow-y-auto px-4 py-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-foreground">Choose BG image</h2>
+                  <span className="text-xs text-muted-foreground">{backgroundImages.length} assets</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {backgroundImages.map((image) => {
+                    const isActive = image === selectedBg;
+                    const src = toPublicUrl(image);
+                    return (
+                      <button
+                        key={image}
+                        type="button"
+                        onClick={() => setSelectedBg(image)}
+                        className={`group relative overflow-hidden rounded-lg border text-left transition ${
+                          isActive
+                            ? "border-[hsl(var(--accent))] ring-2 ring-[hsl(var(--accent))]/40"
+                            : "border-[hsl(var(--surface-border-soft))]"
+                        }`}
+                      >
+                        <img src={src} alt={image} className="h-24 w-full object-cover" loading="lazy" />
+                        <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[10px] text-white">
+                          {image}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-foreground">Design tokens</h2>
                   <button
-                    key={image}
                     type="button"
-                    onClick={() => setSelectedBg(image)}
-                    className={`group relative overflow-hidden rounded-lg border text-left transition ${
-                      isActive
-                        ? "border-[hsl(var(--accent))] ring-2 ring-[hsl(var(--accent))]/40"
-                        : "border-[hsl(var(--surface-border-soft))]"
-                    }`}
+                    onClick={handleReset}
+                    className="text-xs font-medium text-[hsl(var(--accent))] hover:text-[hsl(var(--accent))]/80"
                   >
-                    <img src={src} alt={image} className="h-24 w-full object-cover" loading="lazy" />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[10px] text-white">
-                      {image}
-                    </div>
+                    Reset defaults
                   </button>
-                );
-              })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adjust these to preview styles. Names match globals.css tokens for easy copy/paste.
+                </p>
+                <div className="space-y-4">
+                  {TOKEN_GROUPS.map((group) => (
+                    <div key={group.label} className="space-y-2">
+                      <div className="rounded-lg border border-[hsl(var(--surface-border-soft))] bg-[hsl(var(--surface-1))] px-3 py-2">
+                        <p className="text-xs font-semibold text-foreground">{group.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{group.description}</p>
+                      </div>
+                      <div className="space-y-3">
+                        {group.tokens.map((name) => (
+                          <label key={name} className="flex flex-col gap-1 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">{name}</span>
+                            <input
+                              value={tokenValues[name] ?? ""}
+                              onChange={(event) => handleTokenChange(name, event.target.value)}
+                              className="w-full rounded-md border border-[hsl(var(--surface-border-soft))] bg-[hsl(var(--surface-1))] px-2 py-1 text-xs text-foreground shadow-sm outline-none focus:border-[hsl(var(--accent))] focus:ring-2 focus:ring-[hsl(var(--accent))]/40"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground">Design tokens</h2>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-xs font-medium text-[hsl(var(--accent))] hover:text-[hsl(var(--accent))]/80"
-              >
-                Reset defaults
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Adjust these to preview styles. Names match globals.css tokens for easy copy/paste.
-            </p>
-            <div className="space-y-3">
-              {TOKEN_NAMES.map((name) => (
-                <label key={name} className="flex flex-col gap-1 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{name}</span>
-                  <input
-                    value={tokenValues[name] ?? ""}
-                    onChange={(event) => handleTokenChange(name, event.target.value)}
-                    className="w-full rounded-md border border-[hsl(var(--surface-border-soft))] bg-[hsl(var(--surface-1))] px-2 py-1 text-xs text-foreground shadow-sm outline-none focus:border-[hsl(var(--accent))] focus:ring-2 focus:ring-[hsl(var(--accent))]/40"
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        </aside>
+          )}
+        </div>
       </div>
     </div>
   );

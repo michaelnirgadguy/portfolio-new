@@ -131,9 +131,9 @@ export function useChatController(initialVideos: VideoItem[]) {
     try {
       const response = await sendTurn({
         log,
-        userText: "<context> user idle for 10 seconds; no video playing </context>",
+        userText: "<context> user idle for 20 seconds; no video playing </context>",
         syntheticAfterUser:
-          "<instructions> prompt the user to explore a video or ask about Michael </instructions>",
+          '<instructions> begin with something like "Yoo-hoo, are you there?" then prompt the user to explore a video or ask about Michael </instructions>',
       });
 
       applyTurnResponse(response);

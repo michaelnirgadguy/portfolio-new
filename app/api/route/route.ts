@@ -139,7 +139,9 @@ export async function POST(req: NextRequest) {
     const examples = await loadExamplesPrompt();
 
     const videos = await getVideoCatalog();
-    const thinCatalog = videos.map(({ url, thumbnail, ...rest }) => rest);
+    const thinCatalog = videos.map(
+      ({ url, thumbnail, long_description, related_ids, ...rest }) => rest
+    );
 
     const catalogBlock = `
 # Full video catalog (use ONLY these ids)

@@ -8,6 +8,105 @@ import { getVideoCatalog } from "@/lib/videoCatalog";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
 
 export const runtime = "nodejs";
+const OPENAI_TIMEOUT_MS = 20000;
+
+function isTimeoutError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const err = error as { name?: string; code?: string; message?: string };
+  return (
+    err.name === "AbortError" ||
+    err.code === "ETIMEDOUT" ||
+    Boolean(err.message && err.message.toLowerCase().includes("timeout"))
+  );
+}
+
+function extractFirstJsonObject(raw: string): string | null {
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let start: number | null = null;
+
+  for (let i = 0; i < raw.length; i += 1) {
+    const char = raw[i];
+
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (char === "\\") {
+        escape = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") {
+      if (depth === 0) {
+        start = i;
+      }
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0 && start !== null) {
+        return raw.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractFirstAssistantMessage(output: any[]): {
+  parsed: any | null;
+  rawText: string | null;
+} {
+  if (!Array.isArray(output)) {
+    return { parsed: null, rawText: null };
+  }
+
+  const firstAssistant = output.find(
+    (item: any) => item?.type === "message" && item?.role === "assistant"
+  );
+
+  if (!firstAssistant) {
+    return { parsed: null, rawText: null };
+  }
+
+  if (firstAssistant?.parsed) {
+    return { parsed: firstAssistant.parsed, rawText: null };
+  }
+
+  const content = firstAssistant?.content;
+  if (typeof content === "string") {
+    return { parsed: null, rawText: content };
+  }
+
+  if (Array.isArray(content)) {
+    const firstTextPart = content.find(
+      (part: any) => part?.type === "output_text" && typeof part?.text === "string"
+    );
+    if (firstTextPart?.text) {
+      return { parsed: null, rawText: firstTextPart.text };
+    }
+  }
+
+  return { parsed: null, rawText: null };
+}
 
 // Load system prompt
 async function loadSystemPrompt(): Promise<string> {
@@ -40,7 +139,9 @@ export async function POST(req: NextRequest) {
     const examples = await loadExamplesPrompt();
 
     const videos = await getVideoCatalog();
-    const thinCatalog = videos.map(({ url, thumbnail, ...rest }) => rest);
+    const thinCatalog = videos.map(
+      ({ url, thumbnail, long_description, related_ids, ...rest }) => rest
+    );
 
     const catalogBlock = `
 # Full video catalog (use ONLY these ids)
@@ -75,26 +176,63 @@ ${examples}
     }
 
     // Call the model using the running log + tools
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      tools: TOOLS,
-      tool_choice: "auto",
-      parallel_tool_calls: false,
-      instructions: fullInstructions,
-      input: input_list,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "assistant_reply",
-          strict: true,
-          schema: assistantReplySchema,
+    let resp: Awaited<ReturnType<typeof client.responses.create>>;
+    const openAiController = new AbortController();
+    const openAiTimeout = setTimeout(
+      () => openAiController.abort(),
+      OPENAI_TIMEOUT_MS
+    );
+
+    try {
+      resp = await client.responses.create(
+        {
+          model: "gpt-4.1-mini",
+          tools: TOOLS,
+          tool_choice: "auto",
+          parallel_tool_calls: false,
+          instructions: fullInstructions,
+          input: input_list,
+          text: {
+            format: {
+              type: "json_schema",
+              name: "assistant_reply",
+              strict: true,
+              schema: assistantReplySchema,
+            },
+          },
         },
-      },
-    });
+        {
+          timeout: OPENAI_TIMEOUT_MS,
+          signal: openAiController.signal,
+        }
+      );
+    } catch (err: any) {
+      if (isTimeoutError(err)) {
+        console.warn(
+          `⏱️ Timeout while calling OpenAI responses.create after ${OPENAI_TIMEOUT_MS}ms`
+        );
+        return new Response(
+          JSON.stringify({
+            error: "Upstream Timeout",
+            dependency: "openai",
+            timeoutMs: OPENAI_TIMEOUT_MS,
+          }),
+          { status: 504, headers: { "content-type": "application/json" } }
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(openAiTimeout);
+    }
 
     // Expose both human text and raw tool calls
     const output = (resp as any)?.output ?? [];
     let parsed = (resp as any)?.output_parsed ?? null;
+    const firstAssistantMessage = extractFirstAssistantMessage(output);
+
+    if (!parsed && firstAssistantMessage.parsed) {
+      parsed = firstAssistantMessage.parsed ?? null;
+    }
 
     if (!parsed && Array.isArray(output)) {
       const parsedItem = output.find(
@@ -119,16 +257,20 @@ ${examples}
     }
 
     if (!text) {
-      const raw = (resp as any)?.output_text;
+      const raw =
+        typeof firstAssistantMessage.rawText === "string"
+          ? firstAssistantMessage.rawText
+          : (resp as any)?.output_text;
       if (typeof raw === "string") {
         const trimmed = raw.trim();
+        const firstJson = extractFirstJsonObject(trimmed);
 
         try {
-          const fallback = JSON.parse(trimmed);
+          const fallback = JSON.parse(firstJson ?? trimmed);
           if (typeof fallback?.text === "string") {
             text = fallback.text.trim();
           } else {
-            text = trimmed;
+            text = (firstJson ?? trimmed).trim();
           }
 
           if (!chips.length && Array.isArray(fallback?.chips)) {
@@ -139,7 +281,7 @@ ${examples}
               .filter(Boolean);
           }
         } catch {
-          text = trimmed;
+          text = (firstJson ?? trimmed).trim();
         }
       }
     }

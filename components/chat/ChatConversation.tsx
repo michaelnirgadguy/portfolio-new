@@ -8,6 +8,7 @@ import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
 import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
+import MegaCardBubble from "@/components/bubbles/MegaCardBubble";
 import ContactCard from "@/components/ContactCard";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
@@ -92,6 +93,14 @@ export default function ChatConversation({
         );
       if (msg.type === "contact-card") return <ContactCard />;
       if (msg.type === "profile") return <ProfileBubble />;
+      if (msg.type === "mega-card")
+        return (
+          <MegaCardBubble
+            videoIds={msg.videoIds}
+            videosById={videosById}
+            onOpenVideo={(video) => onOpenVideo(video)}
+          />
+        );
       if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }
 

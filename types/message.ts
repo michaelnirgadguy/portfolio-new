@@ -6,4 +6,5 @@ export type Message =
   | { id: string; role: "widget"; type: "gallery"; videoIds: string[] }
   | { id: string; role: "widget"; type: "contact-card" }
   | { id: string; role: "widget"; type: "profile"; data: any }
+  | { id: string; role: "widget"; type: "mega-card"; videoIds: string[] }
   | { id: string; role: "widget"; type: "act1-fail"; script: string[]; lineDelayMs?: number };

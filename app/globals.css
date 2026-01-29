@@ -6,7 +6,7 @@
 /* 1) Design tokens (HSL components so Tailwind's bg-foreground etc. work) */
 :root {
   --background: 0 0% 99%;
-  --foreground: 222.2 47.4% 11.2%;
+  --foreground: 0 0% 9%;
 
   --muted: 210 16% 96%;
   --muted-foreground: 215 14% 34%;
@@ -15,19 +15,19 @@
   --popover-foreground: 222.2 47.4% 11.2%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222.2 47.4% 11.2%;
+  --card-foreground: 0 0% 9%;
 
   --border: 214 32% 92%;
   --input: 214 32% 92%;
 
-  --primary: 222 47% 11%;
+  --primary: 0 0% 9%;
   --primary-foreground: 210 40% 98%;
 
   --secondary: 210 16% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary-foreground: 0 0% 9%;
 
   --accent: 267 100% 77%;
-  --accent-foreground: 222 47% 11%;
+  --accent-foreground: 0 0% 9%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
@@ -46,12 +46,12 @@
   --bubble-assistant-from: 210 26% 98% / 0.94;
   --bubble-assistant-to: 210 24% 94% / 0.9;
   --bubble-assistant-border: 214 26% 86% / 0.95;
-  --bubble-assistant-foreground: 222.2 47.4% 11.2%;
+  --bubble-assistant-foreground: 0 0% 9%;
 
   --bubble-user-from: 267 96% 81% / 0.96;
   --bubble-user-to: 267 90% 72% / 0.95;
   --bubble-user-border: 267 76% 68% / 0.85;
-  --bubble-user-foreground: 222 47% 11%;
+  --bubble-user-foreground: 0 0% 9%;
 
   --bubble-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.12);
   --bubble-shadow-strong: 0 16px 42px rgba(15, 23, 42, 0.16);
@@ -67,23 +67,23 @@
 }
 
 .dark {
-  --background: 224 14% 8%;
-  --foreground: 210 20% 98%;
+  --background: 0 0% 7%;
+  --foreground: 0 0% 96%;
 
   --muted: 223 13% 14%;
   --muted-foreground: 215 16% 70%;
 
-  --popover: 224 14% 8%;
+  --popover: 0 0% 7%;
   --popover-foreground: 210 20% 98%;
 
-  --card: 224 14% 9%;
+  --card: 0 0% 9%;
   --card-foreground: 210 20% 98%;
 
   --border: 223 13% 18%;
   --input: 223 13% 18%;
 
   --primary: 210 20% 98%;
-  --primary-foreground: 222 47% 11%;
+  --primary-foreground: 0 0% 9%;
 
   --secondary: 223 13% 14%;
   --secondary-foreground: 210 20% 98%;
@@ -114,7 +114,7 @@
   --bubble-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.38);
   --bubble-shadow-strong: 0 16px 42px rgba(0, 0, 0, 0.46);
 
-  --background-veil-strong: 224 14% 6%;
+  --background-veil-strong: 0 0% 6%;
   --background-veil-strong-alpha: 0.55;
 
   --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.32);
@@ -135,19 +135,7 @@
     font-feature-settings: "ss01" on, "liga" on, "calt" on;
     text-rendering: optimizeLegibility;
     background-color: hsl(var(--background));
-    background-image:
-    radial-gradient(
-      ellipse at center,
-      hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 0%,
-      hsl(var(--background-veil-strong) / var(--background-veil-strong-alpha)) 28%,
-      hsl(var(--background-veil-strong) / 0) 68%,
-      hsl(var(--background-veil-strong) / 0) 100%
-    ),
-      url('/BG2.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-image: none;
   }
   h1, h2, h3 {
     @apply tracking-tight;

@@ -78,6 +78,18 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     let useThreeBlock = true;
     let bigOnTop = true;
 
+    if (videos.length === 6 || videos.length === 9) {
+      for (let i = 0; i < videos.length; i += 3) {
+        builtBlocks.push({
+          type: "three",
+          items: videos.slice(i, i + 3),
+          layout: bigOnTop ? "bigTop" : "bigBottom",
+        });
+        bigOnTop = !bigOnTop;
+      }
+      return builtBlocks;
+    }
+
     while (index < videos.length) {
       const remaining = videos.length - index;
       if (useThreeBlock) {
@@ -109,9 +121,11 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     return builtBlocks;
   }, [videos]);
 
-  const isCompactLayout = videos.length <= 4;
+  const layoutMode = videos.length === 3 ? "threeScroll" : videos.length <= 4 ? "compact" : "mosaic";
+  const isCompactLayout = layoutMode === "compact";
   const compactColumns =
     videos.length === 2 ? "sm:grid-cols-2" : videos.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  const isScrollableLayout = layoutMode === "threeScroll" || layoutMode === "mosaic";
 
   const handleClick = (video: VideoItem) => {
     onOpenVideo?.(video);
@@ -150,7 +164,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
   useEffect(() => {
     const node = scrollRef.current;
-    if (!node || isCompactLayout) {
+    if (!node || !isScrollableLayout) {
       setScrollState({ canScrollLeft: false, canScrollRight: false, hasOverflow: false });
       return;
     }
@@ -177,7 +191,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       window.removeEventListener("resize", updateScrollState);
       resizeObserver.disconnect();
     };
-  }, [isCompactLayout, videos.length]);
+  }, [isScrollableLayout, videos.length]);
 
   const wrapperClassName =
     videos.length <= 4
@@ -213,13 +227,28 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
-        {isCompactLayout ? (
+        {layoutMode === "compact" ? (
           <div className="px-6 pb-5 pt-5">
             <div className={`grid gap-4 ${compactColumns} grid-cols-1`}>
               {videos.map((video) => (
                 <MegaVideoTile key={video.id} video={video} onSelect={handleClick} />
               ))}
             </div>
+          </div>
+        ) : layoutMode === "threeScroll" ? (
+          <div
+            ref={scrollRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing"
+          >
+            {videos.map((video) => (
+              <div key={video.id} className="shrink-0 w-[18rem] sm:w-[22rem] lg:w-[26rem]">
+                <MegaVideoTile video={video} onSelect={handleClick} />
+              </div>
+            ))}
           </div>
         ) : (
           <div
@@ -228,7 +257,9 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerUp}
-            className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing"
+            className={`no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing ${
+              videos.length === 5 ? "justify-center" : ""
+            }`}
           >
             {blocks.map((block, blockIndex) => (
               <div

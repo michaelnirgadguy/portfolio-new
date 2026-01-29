@@ -309,3 +309,12 @@
     --chat-pill-angle: 360deg;
   }
 }
+
+.mega-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mega-scroll::-webkit-scrollbar {
+  display: none;
+}

@@ -30,10 +30,14 @@ export default function GalleryBubble({
 
   if (videos.length <= 4) {
     return (
-      <div className="w-full rounded-xl border border-border bg-card p-4">
+      <div className="w-full rounded-xl border border-border bg-card p-4 bg-red-300">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {videos.map((video) => (
-            <VideoCard key={video.id} video={video} onSelect={() => handleClick(video.id)} />
+            <VideoCard
+              key={video.id}
+              video={video}
+              onSelect={() => handleClick(video.id)}
+            />
           ))}
         </div>
       </div>
@@ -41,12 +45,16 @@ export default function GalleryBubble({
   }
 
   return (
-    <div className="w-full rounded-xl border border-border bg-card p-4">
-      {renderMosaic({
-        videos,
-        onSelectId: handleClick,
-        className: "",
-      })}
+    <div className="relative flex justify-center items-center ">
+      <div className="absolute left-1/2 -translate-x-1/2 h-[60vh] top-0 w-[75vw] rounded-xl border border-border bg-card p-4 bg-red-200 overflow-x-scroll overflow-y-clip flex flex-nowrap">
+        {renderMosaic({
+          videos,
+          onSelectId: handleClick,
+          className: "",
+        })}
+      </div>
     </div>
   );
 }
+
+// -translate-x-[25%] h-[50vh] w-[75vw]

@@ -18,11 +18,9 @@ function PairGrid({
   onClick: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 p-4 bg-black h-full w-fit ">
+    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 bg-green-400">
       {items.map((v) => (
-        <div className="flex-1 aspect-video w-fit bg-blue-200">
-          <VideoCard key={v.id} video={v} onSelect={() => onClick(v.id)} />
-        </div>
+        <VideoCard key={v.id} video={v} onSelect={() => onClick(v.id)} />
       ))}
     </div>
   );
@@ -38,16 +36,54 @@ function TrioMosaic({
   side: "L" | "R";
 }) {
   const [A, B, C] = items;
+  // gap-6 => 1.5rem; C = (16/9) * gap to convert row-gap into width difference
+  const style: React.CSSProperties & Record<string, string> = {
+    ["--g"]: "1.5rem",
+    ["--C"]: "calc(var(--g) * 16 / 9)",
+  };
 
+  if (side === "L") {
+    // Left big (same math as before)
+    return (
+      <div
+        className="grid gap-6 md:auto-rows-auto"
+        style={{
+          ...style,
+          gridTemplateColumns:
+            "calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C)) calc((100% - (var(--C) + var(--g))) / 3)",
+        }}
+      >
+        <div className="row-span-2">
+          <VideoCard video={A} onSelect={() => onClick(A.id)} />
+        </div>
+        <div>
+          <VideoCard video={B} onSelect={() => onClick(B.id)} />
+        </div>
+        <div>
+          <VideoCard video={C} onSelect={() => onClick(C.id)} />
+        </div>
+      </div>
+    );
+  }
+
+  // Right big: mirror the columns and row-span placement
   return (
-    <div className="grid grid-flow-col grid-rows-3 gap-4 p-4 w-fit">
-      <div className="col-start-1 col-end-2 row-span-1">
+    <div
+      className="grid gap-6 md:auto-rows-auto"
+      style={{
+        ...style,
+        gridTemplateColumns:
+          "calc((100% - (var(--C) + var(--g))) / 3) calc((2 * (100% - (var(--C) + var(--g))) / 3) + var(--C))",
+      }}
+    >
+      {/* Left: two stacked small */}
+      <div>
         <VideoCard video={A} onSelect={() => onClick(A.id)} />
       </div>
-      <div className="col-start-2 col-end-3 row-span-1">
+      <div className="row-span-2">
         <VideoCard video={B} onSelect={() => onClick(B.id)} />
       </div>
-      <div className="col-start-1 col-end-3 row-span-2 aspect-video">
+      <div>
         <VideoCard video={C} onSelect={() => onClick(C.id)} />
       </div>
     </div>
@@ -154,19 +190,16 @@ function planBlocks(videos: VideoItem[]): Block[] {
 /* ---------- entry ---------- */
 export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
   const count = videos.length;
-  const tmp = [...videos];
-  tmp.length = 2;
-
   if (count === 0) return null;
 
   // Small, explicit cases
-  // if (count === 2) {
-  return (
-    <>
-      <PairGrid items={tmp} onClick={onSelectId} />
-    </>
-  );
-  // }
+  if (count === 2) {
+    return (
+      <div className={className}>
+        <PairGrid items={videos} onClick={onSelectId} />
+      </div>
+    );
+  }
   if (count === 3) {
     return (
       <div className={className}>
@@ -186,6 +219,8 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
   let trioToggle: "L" | "R" = "L";
 
   return (
+    // <div className={className}>
+    // <div className="grid gap-6  border flex-1 m-2 p-4">
     <>
       {blocks.map((b, idx) => {
         if (b.kind === "pair") {
@@ -203,5 +238,15 @@ export function renderMosaic({ videos, onSelectId, className }: MosaicProps) {
         );
       })}
     </>
+
+    // </div>
+    // </div>
+
+    // return (
+    //   <>
+    //     {videos.map((v) => (
+    //       <VideoCard key={v.id} video={v} onSelect={() => onSelectId(v.id)} />
+    //     ))}
+    //   </>
   );
 }

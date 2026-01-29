@@ -45,6 +45,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
+  const hasShownMegaCardRef = useRef(false);
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -165,6 +166,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
     if (forceIntro) {
       hasSentGreetingRef.current = false;
+      hasShownMegaCardRef.current = false;
       setPhase("landing");
       setHasRunLanding(false);
       return;
@@ -183,6 +185,12 @@ export function useChatController(initialVideos: VideoItem[]) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text: DIRECT_GREETING });
         hasSentGreetingRef.current = true;
       }
+    }
+
+    const showMegaCardParam = searchParams?.get("showMegaCard")?.toLowerCase() === "true";
+    if (showMegaCardParam && !hasShownMegaCardRef.current) {
+      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card" });
+      hasShownMegaCardRef.current = true;
     }
   }, [searchParams, appendMessage]);
 

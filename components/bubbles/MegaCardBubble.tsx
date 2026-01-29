@@ -179,8 +179,13 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     };
   }, [isCompactLayout, videos.length]);
 
+  const wrapperClassName =
+    videos.length <= 4
+      ? "w-full"
+      : "w-full md:w-[min(90vw,72rem)] md:relative md:left-1/2 md:-translate-x-1/2";
+
   return (
-    <div className="w-full md:w-[min(90vw,72rem)] md:relative md:left-1/2 md:-translate-x-1/2">
+    <div className={wrapperClassName}>
       <div className="relative rounded-2xl border border-border bg-card shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
         {scrollState.canScrollLeft && (
           <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[hsl(var(--card))] via-[hsl(var(--card)/0.75)] to-transparent" />

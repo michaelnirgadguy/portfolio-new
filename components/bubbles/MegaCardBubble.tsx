@@ -37,9 +37,11 @@ function MegaVideoTile({
           decoding="async"
           className="h-full w-full object-contain transition-transform duration-300 will-change-transform group-hover:scale-[1.02]"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] via-transparent to-transparent opacity-70" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
-          {video.title}
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 opacity-0 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+          <div className="bg-[hsl(var(--foreground)/0.72)] p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
+            {video.title}
+          </div>
         </div>
       </div>
     </button>
@@ -153,7 +155,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth snap-x snap-mandatory cursor-grab active:cursor-grabbing"
+          className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing"
         >
           {blocks.map((block, blockIndex) => (
             <div
@@ -162,7 +164,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                 block.type === "three"
                   ? "w-[24rem] sm:w-[30rem] lg:w-[36rem]"
                   : "w-[18rem] sm:w-[22rem] lg:w-[26rem]"
-              } snap-start`}
+              }`}
             >
               {block.type === "three" && (
                 <div className="grid gap-3">

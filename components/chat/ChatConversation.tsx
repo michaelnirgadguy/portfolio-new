@@ -5,7 +5,6 @@ import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
 import HeroPlayerBubble from "@/components/bubbles/HeroPlayerBubble";
-import GalleryBubble from "@/components/bubbles/GalleryBubble";
 import ProfileBubble from "@/components/bubbles/ProfileBubble";
 import Act1FailWidget from "@/components/bubbles/Act1FailWidget";
 import MegaCardBubble from "@/components/bubbles/MegaCardBubble";
@@ -85,7 +84,7 @@ export default function ChatConversation({
       }
       if (msg.type === "gallery")
         return (
-          <GalleryBubble
+          <MegaCardBubble
             videoIds={msg.videoIds}
             videosById={videosById}
             onOpenVideo={(video) => onOpenVideo(video)}

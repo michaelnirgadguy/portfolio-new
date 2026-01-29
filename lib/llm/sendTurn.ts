@@ -135,7 +135,7 @@ export async function sendTurn(opts: {
         output: JSON.stringify({
           ok: true,
           kind: "all_videos",
-          message: "Widget gallery opened.",
+          message: "Widget mega card opened.",
         }),
       });
 

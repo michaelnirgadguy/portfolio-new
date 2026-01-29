@@ -64,15 +64,8 @@ export function useChatController(initialVideos: VideoItem[]) {
       if (!ids?.length) return;
       if (ids.length === 1) {
         appendMessage({ id: crypto.randomUUID(), role: "widget", type: "hero", videoId: ids[0] });
-      } else if (ids.length >= 5) {
-        appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: ids });
       } else {
-        appendMessage({
-          id: crypto.randomUUID(),
-          role: "widget",
-          type: "gallery",
-          videoIds: ids,
-        });
+        appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: ids });
       }
     },
     [appendMessage],
@@ -82,11 +75,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     const allIds = initialVideos.map((video) => video.id);
     if (!allIds.length) return;
 
-    if (allIds.length >= 5) {
-      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: allIds });
-    } else {
-      appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
-    }
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: allIds });
   }, [appendMessage, initialVideos]);
 
   const handleShowContactCard = useCallback(() => {
@@ -261,7 +250,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     try {
       const response = await sendTurn({
         log,
-        userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the gallery. </context>`,
+        userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the mega card. </context>`,
         syntheticAfterUser: syntheticMessage,
       });
 

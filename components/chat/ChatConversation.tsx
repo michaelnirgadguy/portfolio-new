@@ -93,7 +93,14 @@ export default function ChatConversation({
         );
       if (msg.type === "contact-card") return <ContactCard />;
       if (msg.type === "profile") return <ProfileBubble />;
-      if (msg.type === "mega-card") return <MegaCardBubble />;
+      if (msg.type === "mega-card")
+        return (
+          <MegaCardBubble
+            videoIds={msg.videoIds}
+            videosById={videosById}
+            onOpenVideo={(video) => onOpenVideo(video)}
+          />
+        );
       if (msg.type === "act1-fail") return <Act1FailWidget script={msg.script} lineDelayMs={msg.lineDelayMs} />;
     }
 

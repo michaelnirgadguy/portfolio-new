@@ -45,6 +45,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
+  const hasShownMegaCardRef = useRef(false);
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -64,12 +65,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       if (ids.length === 1) {
         appendMessage({ id: crypto.randomUUID(), role: "widget", type: "hero", videoId: ids[0] });
       } else {
-        appendMessage({
-          id: crypto.randomUUID(),
-          role: "widget",
-          type: "gallery",
-          videoIds: ids,
-        });
+        appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: ids });
       }
     },
     [appendMessage],
@@ -79,7 +75,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     const allIds = initialVideos.map((video) => video.id);
     if (!allIds.length) return;
 
-    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "gallery", videoIds: allIds });
+    appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: allIds });
   }, [appendMessage, initialVideos]);
 
   const handleShowContactCard = useCallback(() => {
@@ -165,6 +161,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
     if (forceIntro) {
       hasSentGreetingRef.current = false;
+      hasShownMegaCardRef.current = false;
       setPhase("landing");
       setHasRunLanding(false);
       return;
@@ -184,7 +181,16 @@ export function useChatController(initialVideos: VideoItem[]) {
         hasSentGreetingRef.current = true;
       }
     }
-  }, [searchParams, appendMessage]);
+
+    const showMegaCardParam = searchParams?.get("showMegaCard")?.toLowerCase() === "true";
+    if (showMegaCardParam && !hasShownMegaCardRef.current) {
+      const allIds = initialVideos.map((video) => video.id);
+      if (allIds.length) {
+        appendMessage({ id: crypto.randomUUID(), role: "widget", type: "mega-card", videoIds: allIds });
+        hasShownMegaCardRef.current = true;
+      }
+    }
+  }, [searchParams, appendMessage, initialVideos]);
 
   useEffect(() => {
     if (hasRunLanding && !suggestionChips.length) {
@@ -244,7 +250,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     try {
       const response = await sendTurn({
         log,
-        userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the gallery. </context>`,
+        userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the mega card. </context>`,
         syntheticAfterUser: syntheticMessage,
       });
 

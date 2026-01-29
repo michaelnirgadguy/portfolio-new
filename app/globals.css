@@ -304,6 +304,15 @@
   animation: chat-pill-sweep 1.4s linear infinite;
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes chat-pill-sweep {
   to {
     --chat-pill-angle: 360deg;

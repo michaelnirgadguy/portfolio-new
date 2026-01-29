@@ -141,6 +141,8 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     const node = scrollRef.current;
     if (!node) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button")) return;
     isDraggingRef.current = true;
     dragStartXRef.current = event.clientX;
     scrollStartRef.current = node.scrollLeft;

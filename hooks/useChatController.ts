@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { usePendingDots } from "@/hooks/useChatHooks";
 import { useIdlePrompt } from "@/hooks/useIdlePrompt";
 import { useVideoNudges } from "@/hooks/useVideoNudges";
+import { compactLog } from "@/lib/llm/compactLog";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
@@ -159,7 +160,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
+      setLog(compactLog(response.nextLog, MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
     } finally {
@@ -285,7 +286,7 @@ export function useChatController(initialVideos: VideoItem[]) {
 
       applyTurnResponse(response);
       handleShowVideos([video.id]);
-      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
+      setLog(compactLog(response.nextLog, MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({
@@ -363,10 +364,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
 
     setLog(
-      [
-        { role: "user", content: `generate for me: ${idea}` },
-        { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
-      ].slice(-MAX_LOG_ENTRIES),
+      compactLog(
+        [
+          { role: "user", content: `generate for me: ${idea}` },
+          { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
+        ],
+        MAX_LOG_ENTRIES,
+      ),
     );
 
     setSuggestionChips(ACT1_CHIPS);
@@ -404,7 +408,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
+      setLog(compactLog(response.nextLog, MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({

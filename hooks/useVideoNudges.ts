@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { compactLog } from "@/lib/llm/compactLog";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
 
@@ -211,7 +212,7 @@ export function useVideoNudges({
           handleShowVideos(ids);
         }
 
-        setLog(nextLog.slice(-10));
+        setLog(compactLog(nextLog, 10));
       } catch (err) {
         console.error(err);
       } finally {

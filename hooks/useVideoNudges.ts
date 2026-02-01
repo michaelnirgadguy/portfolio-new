@@ -155,6 +155,7 @@ export function useVideoNudges({
     pendingStopNudge: false,
   });
   const bingeVideoIdsRef = useRef<Set<string>>(new Set());
+  const muteStateByVideoIdRef = useRef<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     logRef.current = log;
@@ -259,7 +260,12 @@ export function useVideoNudges({
 
   const handleMutedChange = useCallback(
     (videoId: string, muted: boolean) => {
-      if (!muted) return;
+      const muteState = muteStateByVideoIdRef.current;
+      const previousMuted = muteState.get(videoId);
+      muteState.set(videoId, muted);
+      if (previousMuted !== false || !muted) {
+        return;
+      }
       handleSessionNudge("mute", videoId, () => buildMuteTurn(videoId));
     },
     [handleSessionNudge]

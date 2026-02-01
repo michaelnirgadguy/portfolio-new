@@ -8,6 +8,7 @@ type ChatLandingProps = {
   input: string;
   isTyping: boolean;
   isRunningAct1: boolean;
+  isActionLimitReached: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 };
@@ -16,6 +17,7 @@ export default function ChatLanding({
   input,
   isTyping,
   isRunningAct1,
+  isActionLimitReached,
   onInputChange,
   onSubmit,
 }: ChatLandingProps) {
@@ -43,14 +45,15 @@ export default function ChatLanding({
                     <input
                       value={input}
                       onChange={(event) => onInputChange(event.target.value)}
+                      maxLength={280}
                       placeholder='try "dogs dancing on the moon"'
-                      disabled={isTyping || isRunningAct1}
+                      disabled={isTyping || isRunningAct1 || isActionLimitReached}
                       className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
                     />
 
                     <Button
                       type="submit"
-                      disabled={isTyping || isRunningAct1}
+                      disabled={isTyping || isRunningAct1 || isActionLimitReached}
                       size="icon"
                       aria-label="Generate"
                       className="relative z-10 h-10 w-10 shrink-0 border border-[hsl(var(--accent))] bg-[hsl(var(--accent))] text-white shadow-[0_10px_20px_hsl(var(--accent)/0.35)] transition hover:bg-[hsl(var(--accent))]/95 hover:shadow-[0_16px_30px_hsl(var(--accent)/0.4)] sm:h-10 sm:w-auto sm:px-4"

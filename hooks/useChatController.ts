@@ -16,6 +16,11 @@ const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
 const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
 const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
 const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
+const MAX_INPUT_CHARS = 280;
+const MAX_USER_ACTIONS = 25;
+const ACTION_LIMIT_MESSAGE =
+  "You've hit the 25-action limit for this session. Refresh the page to start a new chat.";
+const MAX_LOG_ENTRIES = 10;
 
 type Phase = "landing" | "chat";
 
@@ -41,11 +46,14 @@ export function useChatController(initialVideos: VideoItem[]) {
   const [suggestionChips, setSuggestionChips] = useState<string[]>([]);
   const [animateAct1Chips, setAnimateAct1Chips] = useState(false);
   const [hasShownAct1Chips, setHasShownAct1Chips] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const hasSentGreetingRef = useRef(false);
   const hasShownMegaCardRef = useRef(false);
+  const actionCountRef = useRef(0);
+  const limitMessageShownRef = useRef(false);
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -58,6 +66,24 @@ export function useChatController(initialVideos: VideoItem[]) {
   const setChipsOrFallback = useCallback((chips?: string[] | null) => {
     setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
   }, []);
+
+  const registerUserAction = useCallback(() => {
+    if (actionCountRef.current >= MAX_USER_ACTIONS) {
+      if (!limitMessageShownRef.current) {
+        appendMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: ACTION_LIMIT_MESSAGE,
+        });
+        limitMessageShownRef.current = true;
+      }
+      return false;
+    }
+
+    actionCountRef.current += 1;
+    setActionCount(actionCountRef.current);
+    return true;
+  }, [appendMessage]);
 
   const handleShowVideos = useCallback(
     (ids: string[]) => {
@@ -133,7 +159,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
     } finally {
@@ -212,6 +238,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     const trimmed = input.trim();
     if (!trimmed) return;
     if (isTyping || isRunningAct1) return;
+    if (!registerUserAction()) return;
 
     await runLandingSequence(trimmed);
   }
@@ -237,10 +264,12 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleShowVideos,
     setIsDarkMode,
     fallbackChips: FALLBACK_CHIPS,
+    registerUserAction,
   });
 
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
+    if (!registerUserAction()) return;
 
     const syntheticMessage =
       "<instructions> do not call any tools. do not repeat the title or client as they already appear on screen.. Provide one short, enthusiastic line reacting to their choice and keep the conversation moving. </instructions>";
@@ -256,7 +285,7 @@ export function useChatController(initialVideos: VideoItem[]) {
 
       applyTurnResponse(response);
       handleShowVideos([video.id]);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({
@@ -333,10 +362,12 @@ export function useChatController(initialVideos: VideoItem[]) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
 
-    setLog([
-      { role: "user", content: `generate for me: ${idea}` },
-      { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
-    ]);
+    setLog(
+      [
+        { role: "user", content: `generate for me: ${idea}` },
+        { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
+      ].slice(-MAX_LOG_ENTRIES),
+    );
 
     setSuggestionChips(ACT1_CHIPS);
     if (!hasShownAct1Chips) {
@@ -359,6 +390,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     if (!trimmed) return;
     if (isTyping || isRunningAct1) return;
     if (!hasRunLanding) return;
+    if (!registerUserAction()) return;
 
     const userMessage: Message = { id: crypto.randomUUID(), role: "user", text: trimmed };
     appendMessage(userMessage);
@@ -372,7 +404,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({
@@ -407,10 +439,16 @@ export function useChatController(initialVideos: VideoItem[]) {
     }, 300);
   };
 
+  const handleInputChange = useCallback((value: string) => {
+    setInput(value.slice(0, MAX_INPUT_CHARS));
+  }, []);
+
+  const hasReachedActionLimit = actionCount >= MAX_USER_ACTIONS;
+
   return {
     phase,
     input,
-    setInput,
+    setInput: handleInputChange,
     messages,
     isTyping,
     isRunningAct1,
@@ -420,6 +458,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     dots,
     scrollRef,
     videosById,
+    hasReachedActionLimit,
     handleLandingSubmit,
     handleSubmit,
     handleChipClick,

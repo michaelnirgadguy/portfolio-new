@@ -51,6 +51,7 @@ type UseVideoNudgesArgs = {
   handleShowVideos: (ids: string[]) => void;
   setIsDarkMode: (next: boolean) => void;
   fallbackChips: string[];
+  registerUserAction: () => boolean;
 };
 
 const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
@@ -131,6 +132,7 @@ export function useVideoNudges({
   handleShowVideos,
   setIsDarkMode,
   fallbackChips,
+  registerUserAction,
 }: UseVideoNudgesArgs) {
   const logRef = useRef(log);
   const typingRef = useRef(isTyping);
@@ -169,6 +171,7 @@ export function useVideoNudges({
   const runNudgeTurn = useCallback(
     async ({ userText, syntheticAfterUser }: NudgeTurn) => {
       if (typingRef.current || runningRef.current) return;
+      if (!registerUserAction()) return;
       setIsTyping(true);
       try {
         const {
@@ -207,7 +210,7 @@ export function useVideoNudges({
           handleShowVideos(ids);
         }
 
-        setLog(nextLog);
+        setLog(nextLog.slice(-10));
       } catch (err) {
         console.error(err);
       } finally {
@@ -220,6 +223,7 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
+      registerUserAction,
       setIsDarkMode,
       setIsTyping,
       setLog,

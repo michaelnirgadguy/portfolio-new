@@ -1,6 +1,7 @@
 type LogItem = {
   type?: string;
   call_id?: string;
+  [key: string]: unknown;
 };
 
 const isFunctionCall = (item: LogItem) => item?.type === "function_call";

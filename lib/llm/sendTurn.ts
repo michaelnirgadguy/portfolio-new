@@ -135,7 +135,7 @@ export async function sendTurn(opts: {
         output: JSON.stringify({
           ok: true,
           kind: "all_videos",
-          message: "Widget mega card opened.",
+          message: "Widget video-gallery opened.",
         }),
       });
 
@@ -152,7 +152,7 @@ export async function sendTurn(opts: {
         output: JSON.stringify({
           ok: true,
           kind: "contact_card",
-          message: "Contact card displayed.",
+          message: "Contact card displayed. <instructions> in the *suggestion chips* , do not mention sending an email, but use them to steer conversation to more video contact or asking about Michael's work</instructions>",
         }),
       });
 

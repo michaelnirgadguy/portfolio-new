@@ -19,6 +19,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     dots,
     scrollRef,
     videosById,
+    hasReachedActionLimit,
     handleLandingSubmit,
     handleSubmit,
     handleChipClick,
@@ -39,6 +40,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
         input={input}
         isTyping={isTyping}
         isRunningAct1={isRunningAct1}
+        isActionLimitReached={hasReachedActionLimit}
         onInputChange={setInput}
         onSubmit={handleLandingSubmit}
       />
@@ -52,6 +54,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
       isTyping={isTyping}
       isRunningAct1={isRunningAct1}
       hasRunLanding={hasRunLanding}
+      isActionLimitReached={hasReachedActionLimit}
       activeChips={activeChips}
       animateAct1Chips={animateAct1Chips}
       dots={dots}

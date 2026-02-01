@@ -80,7 +80,7 @@ const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
 const buildManualStopTurn = (videoId: string, seconds: number): NudgeTurn => ({
   userText: `<context> user paused\stopped the video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a witty comment about why you would also lose interest in that video, referencing its content </instructions>",
+    "<instructions> make a witty comment about why one would lose interest in that video, referencing its content </instructions>",
 });
 
 const buildMidpointTurn = (videoId: string): NudgeTurn => ({
@@ -98,7 +98,7 @@ const buildFinishedTurn = (videoId: string): NudgeTurn => ({
 const buildMuteTurn = (videoId: string): NudgeTurn => ({
   userText: `<context> user muted video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content </instructions>",
+    "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content. in the *suggestion chips* - DO NOT reference muting/un-muting </instructions>",
 });
 
 const buildScrubForwardTurn = (videoId: string, seconds: number): NudgeTurn => ({

@@ -459,7 +459,7 @@ export default function VideoPlayer({
       (entries) => {
         const entry = entries[0];
         if (!entry) return;
-        if (entry.intersectionRatio >= 0.5) return;
+        if (entry.intersectionRatio >= 0.2) return;
         if (!isPlayingRef.current) return;
 
         if (isBunny && bunnyPlayerRef.current?.pause) {
@@ -479,7 +479,7 @@ export default function VideoPlayer({
           );
         }
       },
-      { threshold: [0, 0.5, 1] }
+      { threshold: [0, 0.2, 1] }
     );
 
     observer.observe(target);

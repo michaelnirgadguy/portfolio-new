@@ -20,6 +20,7 @@ const MAX_INPUT_CHARS = 280;
 const MAX_USER_ACTIONS = 25;
 const ACTION_LIMIT_MESSAGE =
   "You've hit the 25-action limit for this session. Refresh the page to start a new chat.";
+const MAX_LOG_ENTRIES = 10;
 
 type Phase = "landing" | "chat";
 
@@ -158,7 +159,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
     } finally {
@@ -284,7 +285,7 @@ export function useChatController(initialVideos: VideoItem[]) {
 
       applyTurnResponse(response);
       handleShowVideos([video.id]);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({
@@ -361,10 +362,12 @@ export function useChatController(initialVideos: VideoItem[]) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     appendMessage({ id: crypto.randomUUID(), role: "assistant", text: ACT1_OFFER });
 
-    setLog([
-      { role: "user", content: `generate for me: ${idea}` },
-      { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
-    ]);
+    setLog(
+      [
+        { role: "user", content: `generate for me: ${idea}` },
+        { role: "assistant", content: JSON.stringify({ text: ACT1_OFFER, chips: ACT1_CHIPS }) },
+      ].slice(-MAX_LOG_ENTRIES),
+    );
 
     setSuggestionChips(ACT1_CHIPS);
     if (!hasShownAct1Chips) {
@@ -401,7 +404,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       });
 
       applyTurnResponse(response);
-      setLog(response.nextLog);
+      setLog(response.nextLog.slice(-MAX_LOG_ENTRIES));
     } catch (err) {
       console.error(err);
       appendMessage({

@@ -210,7 +210,7 @@ export function useVideoNudges({
           handleShowVideos(ids);
         }
 
-        setLog(nextLog);
+        setLog(nextLog.slice(-10));
       } catch (err) {
         console.error(err);
       } finally {

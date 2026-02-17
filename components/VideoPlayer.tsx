@@ -60,6 +60,7 @@ export default function VideoPlayer({
   const generatedId = useId();
   const resolvedPlayerId = playerId ?? generatedId;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const bunnyPlayerRef = useRef<any | null>(null);
 
   // Internal refs for Bunny player state
@@ -448,8 +449,47 @@ export default function VideoPlayer({
     };
   }, [emitGlobalPlay, isBunny, onEnded, onPlayingChange, resolvedPlayerId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const target = containerRef.current;
+    if (!target) return;
+    if (!("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        if (entry.intersectionRatio >= 0.2) return;
+        if (!isPlayingRef.current) return;
+
+        if (isBunny && bunnyPlayerRef.current?.pause) {
+          autoPausedRef.current = true;
+          bunnyPlayerRef.current.pause();
+          return;
+        }
+
+        if (!isBunny && iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({
+              event: "command",
+              func: "pauseVideo",
+              args: "",
+            }),
+            "*"
+          );
+        }
+      },
+      { threshold: [0, 0.2, 1] }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.disconnect();
+    };
+  }, [isBunny]);
+
   return (
-    <div className={`w-full ${className ?? ""}`}>
+    <div ref={containerRef} className={`w-full ${className ?? ""}`}>
       <div className="aspect-video overflow-hidden rounded-xl shadow">
         <iframe
           ref={iframeRef}

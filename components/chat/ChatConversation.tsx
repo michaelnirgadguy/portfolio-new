@@ -18,6 +18,7 @@ type ChatConversationProps = {
   isTyping: boolean;
   isRunningAct1: boolean;
   hasRunLanding: boolean;
+  isActionLimitReached: boolean;
   activeChips: string[];
   animateAct1Chips: boolean;
   dots: number;
@@ -43,6 +44,7 @@ export default function ChatConversation({
   isTyping,
   isRunningAct1,
   hasRunLanding,
+  isActionLimitReached,
   activeChips,
   animateAct1Chips,
   dots,
@@ -158,7 +160,8 @@ export default function ChatConversation({
                 key={chip}
                 type="button"
                 onClick={() => onChipClick(chip)}
-                className={`pointer-events-auto shrink-0 glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground ${animateAct1Chips ? "fade-in" : ""}`}
+                disabled={isTyping || isRunningAct1 || isActionLimitReached}
+                className={`pointer-events-auto shrink-0 glass-surface rounded-full px-3 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${animateAct1Chips ? "fade-in" : ""}`}
                 style={animateAct1Chips ? { animationDelay: `${index * 80}ms` } : undefined}
               >
                 {chip}
@@ -171,14 +174,15 @@ export default function ChatConversation({
               <input
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}
+                maxLength={280}
                 placeholder='Try "Show me a geeky video"'
-                disabled={isTyping || isRunningAct1}
+                disabled={isTyping || isRunningAct1 || isActionLimitReached}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />
               <Button
                 type="submit"
                 size="icon"
-                disabled={!hasRunLanding || isTyping || isRunningAct1}
+                disabled={!hasRunLanding || isTyping || isRunningAct1 || isActionLimitReached}
                 variant="outlineAccent"
                 className="shrink-0 border-transparent hover:border-[hsl(var(--accent))]"
               >

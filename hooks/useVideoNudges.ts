@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { compactLog } from "@/lib/llm/compactLog";
 import { sendTurn } from "@/lib/llm/sendTurn";
 import type { Message } from "@/types/message";
 
@@ -51,6 +52,7 @@ type UseVideoNudgesArgs = {
   handleShowVideos: (ids: string[]) => void;
   setIsDarkMode: (next: boolean) => void;
   fallbackChips: string[];
+  registerUserAction: () => boolean;
 };
 
 const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
@@ -79,7 +81,7 @@ const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
 const buildManualStopTurn = (videoId: string, seconds: number): NudgeTurn => ({
   userText: `<context> user paused\stopped the video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> make a witty comment about why you would also lose interest in that video, referencing its content </instructions>",
+    "<instructions> make a witty comment about why one would lose interest in that video, referencing its content </instructions>",
 });
 
 const buildMidpointTurn = (videoId: string): NudgeTurn => ({
@@ -97,7 +99,7 @@ const buildFinishedTurn = (videoId: string): NudgeTurn => ({
 const buildMuteTurn = (videoId: string): NudgeTurn => ({
   userText: `<context> user muted video ${videoId} </context>`,
   syntheticAfterUser:
-    "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content </instructions>",
+    "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content. in the *suggestion chips* - DO NOT reference muting/un-muting </instructions>",
 });
 
 const buildScrubForwardTurn = (videoId: string, seconds: number): NudgeTurn => ({
@@ -131,6 +133,7 @@ export function useVideoNudges({
   handleShowVideos,
   setIsDarkMode,
   fallbackChips,
+  registerUserAction,
 }: UseVideoNudgesArgs) {
   const logRef = useRef(log);
   const typingRef = useRef(isTyping);
@@ -153,6 +156,7 @@ export function useVideoNudges({
     pendingStopNudge: false,
   });
   const bingeVideoIdsRef = useRef<Set<string>>(new Set());
+  const muteStateByVideoIdRef = useRef<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     logRef.current = log;
@@ -169,6 +173,7 @@ export function useVideoNudges({
   const runNudgeTurn = useCallback(
     async ({ userText, syntheticAfterUser }: NudgeTurn) => {
       if (typingRef.current || runningRef.current) return;
+      if (!registerUserAction()) return;
       setIsTyping(true);
       try {
         const {
@@ -207,7 +212,7 @@ export function useVideoNudges({
           handleShowVideos(ids);
         }
 
-        setLog(nextLog);
+        setLog(compactLog(nextLog, 10));
       } catch (err) {
         console.error(err);
       } finally {
@@ -220,6 +225,7 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
+      registerUserAction,
       setIsDarkMode,
       setIsTyping,
       setLog,
@@ -255,7 +261,12 @@ export function useVideoNudges({
 
   const handleMutedChange = useCallback(
     (videoId: string, muted: boolean) => {
-      if (!muted) return;
+      const muteState = muteStateByVideoIdRef.current;
+      const previousMuted = muteState.get(videoId);
+      muteState.set(videoId, muted);
+      if (previousMuted !== false || !muted) {
+        return;
+      }
       handleSessionNudge("mute", videoId, () => buildMuteTurn(videoId));
     },
     [handleSessionNudge]

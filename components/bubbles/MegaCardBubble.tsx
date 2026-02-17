@@ -296,7 +296,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     autoScrollStoppedRef.current = false;
 
-    const speedPxPerSecond = 30;
+    const speedPxPerSecond = 20;
     let lastTimestamp: number | null = null;
 
     const tick = (timestamp: number) => {
@@ -385,7 +385,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                 className={`shrink-0 ${
                   block.type === "three"
                     ? "w-[24rem] sm:w-[30rem] lg:w-[36rem]"
-                    : "w-[17.4375rem] sm:w-[21.9375rem] lg:w-[26.4375rem]"
+                    : "w-[17.3125rem] sm:w-[21.8125rem] lg:w-[26.3125rem]"
                 }`}
               >
                 {block.type === "three" && (

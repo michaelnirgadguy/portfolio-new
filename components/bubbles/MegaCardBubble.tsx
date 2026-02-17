@@ -44,7 +44,7 @@ function MegaVideoTile({
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] via-[hsl(var(--foreground)/0.2)] to-transparent opacity-60 transition-opacity duration-200 group-hover:opacity-80 group-focus-visible:opacity-80" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 opacity-90 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-          <div className="bg-yellow-300 p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
+          <div className="bg-[hsl(var(--foreground)/0.62)] p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
             <p className="line-clamp-2">
             {video.title}
             </p>
@@ -296,9 +296,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     autoScrollStoppedRef.current = false;
 
-    const speedPxPerSecond = 30;
+    const speedPxPerSecond = 24;
     let lastTimestamp: number | null = null;
     let carry = 0;
+    let isAutoStartReady = false;
 
     const tick = (timestamp: number) => {
       if (autoScrollStoppedRef.current) {
@@ -323,13 +324,16 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       carry += speedPxPerSecond * (dt / 1000);
       const wholeStep = Math.floor(carry);
       carry -= wholeStep;
-      node.scrollLeft = Math.min(maxScroll, node.scrollLeft + Math.max(1, wholeStep));
+
+      if (wholeStep > 0) {
+        node.scrollLeft = Math.min(maxScroll, node.scrollLeft + wholeStep);
+      }
 
       autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
 
     const startAutoScroll = () => {
-      if (autoScrollStoppedRef.current || autoScrollFrameRef.current !== null) return;
+      if (!isAutoStartReady || autoScrollStoppedRef.current || autoScrollFrameRef.current !== null) return;
       lastTimestamp = null;
       carry = 0;
       autoScrollFrameRef.current = requestAnimationFrame(tick);
@@ -337,8 +341,9 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     // Delay auto-scroll so the card has a moment to settle before motion starts.
     const autoStartTimeout = window.setTimeout(() => {
+      isAutoStartReady = true;
       requestAnimationFrame(() => requestAnimationFrame(startAutoScroll));
-    }, 1000);
+    }, 2000);
 
     const stopEvents: Array<keyof HTMLElementEventMap> = ["wheel", "touchstart", "mousedown"];
     stopEvents.forEach((eventName) => {

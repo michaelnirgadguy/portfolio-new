@@ -36,12 +36,14 @@ function MegaVideoTile({
           alt={video.title}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-contain transition-transform duration-300 will-change-transform group-hover:scale-[1.02]"
+          className="h-full w-full object-cover opacity-95 transition duration-300 will-change-transform group-hover:scale-[1.015] group-hover:opacity-100 group-hover:contrast-105 group-focus-visible:scale-[1.015] group-focus-visible:opacity-100 group-focus-visible:contrast-105"
         />
-        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 bg-gradient-to-t from-[hsl(var(--foreground)/0.7)] via-transparent to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 opacity-0 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-          <div className="bg-[hsl(var(--foreground)/0.72)] p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] via-[hsl(var(--foreground)/0.2)] to-transparent opacity-60 transition-opacity duration-200 group-hover:opacity-80 group-focus-visible:opacity-80" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 opacity-90 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+          <div className="bg-[hsl(var(--foreground)/0.62)] p-3 text-sm font-medium leading-tight text-[hsl(var(--background))]">
+            <p className="line-clamp-2">
             {video.title}
+            </p>
           </div>
         </div>
       </div>

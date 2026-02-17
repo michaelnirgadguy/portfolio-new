@@ -68,8 +68,6 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   const momentumFrameRef = useRef<number | null>(null);
   const autoScrollFrameRef = useRef<number | null>(null);
   const autoScrollStoppedRef = useRef(false);
-  const autoScrollDirectionRef = useRef<1 | -1>(1);
-  const autoScrollLastTimeRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
   const releaseSuppressTimeoutRef = useRef<number | null>(null);
   const videos = videoIds
@@ -150,7 +148,6 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       cancelAnimationFrame(autoScrollFrameRef.current);
       autoScrollFrameRef.current = null;
     }
-    autoScrollLastTimeRef.current = null;
   };
 
   const stopAutoScroll = () => {
@@ -298,9 +295,9 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     }
 
     autoScrollStoppedRef.current = false;
-    autoScrollDirectionRef.current = 1;
 
-    const speedPxPerSecond = 12;
+    const cycleDurationMs = 90000;
+    const startTime = performance.now();
 
     const tick = (timestamp: number) => {
       if (autoScrollStoppedRef.current) {
@@ -308,24 +305,16 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
         return;
       }
 
-      const previous = autoScrollLastTimeRef.current ?? timestamp;
-      const dt = Math.max(timestamp - previous, 0);
-      autoScrollLastTimeRef.current = timestamp;
-
       const maxScroll = Math.max(node.scrollWidth - node.clientWidth, 0);
       if (maxScroll <= 1) {
         autoScrollFrameRef.current = requestAnimationFrame(tick);
         return;
       }
 
-      if (node.scrollLeft >= maxScroll - 1) {
-        autoScrollDirectionRef.current = -1;
-      } else if (node.scrollLeft <= 1) {
-        autoScrollDirectionRef.current = 1;
-      }
+      const normalized = ((timestamp - startTime) % cycleDurationMs) / cycleDurationMs;
+      const eased = (1 - Math.cos(normalized * Math.PI * 2)) / 2;
+      node.scrollLeft = eased * maxScroll;
 
-      const nextScrollLeft = node.scrollLeft + autoScrollDirectionRef.current * speedPxPerSecond * (dt / 1000);
-      node.scrollLeft = Math.min(maxScroll, Math.max(0, nextScrollLeft));
       autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
 
@@ -394,7 +383,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                 className={`shrink-0 ${
                   block.type === "three"
                     ? "w-[24rem] sm:w-[30rem] lg:w-[36rem]"
-                    : "w-[18rem] sm:w-[22.5rem] lg:w-[27rem]"
+                    : "w-[17.8125rem] sm:w-[22.3125rem] lg:w-[26.8125rem]"
                 }`}
               >
                 {block.type === "three" && (

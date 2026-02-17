@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent } from "react";
+import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { VideoItem } from "@/types/video";
 
@@ -20,15 +20,18 @@ type MegaBlock = {
 function MegaVideoTile({
   video,
   onSelect,
+  onPreventNativeDrag,
 }: {
   video: VideoItem;
-  onSelect?: (video: VideoItem) => void;
+  onSelect?: (video: VideoItem, event: MouseEvent<HTMLButtonElement>) => void;
+  onPreventNativeDrag?: (event: DragEvent<HTMLElement>) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onSelect?.(video)}
-      className="group w-full text-left transition focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
+      onClick={(event) => onSelect?.(video, event)}
+      onDragStart={onPreventNativeDrag}
+      className="group w-full select-none text-left transition outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]"
     >
       <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card aspect-video">
         <img
@@ -36,7 +39,9 @@ function MegaVideoTile({
           alt={video.title}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover opacity-95 transition duration-300 will-change-transform group-hover:scale-[1.015] group-hover:opacity-100 group-hover:contrast-105 group-focus-visible:scale-[1.015] group-focus-visible:opacity-100 group-focus-visible:contrast-105"
+          draggable={false}
+          onDragStart={onPreventNativeDrag}
+          className="h-full w-full select-none object-cover opacity-95 transition duration-300 will-change-transform group-hover:scale-[1.015] group-hover:opacity-100 group-hover:contrast-105 group-focus-visible:scale-[1.015] group-focus-visible:opacity-100 group-focus-visible:contrast-105 [user-select:none] [-webkit-user-drag:none]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] via-[hsl(var(--foreground)/0.2)] to-transparent opacity-60 transition-opacity duration-200 group-hover:opacity-80 group-focus-visible:opacity-80" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 opacity-90 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
@@ -54,8 +59,16 @@ function MegaVideoTile({
 export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: MegaCardBubbleProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const scrollStartRef = useRef(0);
+  const activePointerIdRef = useRef<number | null>(null);
+  const pendingDragRef = useRef(false);
+  const pointerStartXRef = useRef(0);
+  const lastPointerXRef = useRef(0);
+  const lastMoveTimeRef = useRef(0);
+  const velocityRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+  const momentumFrameRef = useRef<number | null>(null);
+  const suppressClickRef = useRef(false);
+  const releaseSuppressTimeoutRef = useRef<number | null>(null);
   const [scrollState, setScrollState] = useState({
     canScrollLeft: false,
     canScrollRight: false,
@@ -129,7 +142,34 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     videos.length === 2 ? "sm:grid-cols-2" : videos.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
   const isScrollableLayout = layoutMode === "threeScroll" || layoutMode === "mosaic";
 
-  const handleClick = (video: VideoItem) => {
+  const clearMomentum = () => {
+    if (momentumFrameRef.current !== null) {
+      cancelAnimationFrame(momentumFrameRef.current);
+      momentumFrameRef.current = null;
+    }
+  };
+
+  const releaseClickSuppression = () => {
+    if (releaseSuppressTimeoutRef.current !== null) {
+      window.clearTimeout(releaseSuppressTimeoutRef.current);
+      releaseSuppressTimeoutRef.current = null;
+    }
+    releaseSuppressTimeoutRef.current = window.setTimeout(() => {
+      suppressClickRef.current = false;
+      releaseSuppressTimeoutRef.current = null;
+    }, 40);
+  };
+
+  const preventNativeDrag = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+  };
+
+  const handleClick = (video: VideoItem, event: MouseEvent<HTMLButtonElement>) => {
+    if (suppressClickRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     onOpenVideo?.(video);
   };
 
@@ -141,32 +181,109 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement | null;
-    if (target?.closest("button")) {
+    if (event.pointerType === "mouse" && event.button !== 0) {
       return;
     }
+
     const node = scrollRef.current;
     if (!node) return;
-    isDraggingRef.current = true;
-    dragStartXRef.current = event.clientX;
-    scrollStartRef.current = node.scrollLeft;
-    node.setPointerCapture(event.pointerId);
+
+    clearMomentum();
+    activePointerIdRef.current = event.pointerId;
+    pendingDragRef.current = true;
+    isDraggingRef.current = false;
+    suppressClickRef.current = false;
+    dragDistanceRef.current = 0;
+    velocityRef.current = 0;
+    pointerStartXRef.current = event.clientX;
+    lastPointerXRef.current = event.clientX;
+    lastMoveTimeRef.current = performance.now();
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
+    if (activePointerIdRef.current !== event.pointerId) return;
+
     const node = scrollRef.current;
     if (!node) return;
-    const delta = event.clientX - dragStartXRef.current;
-    node.scrollLeft = scrollStartRef.current - delta;
+
+    const now = performance.now();
+    const deltaX = event.clientX - lastPointerXRef.current;
+    const movedFromStart = Math.abs(event.clientX - pointerStartXRef.current);
+
+    if (!isDraggingRef.current) {
+      if (!pendingDragRef.current || movedFromStart < 7) {
+        lastPointerXRef.current = event.clientX;
+        lastMoveTimeRef.current = now;
+        return;
+      }
+
+      isDraggingRef.current = true;
+      pendingDragRef.current = false;
+      suppressClickRef.current = true;
+      node.setPointerCapture(event.pointerId);
+    }
+
+    node.scrollLeft -= deltaX;
+    dragDistanceRef.current += Math.abs(deltaX);
+
+    const dt = Math.max(now - lastMoveTimeRef.current, 1);
+    const instantaneousVelocity = deltaX / dt;
+    velocityRef.current = velocityRef.current * 0.7 + instantaneousVelocity * 0.3;
+
+    lastPointerXRef.current = event.clientX;
+    lastMoveTimeRef.current = now;
   };
 
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+  const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
     const node = scrollRef.current;
     if (!node) return;
+    if (activePointerIdRef.current !== event.pointerId) return;
+
+    const wasDragging = isDraggingRef.current;
     isDraggingRef.current = false;
-    node.releasePointerCapture(event.pointerId);
+    pendingDragRef.current = false;
+    activePointerIdRef.current = null;
+
+    if (node.hasPointerCapture(event.pointerId)) {
+      node.releasePointerCapture(event.pointerId);
+    }
+
+    if (!wasDragging) {
+      suppressClickRef.current = false;
+      velocityRef.current = 0;
+      return;
+    }
+
+    const minVelocity = 0.02;
+    let momentumVelocity = velocityRef.current;
+
+    if (Math.abs(momentumVelocity) > minVelocity) {
+      const decay = 0.94;
+      const stepMomentum = () => {
+        momentumVelocity *= decay;
+        if (Math.abs(momentumVelocity) < minVelocity) {
+          momentumFrameRef.current = null;
+          releaseClickSuppression();
+          return;
+        }
+        node.scrollLeft -= momentumVelocity * 16;
+        momentumFrameRef.current = requestAnimationFrame(stepMomentum);
+      };
+      momentumFrameRef.current = requestAnimationFrame(stepMomentum);
+      return;
+    }
+
+    releaseClickSuppression();
   };
+
+  useEffect(() => {
+    return () => {
+      clearMomentum();
+      if (releaseSuppressTimeoutRef.current !== null) {
+        window.clearTimeout(releaseSuppressTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -237,7 +354,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
           <div className="px-6 pb-5 pt-5">
             <div className={`grid gap-4 ${compactColumns} grid-cols-1`}>
               {videos.map((video) => (
-                <MegaVideoTile key={video.id} video={video} onSelect={handleClick} />
+                <MegaVideoTile key={video.id} video={video} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
               ))}
             </div>
           </div>
@@ -246,13 +363,14 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
             ref={scrollRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing"
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onDragStartCapture={preventNativeDrag}
+            className="no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 cursor-grab active:cursor-grabbing [touch-action:pan-y]"
           >
             {videos.map((video) => (
               <div key={video.id} className="shrink-0 w-[18rem] sm:w-[22rem] lg:w-[26rem]">
-                <MegaVideoTile video={video} onSelect={handleClick} />
+                <MegaVideoTile video={video} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
               </div>
             ))}
           </div>
@@ -261,9 +379,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
             ref={scrollRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            className={`no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 scroll-smooth cursor-grab active:cursor-grabbing ${
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onDragStartCapture={preventNativeDrag}
+            className={`no-scrollbar flex gap-4 overflow-x-auto px-6 pb-5 pt-5 cursor-grab active:cursor-grabbing [touch-action:pan-y] ${
               videos.length === 5 ? "justify-center" : ""
             }`}
           >
@@ -280,10 +399,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                   <div className="grid gap-3">
                     {block.layout === "bigTop" ? (
                       <>
-                        <MegaVideoTile video={block.items[2]} onSelect={handleClick} />
+                        <MegaVideoTile video={block.items[2]} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                         <div className="grid grid-cols-2 gap-3">
                           {block.items.slice(0, 2).map((video) => (
-                            <MegaVideoTile key={video.id} video={video} onSelect={handleClick} />
+                            <MegaVideoTile key={video.id} video={video} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                           ))}
                         </div>
                       </>
@@ -291,10 +410,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                       <>
                         <div className="grid grid-cols-2 gap-3">
                           {block.items.slice(0, 2).map((video) => (
-                            <MegaVideoTile key={video.id} video={video} onSelect={handleClick} />
+                            <MegaVideoTile key={video.id} video={video} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                           ))}
                         </div>
-                        <MegaVideoTile video={block.items[2]} onSelect={handleClick} />
+                        <MegaVideoTile video={block.items[2]} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                       </>
                     )}
                   </div>
@@ -303,13 +422,13 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                   <div className="grid gap-3">
                     {block.items.map((video) => (
                       <div key={video.id}>
-                        <MegaVideoTile video={video} onSelect={handleClick} />
+                        <MegaVideoTile video={video} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                       </div>
                     ))}
                   </div>
                 )}
                 {block.type === "single" && (
-                  <MegaVideoTile video={block.items[0]} onSelect={handleClick} />
+                  <MegaVideoTile video={block.items[0]} onSelect={handleClick} onPreventNativeDrag={preventNativeDrag} />
                 )}
               </div>
             ))}

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { VideoItem } from "@/types/video";
 
 type MegaCardBubbleProps = {
@@ -41,7 +40,7 @@ function MegaVideoTile({
           decoding="async"
           draggable={false}
           onDragStart={onPreventNativeDrag}
-          className="h-full w-full select-none object-cover opacity-95 transition duration-300 will-change-transform group-hover:scale-[1.015] group-hover:opacity-100 group-hover:contrast-105 group-focus-visible:scale-[1.015] group-focus-visible:opacity-100 group-focus-visible:contrast-105 [user-select:none] [-webkit-user-drag:none]"
+          className="h-full w-full select-none object-cover opacity-95 transition-[transform,opacity,filter] duration-[2400ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-hover:scale-[1.08] group-hover:opacity-100 group-hover:contrast-110 group-focus-visible:scale-[1.08] group-focus-visible:opacity-100 group-focus-visible:contrast-110 [user-select:none] [-webkit-user-drag:none]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[hsl(var(--foreground)/0.6)] via-[hsl(var(--foreground)/0.2)] to-transparent opacity-60 transition-opacity duration-200 group-hover:opacity-80 group-focus-visible:opacity-80" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 opacity-90 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
@@ -67,14 +66,12 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   const velocityRef = useRef(0);
   const dragDistanceRef = useRef(0);
   const momentumFrameRef = useRef<number | null>(null);
+  const autoScrollFrameRef = useRef<number | null>(null);
+  const autoScrollStoppedRef = useRef(false);
+  const autoScrollDirectionRef = useRef<1 | -1>(1);
+  const autoScrollLastTimeRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
   const releaseSuppressTimeoutRef = useRef<number | null>(null);
-  const [scrollState, setScrollState] = useState({
-    canScrollLeft: false,
-    canScrollRight: false,
-    hasOverflow: false,
-  });
-
   const videos = videoIds
     .map((id) => videosById.get(id))
     .filter(Boolean) as VideoItem[];
@@ -137,7 +134,6 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   }, [videos]);
 
   const layoutMode = videos.length === 3 ? "threeScroll" : videos.length <= 4 ? "compact" : "mosaic";
-  const isCompactLayout = layoutMode === "compact";
   const compactColumns =
     videos.length === 2 ? "sm:grid-cols-2" : videos.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
   const isScrollableLayout = layoutMode === "threeScroll" || layoutMode === "mosaic";
@@ -147,6 +143,19 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       cancelAnimationFrame(momentumFrameRef.current);
       momentumFrameRef.current = null;
     }
+  };
+
+  const clearAutoScroll = () => {
+    if (autoScrollFrameRef.current !== null) {
+      cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+    autoScrollLastTimeRef.current = null;
+  };
+
+  const stopAutoScroll = () => {
+    autoScrollStoppedRef.current = true;
+    clearAutoScroll();
   };
 
   const releaseClickSuppression = () => {
@@ -173,13 +182,6 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     onOpenVideo?.(video);
   };
 
-  const handleScroll = (direction: "left" | "right") => {
-    const node = scrollRef.current;
-    if (!node) return;
-    const offset = Math.round(node.clientWidth * 0.7);
-    node.scrollBy({ left: direction === "left" ? -offset : offset, behavior: "smooth" });
-  };
-
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) {
       return;
@@ -188,6 +190,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     const node = scrollRef.current;
     if (!node) return;
 
+    stopAutoScroll();
     clearMomentum();
     activePointerIdRef.current = event.pointerId;
     pendingDragRef.current = true;
@@ -278,6 +281,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
   useEffect(() => {
     return () => {
+      clearAutoScroll();
       clearMomentum();
       if (releaseSuppressTimeoutRef.current !== null) {
         window.clearTimeout(releaseSuppressTimeoutRef.current);
@@ -285,34 +289,58 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     };
   }, []);
 
+
   useEffect(() => {
     const node = scrollRef.current;
     if (!node || !isScrollableLayout) {
-      setScrollState({ canScrollLeft: false, canScrollRight: false, hasOverflow: false });
+      clearAutoScroll();
       return;
     }
 
-    const updateScrollState = () => {
-      const maxScroll = node.scrollWidth - node.clientWidth;
-      const hasOverflow = maxScroll > 1;
-      setScrollState({
-        canScrollLeft: node.scrollLeft > 1,
-        canScrollRight: node.scrollLeft < maxScroll - 1,
-        hasOverflow,
-      });
+    autoScrollStoppedRef.current = false;
+    autoScrollDirectionRef.current = 1;
+
+    const speedPxPerSecond = 12;
+
+    const tick = (timestamp: number) => {
+      if (autoScrollStoppedRef.current) {
+        autoScrollFrameRef.current = null;
+        return;
+      }
+
+      const previous = autoScrollLastTimeRef.current ?? timestamp;
+      const dt = Math.max(timestamp - previous, 0);
+      autoScrollLastTimeRef.current = timestamp;
+
+      const maxScroll = Math.max(node.scrollWidth - node.clientWidth, 0);
+      if (maxScroll <= 1) {
+        autoScrollFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (node.scrollLeft >= maxScroll - 1) {
+        autoScrollDirectionRef.current = -1;
+      } else if (node.scrollLeft <= 1) {
+        autoScrollDirectionRef.current = 1;
+      }
+
+      const nextScrollLeft = node.scrollLeft + autoScrollDirectionRef.current * speedPxPerSecond * (dt / 1000);
+      node.scrollLeft = Math.min(maxScroll, Math.max(0, nextScrollLeft));
+      autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
 
-    updateScrollState();
-    node.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
+    autoScrollFrameRef.current = requestAnimationFrame(tick);
 
-    const resizeObserver = new ResizeObserver(updateScrollState);
-    resizeObserver.observe(node);
+    const stopEvents: Array<keyof HTMLElementEventMap> = ["wheel", "touchstart", "mousedown"];
+    stopEvents.forEach((eventName) => {
+      node.addEventListener(eventName, stopAutoScroll, { passive: true });
+    });
 
     return () => {
-      node.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-      resizeObserver.disconnect();
+      stopEvents.forEach((eventName) => {
+        node.removeEventListener(eventName, stopAutoScroll);
+      });
+      clearAutoScroll();
     };
   }, [isScrollableLayout, videos.length]);
 
@@ -324,32 +352,6 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   return (
     <div className={wrapperClassName}>
       <div className="relative rounded-2xl border border-border bg-card shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
-        {scrollState.canScrollLeft && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[hsl(var(--card))] via-[hsl(var(--card)/0.75)] to-transparent" />
-        )}
-        {scrollState.canScrollRight && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[hsl(var(--card))] via-[hsl(var(--card)/0.75)] to-transparent" />
-        )}
-        {scrollState.canScrollLeft && (
-          <button
-            type="button"
-            onClick={() => handleScroll("left")}
-            className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full border border-border bg-card/90 text-foreground shadow-sm transition hover:scale-105"
-            aria-label="Scroll mega card left"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-        )}
-        {scrollState.canScrollRight && (
-          <button
-            type="button"
-            onClick={() => handleScroll("right")}
-            className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full border border-border bg-card/90 text-foreground shadow-sm transition hover:scale-105"
-            aria-label="Scroll mega card right"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        )}
         {layoutMode === "compact" ? (
           <div className="px-6 pb-5 pt-5">
             <div className={`grid gap-4 ${compactColumns} grid-cols-1`}>
@@ -392,7 +394,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                 className={`shrink-0 ${
                   block.type === "three"
                     ? "w-[24rem] sm:w-[30rem] lg:w-[36rem]"
-                    : "w-[18rem] sm:w-[22rem] lg:w-[26rem]"
+                    : "w-[18rem] sm:w-[22.5rem] lg:w-[27rem]"
                 }`}
               >
                 {block.type === "three" && (

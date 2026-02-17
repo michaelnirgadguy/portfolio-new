@@ -301,6 +301,16 @@
   display: none;
 }
 
+
+@keyframes megaTileBreath {
+  0% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.14);
+  }
+}
+
 @keyframes chat-pill-sweep {
   to {
     --chat-pill-angle: 360deg;

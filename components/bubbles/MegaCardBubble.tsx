@@ -296,7 +296,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     autoScrollStoppedRef.current = false;
 
-    const speedPxPerSecond = 72;
+    const speedPxPerSecond = 30;
     let lastTimestamp: number | null = null;
     let carry = 0;
 
@@ -335,8 +335,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
 
-    // Allow layout/images to settle first so we always get the correct scroll width.
-    requestAnimationFrame(() => requestAnimationFrame(startAutoScroll));
+    // Delay auto-scroll so the card has a moment to settle before motion starts.
+    const autoStartTimeout = window.setTimeout(() => {
+      requestAnimationFrame(() => requestAnimationFrame(startAutoScroll));
+    }, 1000);
 
     const stopEvents: Array<keyof HTMLElementEventMap> = ["wheel", "touchstart", "mousedown"];
     stopEvents.forEach((eventName) => {
@@ -357,6 +359,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       stopEvents.forEach((eventName) => {
         node.removeEventListener(eventName, stopAutoScroll);
       });
+      window.clearTimeout(autoStartTimeout);
       resizeObserver.disconnect();
       imageNodes.forEach((imageNode) => {
         imageNode.removeEventListener("load", startAutoScroll);

@@ -66,7 +66,9 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
   const dragDistanceRef = useRef(0);
   const momentumFrameRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
-  const releaseSuppressTimeoutRef = useRef<number | null>(null);
+  const dragThresholdPx = 6;
+  const clickSuppressWindowMs = 220;
+  const clickSuppressUntilRef = useRef(0);
   const [scrollState, setScrollState] = useState({
     canScrollLeft: false,
     canScrollRight: false,
@@ -147,23 +149,12 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     }
   };
 
-  const releaseClickSuppression = () => {
-    if (releaseSuppressTimeoutRef.current !== null) {
-      window.clearTimeout(releaseSuppressTimeoutRef.current);
-      releaseSuppressTimeoutRef.current = null;
-    }
-    releaseSuppressTimeoutRef.current = window.setTimeout(() => {
-      suppressClickRef.current = false;
-      releaseSuppressTimeoutRef.current = null;
-    }, 40);
-  };
-
   const preventNativeDrag = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
   };
 
   const handleClick = (video: VideoItem, event: MouseEvent<HTMLButtonElement>) => {
-    if (suppressClickRef.current) {
+    if (suppressClickRef.current || performance.now() < clickSuppressUntilRef.current) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -201,7 +192,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
     node.scrollLeft -= deltaX;
 
     dragDistanceRef.current += Math.abs(deltaX);
-    if (dragDistanceRef.current > 6) {
+    if (dragDistanceRef.current > dragThresholdPx) {
       suppressClickRef.current = true;
     }
 
@@ -225,6 +216,10 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       node.releasePointerCapture(event.pointerId);
     }
 
+    if (dragDistanceRef.current > dragThresholdPx) {
+      clickSuppressUntilRef.current = performance.now() + clickSuppressWindowMs;
+    }
+
     const minVelocity = 0.02;
     let momentumVelocity = velocityRef.current;
 
@@ -234,7 +229,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
         momentumVelocity *= decay;
         if (Math.abs(momentumVelocity) < minVelocity) {
           momentumFrameRef.current = null;
-          releaseClickSuppression();
+          suppressClickRef.current = false;
           return;
         }
         node.scrollLeft -= momentumVelocity * 16;
@@ -244,15 +239,12 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       return;
     }
 
-    releaseClickSuppression();
+    suppressClickRef.current = false;
   };
 
   useEffect(() => {
     return () => {
       clearMomentum();
-      if (releaseSuppressTimeoutRef.current !== null) {
-        window.clearTimeout(releaseSuppressTimeoutRef.current);
-      }
     };
   }, []);
 

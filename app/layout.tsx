@@ -1,6 +1,6 @@
 import "./globals.css";
 
-import LiquidEtherBackground from "@/components/backgrounds/LiquidEtherBackground";
+import BackgroundRuntime from "@/components/BackgroundRuntime";
 
 export default function RootLayout({
   children,
@@ -10,9 +10,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground">
-        <LiquidEtherBackground />
-        {/* Let pages decide about headers / chrome */}
-        <main className="relative z-10 min-h-screen">{children}</main>
+        <BackgroundRuntime>{children}</BackgroundRuntime>
       </body>
     </html>
   );

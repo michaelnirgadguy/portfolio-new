@@ -296,8 +296,9 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     autoScrollStoppedRef.current = false;
 
-    const speedPxPerSecond = 20;
+    const speedPxPerSecond = 72;
     let lastTimestamp: number | null = null;
+    let carry = 0;
 
     const tick = (timestamp: number) => {
       if (autoScrollStoppedRef.current) {
@@ -306,7 +307,12 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       }
 
       const maxScroll = Math.max(node.scrollWidth - node.clientWidth, 0);
-      if (maxScroll <= 1 || node.scrollLeft >= maxScroll - 0.5) {
+      if (maxScroll <= 1) {
+        autoScrollFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (node.scrollLeft >= maxScroll - 0.5) {
         node.scrollLeft = maxScroll;
         autoScrollFrameRef.current = null;
         return;
@@ -314,22 +320,46 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
       const dt = lastTimestamp === null ? 16 : Math.min(timestamp - lastTimestamp, 32);
       lastTimestamp = timestamp;
-      const next = Math.min(maxScroll, node.scrollLeft + speedPxPerSecond * (dt / 1000));
-      node.scrollLeft = next;
+      carry += speedPxPerSecond * (dt / 1000);
+      const wholeStep = Math.floor(carry);
+      carry -= wholeStep;
+      node.scrollLeft = Math.min(maxScroll, node.scrollLeft + Math.max(1, wholeStep));
 
       autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
 
-    autoScrollFrameRef.current = requestAnimationFrame(tick);
+    const startAutoScroll = () => {
+      if (autoScrollStoppedRef.current || autoScrollFrameRef.current !== null) return;
+      lastTimestamp = null;
+      carry = 0;
+      autoScrollFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    // Allow layout/images to settle first so we always get the correct scroll width.
+    requestAnimationFrame(() => requestAnimationFrame(startAutoScroll));
 
     const stopEvents: Array<keyof HTMLElementEventMap> = ["wheel", "touchstart", "mousedown"];
     stopEvents.forEach((eventName) => {
       node.addEventListener(eventName, stopAutoScroll, { passive: true });
     });
 
+    const resizeObserver = new ResizeObserver(() => {
+      startAutoScroll();
+    });
+    resizeObserver.observe(node);
+
+    const imageNodes = Array.from(node.querySelectorAll("img"));
+    imageNodes.forEach((imageNode) => {
+      imageNode.addEventListener("load", startAutoScroll, { once: true });
+    });
+
     return () => {
       stopEvents.forEach((eventName) => {
         node.removeEventListener(eventName, stopAutoScroll);
+      });
+      resizeObserver.disconnect();
+      imageNodes.forEach((imageNode) => {
+        imageNode.removeEventListener("load", startAutoScroll);
       });
       clearAutoScroll();
     };

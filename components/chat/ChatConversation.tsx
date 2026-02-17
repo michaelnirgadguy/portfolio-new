@@ -111,7 +111,7 @@ export default function ChatConversation({
       return (
         <div className="flex w-full justify-end">
           <div className="max-w-[75%]">
-            <div className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-strong)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]">
+            <div className="px-4 py-2 rounded-[var(--radius)] whitespace-pre-wrap leading-relaxed border shadow-[var(--bubble-shadow-soft)] bg-[linear-gradient(145deg,hsl(var(--bubble-user-from)),hsl(var(--bubble-user-to)))] border-[hsl(var(--bubble-user-border))] text-[hsl(var(--bubble-user-foreground))]">
               {msg.text}
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function ChatConversation({
           </div>
 
           <form onSubmit={onSubmit} className="pointer-events-auto w-full max-w-3xl ml-auto mr-auto">
-            <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
+            <div className="glass-surface mx-auto flex items-center gap-2 rounded-[var(--radius)] px-3 py-2">
               <input
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}

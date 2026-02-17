@@ -17,8 +17,8 @@
   --card: 0 0% 100%;
   --card-foreground: 0 0% 9%;
 
-  --border: 214 32% 92%;
-  --input: 214 32% 92%;
+  --border: 214 24% 90%;
+  --input: 214 24% 90%;
 
   --primary: 0 0% 9%;
   --primary-foreground: 210 40% 98%;
@@ -43,18 +43,18 @@
   --surface-border-strong: 267 100% 77% / 0.45;
 
   /* Chat bubble tokens */
-  --bubble-assistant-from: 210 26% 98% / 0.94;
-  --bubble-assistant-to: 210 24% 94% / 0.9;
-  --bubble-assistant-border: 214 26% 86% / 0.95;
+  --bubble-assistant-from: 210 24% 97% / 0.95;
+  --bubble-assistant-to: 210 22% 95% / 0.93;
+  --bubble-assistant-border: 214 20% 88% / 0.82;
   --bubble-assistant-foreground: 0 0% 9%;
 
-  --bubble-user-from: 267 96% 81% / 0.96;
-  --bubble-user-to: 267 90% 72% / 0.95;
-  --bubble-user-border: 267 76% 68% / 0.85;
+  --bubble-user-from: 265 45% 95% / 0.95;
+  --bubble-user-to: 265 42% 93% / 0.93;
+  --bubble-user-border: 265 30% 85% / 0.78;
   --bubble-user-foreground: 0 0% 9%;
 
-  --bubble-shadow-soft: 0 12px 32px rgba(15, 23, 42, 0.12);
-  --bubble-shadow-strong: 0 16px 42px rgba(15, 23, 42, 0.16);
+  --bubble-shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.09);
+  --bubble-shadow-strong: 0 8px 20px rgba(15, 23, 42, 0.09);
 
   /* Background veil over hero image */
   --background-veil-strong: 0 0% 99%;
@@ -79,8 +79,8 @@
   --card: 0 0% 9%;
   --card-foreground: 210 20% 98%;
 
-  --border: 223 13% 18%;
-  --input: 223 13% 18%;
+  --border: 223 12% 24%;
+  --input: 223 12% 24%;
 
   --primary: 210 20% 98%;
   --primary-foreground: 0 0% 9%;
@@ -101,18 +101,18 @@
   --surface-border-soft: 223 16% 32% / 0.45;
   --surface-border-strong: 267 80% 78% / 0.5;
 
-  --bubble-assistant-from: 224 16% 12% / 0.9;
+  --bubble-assistant-from: 224 14% 14% / 0.9;
   --bubble-assistant-to: 224 14% 16% / 0.9;
-  --bubble-assistant-border: 223 16% 32% / 0.65;
+  --bubble-assistant-border: 223 14% 30% / 0.5;
   --bubble-assistant-foreground: 210 20% 98%;
 
-  --bubble-user-from: 267 78% 70% / 0.94;
-  --bubble-user-to: 267 72% 60% / 0.94;
-  --bubble-user-border: 267 80% 78% / 0.6;
+  --bubble-user-from: 266 28% 21% / 0.92;
+  --bubble-user-to: 266 26% 24% / 0.92;
+  --bubble-user-border: 266 20% 34% / 0.5;
   --bubble-user-foreground: 210 20% 98%;
 
-  --bubble-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.38);
-  --bubble-shadow-strong: 0 16px 42px rgba(0, 0, 0, 0.46);
+  --bubble-shadow-soft: 0 8px 20px rgba(0, 0, 0, 0.34);
+  --bubble-shadow-strong: 0 8px 20px rgba(0, 0, 0, 0.34);
 
   --background-veil-strong: 0 0% 6%;
   --background-veil-strong-alpha: 0.55;

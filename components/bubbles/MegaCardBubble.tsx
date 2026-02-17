@@ -30,7 +30,7 @@ function MegaVideoTile({
       onClick={() => onSelect?.(video)}
       className="group w-full text-left transition focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
     >
-      <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card aspect-video">
+      <div className="relative w-full overflow-hidden rounded-[var(--radius)] border border-border bg-card aspect-video">
         <img
           src={video.thumbnail}
           alt={video.title}
@@ -68,7 +68,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
   if (!videos.length) {
     return (
-      <div className="w-full rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+      <div className="w-full rounded-[var(--radius)] border border-border bg-card p-4 text-sm text-muted-foreground">
         No videos to show.
       </div>
     );
@@ -206,7 +206,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
   return (
     <div className={wrapperClassName}>
-      <div className="relative rounded-2xl border border-border bg-card shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+      <div className="relative rounded-[var(--radius)] border border-border bg-card shadow-[var(--shadow-sm)]">
         {scrollState.canScrollLeft && (
           <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[hsl(var(--card))] via-[hsl(var(--card)/0.75)] to-transparent" />
         )}

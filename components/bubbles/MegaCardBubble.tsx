@@ -31,7 +31,7 @@ function MegaVideoTile({
       type="button"
       onClick={(event) => onSelect?.(video, event)}
       onDragStart={onPreventNativeDrag}
-      className="group w-full select-none text-left transition focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
+      className="group w-full select-none text-left transition outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]"
     >
       <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card aspect-video">
         <img

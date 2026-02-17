@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
 import LiquidEther from "@/components/backgrounds/LiquidEther";
 
 type HslColor = {
@@ -81,8 +80,23 @@ function Label({
 }
 
 export default function LiquidEtherBackground() {
-  const searchParams = useSearchParams();
-  const isDesignMode = searchParams.get("mode") === "design";
+  const [isDesignMode, setIsDesignMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncDesignModeFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      setIsDesignMode(params.get("mode") === "design");
+    };
+
+    syncDesignModeFromUrl();
+    window.addEventListener("popstate", syncDesignModeFromUrl);
+
+    return () => {
+      window.removeEventListener("popstate", syncDesignModeFromUrl);
+    };
+  }, []);
   const [cssState, setCssState] = useState(defaultCssState);
   const [liquidState, setLiquidState] = useState(defaultLiquidState);
 

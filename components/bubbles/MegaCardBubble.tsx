@@ -296,8 +296,8 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
 
     autoScrollStoppedRef.current = false;
 
-    const cycleDurationMs = 90000;
-    const startTime = performance.now();
+    const speedPxPerSecond = 30;
+    let lastTimestamp: number | null = null;
 
     const tick = (timestamp: number) => {
       if (autoScrollStoppedRef.current) {
@@ -306,14 +306,16 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
       }
 
       const maxScroll = Math.max(node.scrollWidth - node.clientWidth, 0);
-      if (maxScroll <= 1) {
-        autoScrollFrameRef.current = requestAnimationFrame(tick);
+      if (maxScroll <= 1 || node.scrollLeft >= maxScroll - 0.5) {
+        node.scrollLeft = maxScroll;
+        autoScrollFrameRef.current = null;
         return;
       }
 
-      const normalized = ((timestamp - startTime) % cycleDurationMs) / cycleDurationMs;
-      const eased = (1 - Math.cos(normalized * Math.PI * 2)) / 2;
-      node.scrollLeft = eased * maxScroll;
+      const dt = lastTimestamp === null ? 16 : Math.min(timestamp - lastTimestamp, 32);
+      lastTimestamp = timestamp;
+      const next = Math.min(maxScroll, node.scrollLeft + speedPxPerSecond * (dt / 1000));
+      node.scrollLeft = next;
 
       autoScrollFrameRef.current = requestAnimationFrame(tick);
     };
@@ -383,7 +385,7 @@ export default function MegaCardBubble({ videoIds, videosById, onOpenVideo }: Me
                 className={`shrink-0 ${
                   block.type === "three"
                     ? "w-[24rem] sm:w-[30rem] lg:w-[36rem]"
-                    : "w-[17.8125rem] sm:w-[22.3125rem] lg:w-[26.8125rem]"
+                    : "w-[17.4375rem] sm:w-[21.9375rem] lg:w-[26.4375rem]"
                 }`}
               >
                 {block.type === "three" && (

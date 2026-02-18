@@ -187,6 +187,52 @@
   .meta-secondary { @apply text-base text-muted-foreground; }  /* client */
   .meta-tertiary  { @apply text-sm  text-muted-foreground; }  /* credits */
 
+  .suggestion-chip {
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border) / 0.55);
+    background: hsl(var(--background) / 0.82);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.1;
+    color: hsl(var(--foreground) / 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 10px -10px hsl(var(--foreground) / 0.4);
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .suggestion-chip:hover {
+    border-color: hsl(var(--accent) / 0.65);
+    background: hsl(var(--muted) / 0.72);
+    color: hsl(var(--foreground));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px -8px hsl(var(--foreground) / 0.35);
+  }
+
+  .suggestion-chip:focus-visible {
+    outline: none;
+    border-color: hsl(var(--accent) / 0.75);
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--accent) / 0.35);
+  }
+
+  .dark .suggestion-chip {
+    border-color: hsl(var(--border) / 0.72);
+    background: hsl(var(--background) / 0.84);
+    box-shadow: none;
+  }
+
+  .dark .suggestion-chip:hover {
+    border-color: hsl(var(--accent) / 0.62);
+    background: hsl(var(--muted) / 0.78);
+    box-shadow: none;
+  }
+
 }
 
 /* 4) Subtle motion (respect reduce-motion) */

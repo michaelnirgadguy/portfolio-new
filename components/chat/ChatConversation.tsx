@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, RefObject } from "react";
+import { FormEvent, RefObject, useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -63,6 +63,15 @@ export default function ChatConversation({
   onScrubBackward,
   onStoppedEarly,
 }: ChatConversationProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const isInputDisabled = isTyping || isRunningAct1 || isActionLimitReached;
+
+  useEffect(() => {
+    if (!isInputDisabled) {
+      inputRef.current?.focus();
+    }
+  }, [isInputDisabled]);
+
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
       return <SystemLogBubble text={msg.text} />;
@@ -157,11 +166,13 @@ export default function ChatConversation({
           <form onSubmit={onSubmit} className="pointer-events-auto mx-auto w-full max-w-3xl">
             <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
               <input
+                ref={inputRef}
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}
                 maxLength={280}
+                autoFocus
                 placeholder='Try "Show me a geeky video"'
-                disabled={isTyping || isRunningAct1 || isActionLimitReached}
+                disabled={isInputDisabled}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />
               <Button

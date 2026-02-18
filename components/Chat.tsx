@@ -21,6 +21,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     videosById,
     hasReachedActionLimit,
     handleLandingSubmit,
+    handleLandingChipClick,
     handleSubmit,
     handleChipClick,
     handleOpenVideo,
@@ -43,6 +44,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
         isActionLimitReached={hasReachedActionLimit}
         onInputChange={setInput}
         onSubmit={handleLandingSubmit}
+        onChipClick={handleLandingChipClick}
       />
     );
   }

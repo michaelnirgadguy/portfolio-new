@@ -234,15 +234,34 @@ export function useChatController(initialVideos: VideoItem[]) {
     return () => clearTimeout(timeout);
   }, [animateAct1Chips]);
 
+  const submitLandingIdea = useCallback(
+    async (idea: string) => {
+      const trimmed = idea.trim();
+      if (!trimmed) return;
+      if (isTyping || isRunningAct1) return;
+      if (!registerUserAction()) return;
+
+      await runLandingSequence(trimmed);
+    },
+    [isRunningAct1, isTyping, registerUserAction],
+  );
+
   async function handleLandingSubmit(event: FormEvent) {
     event.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    if (isTyping || isRunningAct1) return;
-    if (!registerUserAction()) return;
-
-    await runLandingSequence(trimmed);
+    await submitLandingIdea(input);
   }
+
+  const handleLandingChipClick = useCallback(
+    (chip: string) => {
+      if (isTyping || isRunningAct1) return;
+
+      setInput(chip);
+      setTimeout(() => {
+        submitLandingIdea(chip);
+      }, 300);
+    },
+    [isRunningAct1, isTyping, submitLandingIdea],
+  );
 
   const {
     handleMutedChange,
@@ -464,6 +483,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     videosById,
     hasReachedActionLimit,
     handleLandingSubmit,
+    handleLandingChipClick,
     handleSubmit,
     handleChipClick,
     handleOpenVideo,

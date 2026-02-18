@@ -13,10 +13,11 @@ import type { VideoItem } from "@/types/video";
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
 const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
+const DIRECT_GREETING_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
 const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
 const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
-const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
+const FALLBACK_CHIPS = DIRECT_GREETING_CHIPS;
 const MAX_INPUT_CHARS = 280;
 const MAX_USER_ACTIONS = 25;
 const ACTION_LIMIT_MESSAGE =
@@ -205,6 +206,18 @@ export function useChatController(initialVideos: VideoItem[]) {
 
       if (!hasSentGreetingRef.current) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text: DIRECT_GREETING });
+        setLog(
+          compactLog(
+            [
+              {
+                role: "assistant",
+                content: JSON.stringify({ text: DIRECT_GREETING, chips: DIRECT_GREETING_CHIPS }),
+              },
+            ],
+            MAX_LOG_ENTRIES,
+          ),
+        );
+        setSuggestionChips(DIRECT_GREETING_CHIPS);
         hasSentGreetingRef.current = true;
       }
     }

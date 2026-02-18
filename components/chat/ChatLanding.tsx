@@ -17,6 +17,7 @@ type ChatLandingProps = {
   isActionLimitReached: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
+  onChipClick: (chip: string) => void;
 };
 
 export default function ChatLanding({
@@ -26,6 +27,7 @@ export default function ChatLanding({
   isActionLimitReached,
   onInputChange,
   onSubmit,
+  onChipClick,
 }: ChatLandingProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isInputDisabled = isTyping || isRunningAct1 || isActionLimitReached;
@@ -63,7 +65,7 @@ export default function ChatLanding({
                       onChange={(event) => onInputChange(event.target.value)}
                       maxLength={280}
                       autoFocus
-                      placeholder="type your videoidea here"
+                      placeholder="Type your video idea here"
                       disabled={isInputDisabled}
                       className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
                     />
@@ -89,7 +91,7 @@ export default function ChatLanding({
                     type="button"
                     onClick={() => {
                       if (isInputDisabled) return;
-                      onInputChange(chip);
+                      onChipClick(chip);
                       inputRef.current?.focus();
                     }}
                     disabled={isInputDisabled}

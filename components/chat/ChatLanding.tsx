@@ -48,12 +48,12 @@ export default function ChatLanding({
 
             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-snug">
               Hi, I’m Mimsy,
-              <br />a hamster, a film creator, a genius!
+              <br />a Hamster, a Film Creator, a Genius!
             </p>
 
             <div className="space-y-4">
               <p className="text-base md:text-lg font-medium text-foreground/80 md:whitespace-nowrap">
-                Tell me your idea for a video - and I’ll generate it for you
+               What video should I create for you?
               </p>
 
               <form onSubmit={onSubmit} className="flex items-center justify-center">
@@ -65,7 +65,7 @@ export default function ChatLanding({
                       onChange={(event) => onInputChange(event.target.value)}
                       maxLength={280}
                       autoFocus
-                      placeholder="Type your video idea here"
+                      placeholder="Type your idea here"
                       disabled={isInputDisabled}
                       className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground/70 disabled:opacity-50"
                     />

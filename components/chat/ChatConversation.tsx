@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, RefObject } from "react";
+import { FormEvent, RefObject, useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SystemLogBubble from "@/components/bubbles/SystemLogBubble";
@@ -19,6 +19,7 @@ type ChatConversationProps = {
   isRunningAct1: boolean;
   hasRunLanding: boolean;
   isActionLimitReached: boolean;
+  inputPlaceholder: string;
   activeChips: string[];
   animateAct1Chips: boolean;
   dots: number;
@@ -28,14 +29,15 @@ type ChatConversationProps = {
   onSubmit: (event: FormEvent) => void;
   onChipClick: (chip: string) => void;
   onOpenVideo: (video: VideoItem) => void;
-  onPlayingChange: (videoId: string, isPlaying: boolean) => void;
-  onMutedChange: (videoId: string, muted: boolean) => void;
-  onReachedMidpoint: (videoId: string) => void;
-  onReachedNearEnd: (videoId: string) => void;
-  onPlayed10s: (videoId: string) => void;
-  onScrubForward: (videoId: string, deltaSeconds: number) => void;
-  onScrubBackward: (videoId: string, deltaSeconds: number) => void;
-  onStoppedEarly: (videoId: string, seconds: number) => void;
+  onPlayingChange: (videoId: string, sourceMessageId: string, isPlaying: boolean) => void;
+  onMutedChange: (videoId: string, sourceMessageId: string, muted: boolean) => void;
+  onReachedMidpoint: (videoId: string, sourceMessageId: string) => void;
+  onReachedNearEnd: (videoId: string, sourceMessageId: string) => void;
+  onPlayed5s: (videoId: string, sourceMessageId: string) => void;
+  onPlayed10s: (videoId: string, sourceMessageId: string) => void;
+  onScrubForward: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onScrubBackward: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onStoppedEarly: (videoId: string, sourceMessageId: string, seconds: number) => void;
 };
 
 export default function ChatConversation({
@@ -45,6 +47,7 @@ export default function ChatConversation({
   isRunningAct1,
   hasRunLanding,
   isActionLimitReached,
+  inputPlaceholder,
   activeChips,
   animateAct1Chips,
   dots,
@@ -58,11 +61,21 @@ export default function ChatConversation({
   onMutedChange,
   onReachedMidpoint,
   onReachedNearEnd,
+  onPlayed5s,
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
   onStoppedEarly,
 }: ChatConversationProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const isInputDisabled = isTyping || isRunningAct1 || isActionLimitReached;
+
+  useEffect(() => {
+    if (!isInputDisabled) {
+      inputRef.current?.focus();
+    }
+  }, [isInputDisabled]);
+
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
       return <SystemLogBubble text={msg.text} />;
@@ -73,10 +86,12 @@ export default function ChatConversation({
         return (
           <HeroPlayerBubble
             video={videosById.get(msg.videoId)}
+            sourceMessageId={msg.id}
             onPlayingChange={onPlayingChange}
             onMutedChange={onMutedChange}
             onReachedMidpoint={onReachedMidpoint}
             onReachedNearEnd={onReachedNearEnd}
+            onPlayed5s={onPlayed5s}
             onPlayed10s={onPlayed10s}
             onScrubForward={onScrubForward}
             onScrubBackward={onScrubBackward}
@@ -157,11 +172,13 @@ export default function ChatConversation({
           <form onSubmit={onSubmit} className="pointer-events-auto mx-auto w-full max-w-3xl">
             <div className="glass-surface mx-auto flex items-center gap-2 rounded-full px-3 py-2">
               <input
+                ref={inputRef}
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}
                 maxLength={280}
-                placeholder='Try "Show me a geeky video"'
-                disabled={isTyping || isRunningAct1 || isActionLimitReached}
+                autoFocus
+                placeholder={inputPlaceholder}
+                disabled={isInputDisabled}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />
               <Button

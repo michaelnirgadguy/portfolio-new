@@ -14,6 +14,7 @@ type Props = {
   onPlayingChange?: (isPlaying: boolean) => void;
 
   // EVENTS (one-off / edge transitions)
+  onPlayed5s?: () => void;
   onPlayed10s?: () => void;
   onReachedMidpoint?: () => void;
   onReachedNearEnd?: () => void;
@@ -48,6 +49,7 @@ export default function VideoPlayer({
   autoplay,
   playerId,
   onPlayingChange,
+  onPlayed5s,
   onPlayed10s,
   onReachedMidpoint,
   onReachedNearEnd,
@@ -69,6 +71,7 @@ export default function VideoPlayer({
   const isPlayingRef = useRef(false);
   const endedRef = useRef(false);
   const played10Ref = useRef(false);
+  const played5Ref = useRef(false);
   const midpointRef = useRef(false);
   const lastMutedRef = useRef<boolean | null>(null);
   const lastTimeRef = useRef<number | null>(null);
@@ -136,6 +139,7 @@ export default function VideoPlayer({
     isPlayingRef.current = false;
     endedRef.current = false;
     played10Ref.current = false;
+    played5Ref.current = false;
     midpointRef.current = false;
     lastMutedRef.current = null;
     lastTimeRef.current = null;
@@ -265,6 +269,11 @@ export default function VideoPlayer({
         lastTimeRef.current = seconds;
         lastTimeUpdateAtRef.current = now;
 
+        if (!played5Ref.current && seconds >= 5) {
+          played5Ref.current = true;
+          onPlayed5s?.();
+        }
+
         // Event: played at least 10s (fire once)
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
@@ -359,6 +368,7 @@ export default function VideoPlayer({
     isBunny,
     url,
     onPlayingChange,
+    onPlayed5s,
     onPlayed10s,
     onReachedMidpoint,
     onReachedNearEnd,

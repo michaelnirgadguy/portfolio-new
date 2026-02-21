@@ -11,12 +11,16 @@ import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
+const HAS_TYPED_CHAT_MESSAGE_KEY = "mimsyHasTypedChatMessage";
+const FIRST_TIME_CHAT_PLACEHOLDER = "Try 'Show me something geeky'";
+const RETURNING_CHAT_PLACEHOLDER = "Ask Mimsy anything";
 const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
+const DIRECT_GREETING_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
 const ACT1_FAIL_REACTION = "Oh My! This never happened to me before.";
 const ACT1_OFFER = "Mmm... Maybe instead I can show you videos made by my human, Michael?";
 const ACT1_CHIPS = ["Yes please!", "Whatever, show me a cool vid", "Michael? Whos' that?"];
-const FALLBACK_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
+const FALLBACK_CHIPS = DIRECT_GREETING_CHIPS;
 const MAX_INPUT_CHARS = 280;
 const MAX_USER_ACTIONS = 25;
 const ACTION_LIMIT_MESSAGE =
@@ -48,6 +52,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const [animateAct1Chips, setAnimateAct1Chips] = useState(false);
   const [hasShownAct1Chips, setHasShownAct1Chips] = useState(false);
   const [actionCount, setActionCount] = useState(0);
+  const [chatInputPlaceholder, setChatInputPlaceholder] = useState(FIRST_TIME_CHAT_PLACEHOLDER);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -55,6 +60,8 @@ export function useChatController(initialVideos: VideoItem[]) {
   const hasShownMegaCardRef = useRef(false);
   const actionCountRef = useRef(0);
   const limitMessageShownRef = useRef(false);
+  const lastMessageRef = useRef<Message | null>(null);
+  const seenVideoIdsRef = useRef<Set<string>>(new Set());
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -67,6 +74,18 @@ export function useChatController(initialVideos: VideoItem[]) {
   const setChipsOrFallback = useCallback((chips?: string[] | null) => {
     setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
   }, []);
+
+  const getSeenVideoIds = useCallback(() => Array.from(seenVideoIdsRef.current), []);
+
+  const trackSeenVideo = useCallback((videoId: string) => {
+    if (!videoId) return;
+    seenVideoIdsRef.current.add(videoId);
+  }, []);
+
+
+  useEffect(() => {
+    lastMessageRef.current = messages[messages.length - 1] ?? null;
+  }, [messages]);
 
   const registerUserAction = useCallback(() => {
     if (actionCountRef.current >= MAX_USER_ACTIONS) {
@@ -108,6 +127,19 @@ export function useChatController(initialVideos: VideoItem[]) {
   const handleShowContactCard = useCallback(() => {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
   }, [appendMessage]);
+
+  const isVideoNudgeEligible = useCallback((videoId: string, sourceMessageId: string) => {
+    const lastMessage = lastMessageRef.current;
+    return (
+      !!videoId &&
+      !!sourceMessageId &&
+      !!lastMessage &&
+      lastMessage.id === sourceMessageId &&
+      lastMessage.role === "widget" &&
+      lastMessage.type === "hero" &&
+      lastMessage.videoId === videoId
+    );
+  }, []);
 
   const applyTurnResponse = useCallback(
     ({
@@ -157,6 +189,7 @@ export function useChatController(initialVideos: VideoItem[]) {
         userText: "<context> user idle for 20 seconds; no video playing </context>",
         syntheticAfterUser:
           '<instructions> begin with something like "Yoo-hoo, are you there?" then prompt the user to explore a video or ask about Michael </instructions>',
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -166,7 +199,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     } finally {
       setIsTyping(false);
     }
-  }, [applyTurnResponse, log]);
+  }, [applyTurnResponse, getSeenVideoIds, log]);
 
   const { handleVideoPlayingChange } = useIdlePrompt({
     enabled: hasRunLanding && phase === "chat",
@@ -174,6 +207,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     isRunningAct1,
     onIdle: handleIdleTimeout,
   });
+
+  const handleVideoPlayingChangeWithSource = useCallback(
+    (videoId: string, _sourceMessageId: string, isPlaying: boolean) => {
+      handleVideoPlayingChange(videoId, isPlaying);
+    },
+    [handleVideoPlayingChange],
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -183,6 +223,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     const root = document.documentElement;
     root.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hasTypedChatMessage = localStorage.getItem(HAS_TYPED_CHAT_MESSAGE_KEY) === "true";
+    setChatInputPlaceholder(hasTypedChatMessage ? RETURNING_CHAT_PLACEHOLDER : FIRST_TIME_CHAT_PLACEHOLDER);
+  }, []);
 
   useEffect(() => {
     const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
@@ -205,6 +252,18 @@ export function useChatController(initialVideos: VideoItem[]) {
 
       if (!hasSentGreetingRef.current) {
         appendMessage({ id: crypto.randomUUID(), role: "assistant", text: DIRECT_GREETING });
+        setLog(
+          compactLog(
+            [
+              {
+                role: "assistant",
+                content: JSON.stringify({ text: DIRECT_GREETING, chips: DIRECT_GREETING_CHIPS }),
+              },
+            ],
+            MAX_LOG_ENTRIES,
+          ),
+        );
+        setSuggestionChips(DIRECT_GREETING_CHIPS);
         hasSentGreetingRef.current = true;
       }
     }
@@ -234,15 +293,34 @@ export function useChatController(initialVideos: VideoItem[]) {
     return () => clearTimeout(timeout);
   }, [animateAct1Chips]);
 
+  const submitLandingIdea = useCallback(
+    async (idea: string) => {
+      const trimmed = idea.trim();
+      if (!trimmed) return;
+      if (isTyping || isRunningAct1) return;
+      if (!registerUserAction()) return;
+
+      await runLandingSequence(trimmed);
+    },
+    [isRunningAct1, isTyping, registerUserAction],
+  );
+
   async function handleLandingSubmit(event: FormEvent) {
     event.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    if (isTyping || isRunningAct1) return;
-    if (!registerUserAction()) return;
-
-    await runLandingSequence(trimmed);
+    await submitLandingIdea(input);
   }
+
+  const handleLandingChipClick = useCallback(
+    (chip: string) => {
+      if (isTyping || isRunningAct1) return;
+
+      setInput(chip);
+      setTimeout(() => {
+        submitLandingIdea(chip);
+      }, 300);
+    },
+    [isRunningAct1, isTyping, submitLandingIdea],
+  );
 
   const {
     handleMutedChange,
@@ -250,6 +328,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   } = useVideoNudges({
@@ -266,7 +345,17 @@ export function useChatController(initialVideos: VideoItem[]) {
     setIsDarkMode,
     fallbackChips: FALLBACK_CHIPS,
     registerUserAction,
+    getSeenVideoIds,
+    isVideoNudgeEligible,
   });
+
+  const handlePlayed5sWithTracking = useCallback(
+    (videoId: string, sourceMessageId: string) => {
+      trackSeenVideo(videoId);
+      handlePlayed5s(videoId, sourceMessageId);
+    },
+    [handlePlayed5s, trackSeenVideo],
+  );
 
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
@@ -282,6 +371,7 @@ export function useChatController(initialVideos: VideoItem[]) {
         log,
         userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the mega card. </context>`,
         syntheticAfterUser: syntheticMessage,
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -400,11 +490,17 @@ export function useChatController(initialVideos: VideoItem[]) {
     appendMessage(userMessage);
     setInput("");
 
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HAS_TYPED_CHAT_MESSAGE_KEY, "true");
+    }
+    setChatInputPlaceholder(RETURNING_CHAT_PLACEHOLDER);
+
     setIsTyping(true);
     try {
       const response = await sendTurn({
         log,
         userText: trimmed,
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -463,16 +559,19 @@ export function useChatController(initialVideos: VideoItem[]) {
     scrollRef,
     videosById,
     hasReachedActionLimit,
+    chatInputPlaceholder,
     handleLandingSubmit,
+    handleLandingChipClick,
     handleSubmit,
     handleChipClick,
     handleOpenVideo,
-    handleVideoPlayingChange,
+    handleVideoPlayingChange: handleVideoPlayingChangeWithSource,
     handleMutedChange,
     handleScrubForward,
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s: handlePlayed5sWithTracking,
     handlePlayed10s,
     handleStoppedEarly,
   };

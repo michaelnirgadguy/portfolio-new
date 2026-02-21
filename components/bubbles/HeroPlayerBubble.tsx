@@ -4,78 +4,86 @@ import type { VideoItem } from "@/types/video";
 
 export default function HeroPlayerBubble({
   video,
+  sourceMessageId,
   onPlayingChange,
   onMutedChange,
   onReachedMidpoint,
   onReachedNearEnd,
+  onPlayed5s,
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
   onStoppedEarly,
 }: {
   video?: VideoItem;
-  onPlayingChange?: (videoId: string, isPlaying: boolean) => void;
-  onMutedChange?: (videoId: string, muted: boolean) => void;
-  onReachedMidpoint?: (videoId: string) => void;
-  onReachedNearEnd?: (videoId: string) => void;
-  onPlayed10s?: (videoId: string) => void;
-  onScrubForward?: (videoId: string, deltaSeconds: number) => void;
-  onScrubBackward?: (videoId: string, deltaSeconds: number) => void;
-  onStoppedEarly?: (videoId: string, seconds: number) => void;
+  sourceMessageId: string;
+  onPlayingChange?: (videoId: string, sourceMessageId: string, isPlaying: boolean) => void;
+  onMutedChange?: (videoId: string, sourceMessageId: string, muted: boolean) => void;
+  onReachedMidpoint?: (videoId: string, sourceMessageId: string) => void;
+  onReachedNearEnd?: (videoId: string, sourceMessageId: string) => void;
+  onPlayed5s?: (videoId: string, sourceMessageId: string) => void;
+  onPlayed10s?: (videoId: string, sourceMessageId: string) => void;
+  onScrubForward?: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onScrubBackward?: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onStoppedEarly?: (videoId: string, sourceMessageId: string, seconds: number) => void;
 }) {
   const videoId = video?.id ?? "";
   const handlePlayingChange = useCallback(
     (isPlaying: boolean) => {
       if (!videoId) return;
-      onPlayingChange?.(videoId, isPlaying);
+      onPlayingChange?.(videoId, sourceMessageId, isPlaying);
     },
-    [onPlayingChange, videoId]
+    [onPlayingChange, sourceMessageId, videoId]
   );
   const handleMutedChange = useCallback(
     (muted: boolean) => {
       if (!videoId) return;
-      onMutedChange?.(videoId, muted);
+      onMutedChange?.(videoId, sourceMessageId, muted);
     },
-    [onMutedChange, videoId]
+    [onMutedChange, sourceMessageId, videoId]
   );
   const handleReachedMidpoint = useCallback(() => {
     if (!videoId) return;
-    onReachedMidpoint?.(videoId);
-  }, [onReachedMidpoint, videoId]);
+    onReachedMidpoint?.(videoId, sourceMessageId);
+  }, [onReachedMidpoint, sourceMessageId, videoId]);
   const handleReachedNearEnd = useCallback(() => {
     if (!videoId) return;
-    onReachedNearEnd?.(videoId);
-  }, [onReachedNearEnd, videoId]);
+    onReachedNearEnd?.(videoId, sourceMessageId);
+  }, [onReachedNearEnd, sourceMessageId, videoId]);
   const handlePlayed10s = useCallback(() => {
     if (!videoId) return;
-    onPlayed10s?.(videoId);
-  }, [onPlayed10s, videoId]);
+    onPlayed10s?.(videoId, sourceMessageId);
+  }, [onPlayed10s, sourceMessageId, videoId]);
+  const handlePlayed5s = useCallback(() => {
+    if (!videoId) return;
+    onPlayed5s?.(videoId, sourceMessageId);
+  }, [onPlayed5s, sourceMessageId, videoId]);
   const handleScrubForward = useCallback(
     (deltaSeconds: number) => {
       if (!videoId) return;
-      onScrubForward?.(videoId, deltaSeconds);
+      onScrubForward?.(videoId, sourceMessageId, deltaSeconds);
     },
-    [onScrubForward, videoId]
+    [onScrubForward, sourceMessageId, videoId]
   );
   const handleScrubBackward = useCallback(
     (deltaSeconds: number) => {
       if (!videoId) return;
-      onScrubBackward?.(videoId, deltaSeconds);
+      onScrubBackward?.(videoId, sourceMessageId, deltaSeconds);
     },
-    [onScrubBackward, videoId]
+    [onScrubBackward, sourceMessageId, videoId]
   );
   const handleStoppedEarly = useCallback(
     (seconds: number) => {
       if (!videoId) return;
-      onStoppedEarly?.(videoId, seconds);
+      onStoppedEarly?.(videoId, sourceMessageId, seconds);
     },
-    [onStoppedEarly, videoId]
+    [onStoppedEarly, sourceMessageId, videoId]
   );
 
   useEffect(() => {
     if (!videoId) return;
-    return () => onPlayingChange?.(videoId, false);
-  }, [onPlayingChange, videoId]);
+    return () => onPlayingChange?.(videoId, sourceMessageId, false);
+  }, [onPlayingChange, sourceMessageId, videoId]);
 
   if (!video) {
     return (
@@ -96,6 +104,7 @@ export default function HeroPlayerBubble({
         onMutedChange={handleMutedChange}
         onReachedMidpoint={handleReachedMidpoint}
         onReachedNearEnd={handleReachedNearEnd}
+        onPlayed5s={handlePlayed5s}
         onPlayed10s={handlePlayed10s}
         onScrubForward={handleScrubForward}
         onScrubBackward={handleScrubBackward}

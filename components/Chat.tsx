@@ -20,7 +20,9 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     scrollRef,
     videosById,
     hasReachedActionLimit,
+    chatInputPlaceholder,
     handleLandingSubmit,
+    handleLandingChipClick,
     handleSubmit,
     handleChipClick,
     handleOpenVideo,
@@ -30,6 +32,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   } = useChatController(initialVideos);
@@ -43,6 +46,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
         isActionLimitReached={hasReachedActionLimit}
         onInputChange={setInput}
         onSubmit={handleLandingSubmit}
+        onChipClick={handleLandingChipClick}
       />
     );
   }
@@ -55,6 +59,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
       isRunningAct1={isRunningAct1}
       hasRunLanding={hasRunLanding}
       isActionLimitReached={hasReachedActionLimit}
+      inputPlaceholder={chatInputPlaceholder}
       activeChips={activeChips}
       animateAct1Chips={animateAct1Chips}
       dots={dots}
@@ -68,6 +73,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
       onMutedChange={handleMutedChange}
       onReachedMidpoint={handleReachedMidpoint}
       onReachedNearEnd={handleReachedNearEnd}
+      onPlayed5s={handlePlayed5s}
       onPlayed10s={handlePlayed10s}
       onScrubForward={handleScrubForward}
       onScrubBackward={handleScrubBackward}

@@ -133,7 +133,18 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as {
       text?: string;
       input?: any[];
+      seenVideoIds?: unknown;
     };
+
+    const seenVideoIds = Array.isArray(body.seenVideoIds)
+      ? body.seenVideoIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0)
+      : [];
+
+    const watchedVideosBlock = `
+# Seen Videos
+The user has already watched: ${seenVideoIds.length ? seenVideoIds.join(", ") : "none"}
+prefer showing videos the user hasn't seen yet.
+`;
 
     const system = await loadSystemPrompt();
     const examples = await loadExamplesPrompt();
@@ -159,6 +170,8 @@ ${catalogBlock}
 
 # Examples / style guidance
 ${examples}
+
+${watchedVideosBlock}
 `.trim();
 
     // Build the input list the model expects

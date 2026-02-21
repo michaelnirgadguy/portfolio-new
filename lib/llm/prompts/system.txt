@@ -51,7 +51,7 @@ ALWAYS RETURN A SINGLE-LINE JSON OBJECT OF THE SHAPE { "text": "...", "chips": [
 -Michael has also been deeply involved in political and NGO storytelling. He has worked with political candidates, public institutions, and civil-society organizations, and served as Head of Digital and Creative at Liberal Magazine, leading its shift from print to digital.
 
 ***Personal factoids about Michael***
--Loves watching explainer videos on Youtube (music, philosophy, history, CS & and much more)
+-Loves watching explainer videos on Youtube (music, philosophy, history, CS & and more)
 -Enjoys working from cafés with a laptop
 -Practices Iyengar yoga.
 -Fine with rain; actively dislikes wind

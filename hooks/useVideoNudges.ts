@@ -38,6 +38,7 @@ type SessionNudgeConfig = {
 type NudgeTurn = {
   userText: string;
   syntheticAfterUser: string;
+  videoId?: string;
 };
 type UseVideoNudgesArgs = {
   log: any[];
@@ -80,42 +81,49 @@ const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
 };
 
 const buildManualStopTurn = (videoId: string, seconds: number): NudgeTurn => ({
+  videoId,
   userText: `<context> user paused\stopped the video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> make a witty comment about why one would lose interest in that video, referencing its content </instructions>",
 });
 
 const buildMidpointTurn = (videoId: string): NudgeTurn => ({
+  videoId,
   userText: `<context> user watched about half of the video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> make a short comment on the content of the video to keep the user engaged </instructions>",
 });
 
 const buildFinishedTurn = (videoId: string): NudgeTurn => ({
+  videoId,
   userText: `<context> user finished watchin the video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> roast the user for watching the entire video, implying you, Mimsy, are too important or impatient for that sort of stuff, refrencing the video content. This message can be a bit longer. </instructions>",
 });
 
 const buildMuteTurn = (videoId: string): NudgeTurn => ({
+  videoId,
   userText: `<context> user muted video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> comment playfully about what in this video could be too loud for you too, referencing the video's content. in the *suggestion chips* - DO NOT reference muting/un-muting </instructions>",
 });
 
 const buildScrubForwardTurn = (videoId: string, seconds: number): NudgeTurn => ({
+  videoId,
   userText: `<context> user skipped ${seconds} ahead on video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> make a funny remark why you would also skip the boring parts, referencing the video's content </instructions>",
 });
 
 const buildScrubBackwardTurn = (videoId: string, seconds: number): NudgeTurn => ({
+  videoId,
   userText: `<context> user rewinded ${seconds} on video ${videoId} </context>`,
   syntheticAfterUser:
     "<instructions> make a funny remark why you also like to re-watch stuff in this video, referencing the video's content </instructions>",
 });
 
 const buildBingeTurn = (videoId: string, nth: number): NudgeTurn => ({
+  videoId,
   userText: `<context> user is now watching ${videoId} - his ${nth} video on the site </context>`,
   syntheticAfterUser:
     "<instructions> roast this video referencing its content. imply that you keep telling michael what to do but he never listens to you because you're a tiny hamster. suggest that maybe the user can talk some sense to michael, and ask if they would like to contact him. this can be a somewhat longer message </instructions>",
@@ -173,7 +181,8 @@ export function useVideoNudges({
   }, [isRunningAct1]);
 
   const runNudgeTurn = useCallback(
-    async ({ userText, syntheticAfterUser }: NudgeTurn) => {
+    async ({ userText, syntheticAfterUser, videoId }: NudgeTurn) => {
+      if (videoId && !isVideoNudgeEligible(videoId)) return false;
       if (typingRef.current || runningRef.current) return false;
       if (!registerUserAction()) return false;
       setIsTyping(true);
@@ -191,6 +200,11 @@ export function useVideoNudges({
           userText,
           syntheticAfterUser,
         });
+
+
+        if (videoId && !isVideoNudgeEligible(videoId)) {
+          return false;
+        }
 
         if (text) {
           appendMessage({ id: crypto.randomUUID(), role: "assistant", text, chips });
@@ -230,6 +244,7 @@ export function useVideoNudges({
       handleShowContactCard,
       handleShowVideos,
       registerUserAction,
+      isVideoNudgeEligible,
       setIsDarkMode,
       setIsTyping,
       setLog,
@@ -250,16 +265,22 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(turnBuilder());
-      state.sentNudgeByVideoId.add(videoId);
-      if (type === "mute") {
-        state.muteNudgeByVideoId.add(videoId);
-      }
-      if (type === "stop") {
-        state.stopNudgeByVideoId.add(videoId);
-      }
-      state[sentKey] = true;
-      state[pendingKey] = false;
+      void runNudgeTurn(turnBuilder()).then((sent) => {
+        if (!sent) {
+          state[pendingKey] = true;
+          return;
+        }
+
+        state.sentNudgeByVideoId.add(videoId);
+        if (type === "mute") {
+          state.muteNudgeByVideoId.add(videoId);
+        }
+        if (type === "stop") {
+          state.stopNudgeByVideoId.add(videoId);
+        }
+        state[sentKey] = true;
+        state[pendingKey] = false;
+      });
     },
     [isVideoNudgeEligible, runNudgeTurn]
   );
@@ -303,8 +324,10 @@ export function useVideoNudges({
       if (!isVideoNudgeEligible(videoId)) return;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.sentNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildMidpointTurn(videoId));
-      state.sentNudgeByVideoId.add(videoId);
+      void runNudgeTurn(buildMidpointTurn(videoId)).then((sent) => {
+        if (!sent) return;
+        state.sentNudgeByVideoId.add(videoId);
+      });
     },
     [isVideoNudgeEligible, runNudgeTurn]
   );
@@ -317,8 +340,10 @@ export function useVideoNudges({
       if (state.muteNudgeByVideoId.has(videoId)) return;
       if (state.stopNudgeByVideoId.has(videoId)) return;
       if (state.finishedNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildFinishedTurn(videoId));
-      state.finishedNudgeByVideoId.add(videoId);
+      void runNudgeTurn(buildFinishedTurn(videoId)).then((sent) => {
+        if (!sent) return;
+        state.finishedNudgeByVideoId.add(videoId);
+      });
     },
     [isVideoNudgeEligible, runNudgeTurn]
   );
@@ -337,7 +362,7 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(buildBingeTurn(videoId, nth)).then((sent) => {
+      void runNudgeTurn(buildBingeTurn(videoId, nth)).then((sent) => {
         if (!sent) {
           state.pendingBingeNudge = true;
           return;

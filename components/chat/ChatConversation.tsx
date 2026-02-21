@@ -32,6 +32,7 @@ type ChatConversationProps = {
   onMutedChange: (videoId: string, muted: boolean) => void;
   onReachedMidpoint: (videoId: string) => void;
   onReachedNearEnd: (videoId: string) => void;
+  onPlayed5s: (videoId: string) => void;
   onPlayed10s: (videoId: string) => void;
   onScrubForward: (videoId: string, deltaSeconds: number) => void;
   onScrubBackward: (videoId: string, deltaSeconds: number) => void;
@@ -58,6 +59,7 @@ export default function ChatConversation({
   onMutedChange,
   onReachedMidpoint,
   onReachedNearEnd,
+  onPlayed5s,
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
@@ -86,6 +88,7 @@ export default function ChatConversation({
             onMutedChange={onMutedChange}
             onReachedMidpoint={onReachedMidpoint}
             onReachedNearEnd={onReachedNearEnd}
+            onPlayed5s={onPlayed5s}
             onPlayed10s={onPlayed10s}
             onScrubForward={onScrubForward}
             onScrubBackward={onScrubBackward}

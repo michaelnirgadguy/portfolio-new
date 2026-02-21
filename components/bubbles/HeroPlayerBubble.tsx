@@ -8,6 +8,7 @@ export default function HeroPlayerBubble({
   onMutedChange,
   onReachedMidpoint,
   onReachedNearEnd,
+  onPlayed5s,
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
@@ -18,6 +19,7 @@ export default function HeroPlayerBubble({
   onMutedChange?: (videoId: string, muted: boolean) => void;
   onReachedMidpoint?: (videoId: string) => void;
   onReachedNearEnd?: (videoId: string) => void;
+  onPlayed5s?: (videoId: string) => void;
   onPlayed10s?: (videoId: string) => void;
   onScrubForward?: (videoId: string, deltaSeconds: number) => void;
   onScrubBackward?: (videoId: string, deltaSeconds: number) => void;
@@ -50,6 +52,10 @@ export default function HeroPlayerBubble({
     if (!videoId) return;
     onPlayed10s?.(videoId);
   }, [onPlayed10s, videoId]);
+  const handlePlayed5s = useCallback(() => {
+    if (!videoId) return;
+    onPlayed5s?.(videoId);
+  }, [onPlayed5s, videoId]);
   const handleScrubForward = useCallback(
     (deltaSeconds: number) => {
       if (!videoId) return;
@@ -96,6 +102,7 @@ export default function HeroPlayerBubble({
         onMutedChange={handleMutedChange}
         onReachedMidpoint={handleReachedMidpoint}
         onReachedNearEnd={handleReachedNearEnd}
+        onPlayed5s={handlePlayed5s}
         onPlayed10s={handlePlayed10s}
         onScrubForward={handleScrubForward}
         onScrubBackward={handleScrubBackward}

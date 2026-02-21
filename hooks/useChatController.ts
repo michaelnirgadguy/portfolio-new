@@ -110,6 +110,20 @@ export function useChatController(initialVideos: VideoItem[]) {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
   }, [appendMessage]);
 
+  const isVideoNudgeEligible = useCallback(
+    (videoId: string) => {
+      const lastMessage = messages[messages.length - 1];
+      return (
+        !!videoId &&
+        !!lastMessage &&
+        lastMessage.role === "widget" &&
+        lastMessage.type === "hero" &&
+        lastMessage.videoId === videoId
+      );
+    },
+    [messages],
+  );
+
   const applyTurnResponse = useCallback(
     ({
       text,
@@ -282,6 +296,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   } = useVideoNudges({
@@ -298,6 +313,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     setIsDarkMode,
     fallbackChips: FALLBACK_CHIPS,
     registerUserAction,
+    isVideoNudgeEligible,
   });
 
   const handleOpenVideo = async (video: VideoItem) => {
@@ -506,6 +522,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   };

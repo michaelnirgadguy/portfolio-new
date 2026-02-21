@@ -56,6 +56,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const hasShownMegaCardRef = useRef(false);
   const actionCountRef = useRef(0);
   const limitMessageShownRef = useRef(false);
+  const lastMessageRef = useRef<Message | null>(null);
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -68,6 +69,11 @@ export function useChatController(initialVideos: VideoItem[]) {
   const setChipsOrFallback = useCallback((chips?: string[] | null) => {
     setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
   }, []);
+
+
+  useEffect(() => {
+    lastMessageRef.current = messages[messages.length - 1] ?? null;
+  }, [messages]);
 
   const registerUserAction = useCallback(() => {
     if (actionCountRef.current >= MAX_USER_ACTIONS) {
@@ -110,21 +116,18 @@ export function useChatController(initialVideos: VideoItem[]) {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
   }, [appendMessage]);
 
-  const isVideoNudgeEligible = useCallback(
-    (videoId: string, sourceMessageId: string) => {
-      const lastMessage = messages[messages.length - 1];
-      return (
-        !!videoId &&
-        !!sourceMessageId &&
-        !!lastMessage &&
-        lastMessage.id === sourceMessageId &&
-        lastMessage.role === "widget" &&
-        lastMessage.type === "hero" &&
-        lastMessage.videoId === videoId
-      );
-    },
-    [messages],
-  );
+  const isVideoNudgeEligible = useCallback((videoId: string, sourceMessageId: string) => {
+    const lastMessage = lastMessageRef.current;
+    return (
+      !!videoId &&
+      !!sourceMessageId &&
+      !!lastMessage &&
+      lastMessage.id === sourceMessageId &&
+      lastMessage.role === "widget" &&
+      lastMessage.type === "hero" &&
+      lastMessage.videoId === videoId
+    );
+  }, []);
 
   const applyTurnResponse = useCallback(
     ({

@@ -40,6 +40,8 @@ type SessionNudgeConfig = {
 type NudgeTurn = {
   userText: string;
   syntheticAfterUser: string;
+  sourceVideoId?: string;
+  sourceMessageId?: string;
 };
 
 type UseVideoNudgesArgs = {
@@ -161,8 +163,11 @@ export function useVideoNudges({
   }, [isRunningAct1]);
 
   const runNudgeTurn = useCallback(
-    async ({ userText, syntheticAfterUser }: NudgeTurn) => {
+    async ({ userText, syntheticAfterUser, sourceVideoId, sourceMessageId }: NudgeTurn) => {
       if (typingRef.current || runningRef.current) return false;
+      if (sourceVideoId && sourceMessageId && !isVideoNudgeEligible(sourceVideoId, sourceMessageId)) {
+        return false;
+      }
       if (!registerUserAction()) return false;
       setIsTyping(true);
       try {
@@ -217,6 +222,7 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
+      isVideoNudgeEligible,
       registerUserAction,
       setIsDarkMode,
       setIsTyping,
@@ -243,7 +249,7 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(turnBuilder());
+      runNudgeTurn({ ...turnBuilder(), sourceVideoId: videoId, sourceMessageId });
       state.sentNudgeByVideoId.add(videoId);
       if (type === "mute") state.muteNudgeByVideoId.add(videoId);
       if (type === "stop") state.stopNudgeByVideoId.add(videoId);
@@ -294,7 +300,7 @@ export function useVideoNudges({
       if (!isVideoNudgeEligible(videoId, sourceMessageId)) return;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.sentNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildMidpointTurn(videoId));
+      runNudgeTurn({ ...buildMidpointTurn(videoId), sourceVideoId: videoId, sourceMessageId });
       state.sentNudgeByVideoId.add(videoId);
     },
     [isVideoNudgeEligible, runNudgeTurn]
@@ -308,7 +314,7 @@ export function useVideoNudges({
       if (state.muteNudgeByVideoId.has(videoId)) return;
       if (state.stopNudgeByVideoId.has(videoId)) return;
       if (state.finishedNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildFinishedTurn(videoId));
+      runNudgeTurn({ ...buildFinishedTurn(videoId), sourceVideoId: videoId, sourceMessageId });
       state.finishedNudgeByVideoId.add(videoId);
     },
     [isVideoNudgeEligible, runNudgeTurn]
@@ -328,7 +334,11 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(buildBingeTurn(videoId, nth)).then((sent) => {
+      runNudgeTurn({
+        ...buildBingeTurn(videoId, nth),
+        sourceVideoId: videoId,
+        sourceMessageId,
+      }).then((sent) => {
         if (!sent) {
           state.pendingBingeNudge = true;
           return;

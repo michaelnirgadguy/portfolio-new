@@ -57,6 +57,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const actionCountRef = useRef(0);
   const limitMessageShownRef = useRef(false);
   const lastMessageRef = useRef<Message | null>(null);
+  const seenVideoIdsRef = useRef<Set<string>>(new Set());
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -68,6 +69,13 @@ export function useChatController(initialVideos: VideoItem[]) {
 
   const setChipsOrFallback = useCallback((chips?: string[] | null) => {
     setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
+  }, []);
+
+  const getSeenVideoIds = useCallback(() => Array.from(seenVideoIdsRef.current), []);
+
+  const trackSeenVideo = useCallback((videoId: string) => {
+    if (!videoId) return;
+    seenVideoIdsRef.current.add(videoId);
   }, []);
 
 
@@ -177,6 +185,7 @@ export function useChatController(initialVideos: VideoItem[]) {
         userText: "<context> user idle for 20 seconds; no video playing </context>",
         syntheticAfterUser:
           '<instructions> begin with something like "Yoo-hoo, are you there?" then prompt the user to explore a video or ask about Michael </instructions>',
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -186,7 +195,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     } finally {
       setIsTyping(false);
     }
-  }, [applyTurnResponse, log]);
+  }, [applyTurnResponse, getSeenVideoIds, log]);
 
   const { handleVideoPlayingChange } = useIdlePrompt({
     enabled: hasRunLanding && phase === "chat",
@@ -325,8 +334,17 @@ export function useChatController(initialVideos: VideoItem[]) {
     setIsDarkMode,
     fallbackChips: FALLBACK_CHIPS,
     registerUserAction,
+    getSeenVideoIds,
     isVideoNudgeEligible,
   });
+
+  const handlePlayed5sWithTracking = useCallback(
+    (videoId: string, sourceMessageId: string) => {
+      trackSeenVideo(videoId);
+      handlePlayed5s(videoId, sourceMessageId);
+    },
+    [handlePlayed5s, trackSeenVideo],
+  );
 
   const handleOpenVideo = async (video: VideoItem) => {
     if (isTyping || isRunningAct1) return;
@@ -342,6 +360,7 @@ export function useChatController(initialVideos: VideoItem[]) {
         log,
         userText: `<context> User opened video \"${video.title}\" (id: ${video.id}) from the mega card. </context>`,
         syntheticAfterUser: syntheticMessage,
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -465,6 +484,7 @@ export function useChatController(initialVideos: VideoItem[]) {
       const response = await sendTurn({
         log,
         userText: trimmed,
+        seenVideoIds: getSeenVideoIds(),
       });
 
       applyTurnResponse(response);
@@ -534,7 +554,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
-    handlePlayed5s,
+    handlePlayed5s: handlePlayed5sWithTracking,
     handlePlayed10s,
     handleStoppedEarly,
   };

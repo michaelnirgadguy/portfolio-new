@@ -57,8 +57,9 @@ export async function sendTurn(opts: {
   log: any[];
   userText: string;
   syntheticAfterUser?: string; // ✅ NEW
+  seenVideoIds?: string[];
 }): Promise<SendTurnResult> {
-  const { log, userText, syntheticAfterUser } = opts;
+  const { log, userText, syntheticAfterUser, seenVideoIds } = opts;
 
   // 1) Start logs (real user message, then optional synthetic user message)
   const persistedLog = [...log, { role: "user", content: userText }];
@@ -70,7 +71,7 @@ export async function sendTurn(opts: {
   const res1 = await fetch("/api/route", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ input: modelInputLog }),
+    body: JSON.stringify({ input: modelInputLog, seenVideoIds }),
   });
   const data1 = await res1.json();
   const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
@@ -205,7 +206,7 @@ export async function sendTurn(opts: {
   const res2 = await fetch("/api/route", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ input: modelLogWithToolOutputs }),
+    body: JSON.stringify({ input: modelLogWithToolOutputs, seenVideoIds }),
   });
   const data2 = await res2.json();
   const followPayload = normalizeAssistantPayload(data2);

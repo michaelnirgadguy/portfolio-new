@@ -58,6 +58,7 @@ type UseVideoNudgesArgs = {
   setIsDarkMode: (next: boolean) => void;
   fallbackChips: string[];
   registerUserAction: () => boolean;
+  getSeenVideoIds: () => string[];
   isVideoNudgeEligible: (videoId: string, sourceMessageId: string) => boolean;
 };
 
@@ -125,6 +126,7 @@ export function useVideoNudges({
   setIsDarkMode,
   fallbackChips,
   registerUserAction,
+  getSeenVideoIds,
   isVideoNudgeEligible,
 }: UseVideoNudgesArgs) {
   const logRef = useRef(log);
@@ -183,6 +185,7 @@ export function useVideoNudges({
           log: logRef.current,
           userText,
           syntheticAfterUser,
+          seenVideoIds: getSeenVideoIds(),
         });
 
         if (text) {
@@ -222,6 +225,7 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
+      getSeenVideoIds,
       isVideoNudgeEligible,
       registerUserAction,
       setIsDarkMode,

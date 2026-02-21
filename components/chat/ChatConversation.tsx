@@ -28,14 +28,15 @@ type ChatConversationProps = {
   onSubmit: (event: FormEvent) => void;
   onChipClick: (chip: string) => void;
   onOpenVideo: (video: VideoItem) => void;
-  onPlayingChange: (videoId: string, isPlaying: boolean) => void;
-  onMutedChange: (videoId: string, muted: boolean) => void;
-  onReachedMidpoint: (videoId: string) => void;
-  onReachedNearEnd: (videoId: string) => void;
-  onPlayed10s: (videoId: string) => void;
-  onScrubForward: (videoId: string, deltaSeconds: number) => void;
-  onScrubBackward: (videoId: string, deltaSeconds: number) => void;
-  onStoppedEarly: (videoId: string, seconds: number) => void;
+  onPlayingChange: (videoId: string, sourceMessageId: string, isPlaying: boolean) => void;
+  onMutedChange: (videoId: string, sourceMessageId: string, muted: boolean) => void;
+  onReachedMidpoint: (videoId: string, sourceMessageId: string) => void;
+  onReachedNearEnd: (videoId: string, sourceMessageId: string) => void;
+  onPlayed5s: (videoId: string, sourceMessageId: string) => void;
+  onPlayed10s: (videoId: string, sourceMessageId: string) => void;
+  onScrubForward: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onScrubBackward: (videoId: string, sourceMessageId: string, deltaSeconds: number) => void;
+  onStoppedEarly: (videoId: string, sourceMessageId: string, seconds: number) => void;
 };
 
 export default function ChatConversation({
@@ -58,6 +59,7 @@ export default function ChatConversation({
   onMutedChange,
   onReachedMidpoint,
   onReachedNearEnd,
+  onPlayed5s,
   onPlayed10s,
   onScrubForward,
   onScrubBackward,
@@ -82,10 +84,12 @@ export default function ChatConversation({
         return (
           <HeroPlayerBubble
             video={videosById.get(msg.videoId)}
+            sourceMessageId={msg.id}
             onPlayingChange={onPlayingChange}
             onMutedChange={onMutedChange}
             onReachedMidpoint={onReachedMidpoint}
             onReachedNearEnd={onReachedNearEnd}
+            onPlayed5s={onPlayed5s}
             onPlayed10s={onPlayed10s}
             onScrubForward={onScrubForward}
             onScrubBackward={onScrubBackward}

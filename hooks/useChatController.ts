@@ -56,6 +56,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const hasShownMegaCardRef = useRef(false);
   const actionCountRef = useRef(0);
   const limitMessageShownRef = useRef(false);
+  const lastMessageRef = useRef<Message | null>(null);
   const videosById = useMemo(
     () => new Map(initialVideos.map((video) => [video.id, video])),
     [initialVideos],
@@ -68,6 +69,11 @@ export function useChatController(initialVideos: VideoItem[]) {
   const setChipsOrFallback = useCallback((chips?: string[] | null) => {
     setSuggestionChips(chips?.length ? chips : FALLBACK_CHIPS);
   }, []);
+
+
+  useEffect(() => {
+    lastMessageRef.current = messages[messages.length - 1] ?? null;
+  }, [messages]);
 
   const registerUserAction = useCallback(() => {
     if (actionCountRef.current >= MAX_USER_ACTIONS) {
@@ -109,6 +115,19 @@ export function useChatController(initialVideos: VideoItem[]) {
   const handleShowContactCard = useCallback(() => {
     appendMessage({ id: crypto.randomUUID(), role: "widget", type: "contact-card" });
   }, [appendMessage]);
+
+  const isVideoNudgeEligible = useCallback((videoId: string, sourceMessageId: string) => {
+    const lastMessage = lastMessageRef.current;
+    return (
+      !!videoId &&
+      !!sourceMessageId &&
+      !!lastMessage &&
+      lastMessage.id === sourceMessageId &&
+      lastMessage.role === "widget" &&
+      lastMessage.type === "hero" &&
+      lastMessage.videoId === videoId
+    );
+  }, []);
 
   const applyTurnResponse = useCallback(
     ({
@@ -175,6 +194,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     isRunningAct1,
     onIdle: handleIdleTimeout,
   });
+
+  const handleVideoPlayingChangeWithSource = useCallback(
+    (videoId: string, _sourceMessageId: string, isPlaying: boolean) => {
+      handleVideoPlayingChange(videoId, isPlaying);
+    },
+    [handleVideoPlayingChange],
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -282,6 +308,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   } = useVideoNudges({
@@ -298,6 +325,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     setIsDarkMode,
     fallbackChips: FALLBACK_CHIPS,
     registerUserAction,
+    isVideoNudgeEligible,
   });
 
   const handleOpenVideo = async (video: VideoItem) => {
@@ -500,12 +528,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     handleSubmit,
     handleChipClick,
     handleOpenVideo,
-    handleVideoPlayingChange,
+    handleVideoPlayingChange: handleVideoPlayingChangeWithSource,
     handleMutedChange,
     handleScrubForward,
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   };

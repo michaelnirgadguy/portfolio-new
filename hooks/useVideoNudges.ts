@@ -21,6 +21,7 @@ type NudgeState = {
   pendingBingeNudge: boolean;
   pendingStopNudge: boolean;
 };
+
 type SessionNudgeConfig = {
   sentKey:
     | "muteNudgeSent"
@@ -35,10 +36,14 @@ type SessionNudgeConfig = {
     | "pendingBingeNudge"
     | "pendingStopNudge";
 };
+
 type NudgeTurn = {
   userText: string;
   syntheticAfterUser: string;
+  sourceVideoId?: string;
+  sourceMessageId?: string;
 };
+
 type UseVideoNudgesArgs = {
   log: any[];
   setLog: (nextLog: any[]) => void;
@@ -53,29 +58,15 @@ type UseVideoNudgesArgs = {
   setIsDarkMode: (next: boolean) => void;
   fallbackChips: string[];
   registerUserAction: () => boolean;
+  isVideoNudgeEligible: (videoId: string, sourceMessageId: string) => boolean;
 };
 
 const SESSION_NUDGE_CONFIG: Record<SessionNudgeType, SessionNudgeConfig> = {
-  mute: {
-    sentKey: "muteNudgeSent",
-    pendingKey: "pendingMuteNudge",
-  },
-  "scrub-forward": {
-    sentKey: "scrubForwardNudgeSent",
-    pendingKey: "pendingScrubForwardNudge",
-  },
-  "scrub-backward": {
-    sentKey: "scrubBackwardNudgeSent",
-    pendingKey: "pendingScrubBackwardNudge",
-  },
-  binge: {
-    sentKey: "bingeNudgeSent",
-    pendingKey: "pendingBingeNudge",
-  },
-  stop: {
-    sentKey: "stopNudgeSent",
-    pendingKey: "pendingStopNudge",
-  },
+  mute: { sentKey: "muteNudgeSent", pendingKey: "pendingMuteNudge" },
+  "scrub-forward": { sentKey: "scrubForwardNudgeSent", pendingKey: "pendingScrubForwardNudge" },
+  "scrub-backward": { sentKey: "scrubBackwardNudgeSent", pendingKey: "pendingScrubBackwardNudge" },
+  binge: { sentKey: "bingeNudgeSent", pendingKey: "pendingBingeNudge" },
+  stop: { sentKey: "stopNudgeSent", pendingKey: "pendingStopNudge" },
 };
 
 const buildManualStopTurn = (videoId: string, seconds: number): NudgeTurn => ({
@@ -134,6 +125,7 @@ export function useVideoNudges({
   setIsDarkMode,
   fallbackChips,
   registerUserAction,
+  isVideoNudgeEligible,
 }: UseVideoNudgesArgs) {
   const logRef = useRef(log);
   const typingRef = useRef(isTyping);
@@ -171,9 +163,12 @@ export function useVideoNudges({
   }, [isRunningAct1]);
 
   const runNudgeTurn = useCallback(
-    async ({ userText, syntheticAfterUser }: NudgeTurn) => {
-      if (typingRef.current || runningRef.current) return;
-      if (!registerUserAction()) return;
+    async ({ userText, syntheticAfterUser, sourceVideoId, sourceMessageId }: NudgeTurn) => {
+      if (typingRef.current || runningRef.current) return false;
+      if (sourceVideoId && sourceMessageId && !isVideoNudgeEligible(sourceVideoId, sourceMessageId)) {
+        return false;
+      }
+      if (!registerUserAction()) return false;
       setIsTyping(true);
       try {
         const {
@@ -213,11 +208,13 @@ export function useVideoNudges({
         }
 
         setLog(compactLog(nextLog, 10));
+        return true;
       } catch (err) {
         console.error(err);
       } finally {
         setIsTyping(false);
       }
+      return false;
     },
     [
       appendMessage,
@@ -225,6 +222,7 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
+      isVideoNudgeEligible,
       registerUserAction,
       setIsDarkMode,
       setIsTyping,
@@ -234,8 +232,14 @@ export function useVideoNudges({
   );
 
   const handleSessionNudge = useCallback(
-    (type: SessionNudgeType, videoId: string, turnBuilder: () => NudgeTurn) => {
+    (
+      type: SessionNudgeType,
+      videoId: string,
+      sourceMessageId: string,
+      turnBuilder: () => NudgeTurn
+    ) => {
       if (!videoId) return;
+      if (!isVideoNudgeEligible(videoId, sourceMessageId)) return;
       const state = nudgeStateRef.current;
       const { sentKey, pendingKey } = SESSION_NUDGE_CONFIG[type];
 
@@ -245,93 +249,139 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(turnBuilder());
+      runNudgeTurn({ ...turnBuilder(), sourceVideoId: videoId, sourceMessageId });
       state.sentNudgeByVideoId.add(videoId);
-      if (type === "mute") {
-        state.muteNudgeByVideoId.add(videoId);
-      }
-      if (type === "stop") {
-        state.stopNudgeByVideoId.add(videoId);
-      }
+      if (type === "mute") state.muteNudgeByVideoId.add(videoId);
+      if (type === "stop") state.stopNudgeByVideoId.add(videoId);
       state[sentKey] = true;
       state[pendingKey] = false;
     },
-    [runNudgeTurn]
+    [isVideoNudgeEligible, runNudgeTurn]
   );
 
   const handleMutedChange = useCallback(
-    (videoId: string, muted: boolean) => {
+    (videoId: string, sourceMessageId: string, muted: boolean) => {
       const muteState = muteStateByVideoIdRef.current;
       const previousMuted = muteState.get(videoId);
       muteState.set(videoId, muted);
-      if (previousMuted !== false || !muted) {
-        return;
-      }
-      handleSessionNudge("mute", videoId, () => buildMuteTurn(videoId));
+      if (previousMuted !== false || !muted) return;
+      handleSessionNudge("mute", videoId, sourceMessageId, () => buildMuteTurn(videoId));
     },
     [handleSessionNudge]
   );
 
   const handleScrubForward = useCallback(
-    (videoId: string, deltaSeconds: number) => {
+    (videoId: string, sourceMessageId: string, deltaSeconds: number) => {
       const state = nudgeStateRef.current;
       state.scrubbedByVideoId.add(videoId);
       const seconds = Math.round(Math.abs(deltaSeconds));
-      handleSessionNudge("scrub-forward", videoId, () => buildScrubForwardTurn(videoId, seconds));
+      handleSessionNudge("scrub-forward", videoId, sourceMessageId, () =>
+        buildScrubForwardTurn(videoId, seconds)
+      );
     },
     [handleSessionNudge]
   );
 
   const handleScrubBackward = useCallback(
-    (videoId: string, deltaSeconds: number) => {
+    (videoId: string, sourceMessageId: string, deltaSeconds: number) => {
       const state = nudgeStateRef.current;
       state.scrubbedByVideoId.add(videoId);
       const seconds = Math.round(Math.abs(deltaSeconds));
-      handleSessionNudge("scrub-backward", videoId, () => buildScrubBackwardTurn(videoId, seconds));
+      handleSessionNudge("scrub-backward", videoId, sourceMessageId, () =>
+        buildScrubBackwardTurn(videoId, seconds)
+      );
     },
     [handleSessionNudge]
   );
 
   const handleReachedMidpoint = useCallback(
-    (videoId: string) => {
+    (videoId: string, sourceMessageId: string) => {
       const state = nudgeStateRef.current;
+      if (!isVideoNudgeEligible(videoId, sourceMessageId)) return;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.sentNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildMidpointTurn(videoId));
+      runNudgeTurn({ ...buildMidpointTurn(videoId), sourceVideoId: videoId, sourceMessageId });
       state.sentNudgeByVideoId.add(videoId);
     },
-    [runNudgeTurn]
+    [isVideoNudgeEligible, runNudgeTurn]
   );
 
   const handleReachedNearEnd = useCallback(
-    (videoId: string) => {
+    (videoId: string, sourceMessageId: string) => {
       const state = nudgeStateRef.current;
+      if (!isVideoNudgeEligible(videoId, sourceMessageId)) return;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.muteNudgeByVideoId.has(videoId)) return;
       if (state.stopNudgeByVideoId.has(videoId)) return;
       if (state.finishedNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildFinishedTurn(videoId));
+      runNudgeTurn({ ...buildFinishedTurn(videoId), sourceVideoId: videoId, sourceMessageId });
       state.finishedNudgeByVideoId.add(videoId);
     },
-    [runNudgeTurn]
+    [isVideoNudgeEligible, runNudgeTurn]
+  );
+
+  const trySendBingeNudge = useCallback(
+    (videoId: string, sourceMessageId: string, nth: number) => {
+      if (!videoId) return;
+      const state = nudgeStateRef.current;
+      if (state.bingeNudgeSent) return;
+      if (state.sentNudgeByVideoId.has(videoId)) {
+        state.pendingBingeNudge = true;
+        return;
+      }
+      if (!isVideoNudgeEligible(videoId, sourceMessageId)) {
+        state.pendingBingeNudge = true;
+        return;
+      }
+
+      runNudgeTurn({
+        ...buildBingeTurn(videoId, nth),
+        sourceVideoId: videoId,
+        sourceMessageId,
+      }).then((sent) => {
+        if (!sent) {
+          state.pendingBingeNudge = true;
+          return;
+        }
+
+        state.sentNudgeByVideoId.add(videoId);
+        state.bingeNudgeSent = true;
+        state.pendingBingeNudge = false;
+      });
+    },
+    [isVideoNudgeEligible, runNudgeTurn]
+  );
+
+  const handlePlayed5s = useCallback(
+    (videoId: string, sourceMessageId: string) => {
+      const state = nudgeStateRef.current;
+      if (!state.pendingBingeNudge || state.bingeNudgeSent) return;
+      const count = bingeVideoIdsRef.current.size;
+      if (count < 3) return;
+      trySendBingeNudge(videoId, sourceMessageId, count);
+    },
+    [trySendBingeNudge]
   );
 
   const handlePlayed10s = useCallback(
-    (videoId: string) => {
+    (videoId: string, sourceMessageId: string) => {
       bingeVideoIdsRef.current.add(videoId);
       const count = bingeVideoIdsRef.current.size;
       if (count < 3) return;
-      handleSessionNudge("binge", videoId, () => buildBingeTurn(videoId, count));
+      trySendBingeNudge(videoId, sourceMessageId, count);
     },
-    [handleSessionNudge]
+    [trySendBingeNudge]
   );
 
   const handleStoppedEarly = useCallback(
-    (videoId: string, seconds: number) => {
+    (videoId: string, sourceMessageId: string, seconds: number) => {
+      if (!isVideoNudgeEligible(videoId, sourceMessageId)) return;
       const roundedSeconds = Math.round(seconds);
-      handleSessionNudge("stop", videoId, () => buildManualStopTurn(videoId, roundedSeconds));
+      handleSessionNudge("stop", videoId, sourceMessageId, () =>
+        buildManualStopTurn(videoId, roundedSeconds)
+      );
     },
-    [handleSessionNudge]
+    [handleSessionNudge, isVideoNudgeEligible]
   );
 
   return {
@@ -340,6 +390,7 @@ export function useVideoNudges({
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   };

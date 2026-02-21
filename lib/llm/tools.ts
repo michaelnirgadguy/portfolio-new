@@ -6,7 +6,7 @@ export const TOOLS = [
     type: "function" as const,
     name: "ui_show_videos",
     description:
-      "Show one or more videos on the site. If exactly one ID is provided, open the player. If multiple IDs are provided, render a thumbnails grid. Use only IDs from the catalog.",
+      'Show one or more videos on the site. If exactly one ID is provided, open the player. If multiple IDs are provided, render a thumbnails grid. Use only IDs from the catalog. prefer IDs not listed in "Seen Videos"',
     strict: true,
     parameters: {
       type: "object",

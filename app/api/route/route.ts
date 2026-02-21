@@ -141,9 +141,9 @@ export async function POST(req: NextRequest) {
       : [];
 
     const watchedVideosBlock = `
-# Seen videos guidance
-Prefer presenting the user with videos they haven't seen yet.
+# Seen Videos
 The user has already watched: ${seenVideoIds.length ? seenVideoIds.join(", ") : "none"}
+prefer showing videos the user hasn't seen yet.
 `;
 
     const system = await loadSystemPrompt();

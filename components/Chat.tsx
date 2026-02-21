@@ -31,6 +31,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   } = useChatController(initialVideos);
@@ -70,6 +71,7 @@ export default function Chat({ initialVideos }: { initialVideos: VideoItem[] }) 
       onMutedChange={handleMutedChange}
       onReachedMidpoint={handleReachedMidpoint}
       onReachedNearEnd={handleReachedNearEnd}
+      onPlayed5s={handlePlayed5s}
       onPlayed10s={handlePlayed10s}
       onScrubForward={handleScrubForward}
       onScrubBackward={handleScrubBackward}

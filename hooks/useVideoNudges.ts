@@ -40,6 +40,7 @@ type NudgeTurn = {
   syntheticAfterUser: string;
 };
 type UseVideoNudgesArgs = {
+  isLatestVideoMessage: (videoId: string) => boolean;
   log: any[];
   setLog: (nextLog: any[]) => void;
   appendMessage: (msg: Message) => void;
@@ -121,6 +122,7 @@ const buildBingeTurn = (videoId: string, nth: number): NudgeTurn => ({
 });
 
 export function useVideoNudges({
+  isLatestVideoMessage,
   log,
   setLog,
   appendMessage,
@@ -172,8 +174,6 @@ export function useVideoNudges({
 
   const runNudgeTurn = useCallback(
     async ({ userText, syntheticAfterUser }: NudgeTurn) => {
-      if (typingRef.current || runningRef.current) return;
-      if (!registerUserAction()) return;
       setIsTyping(true);
       try {
         const {
@@ -225,7 +225,6 @@ export function useVideoNudges({
       handleShowAllVideos,
       handleShowContactCard,
       handleShowVideos,
-      registerUserAction,
       setIsDarkMode,
       setIsTyping,
       setLog,
@@ -233,9 +232,15 @@ export function useVideoNudges({
     ]
   );
 
+  const canRunNudge = useCallback(() => {
+    if (typingRef.current || runningRef.current) return false;
+    return registerUserAction();
+  }, [registerUserAction]);
+
   const handleSessionNudge = useCallback(
     (type: SessionNudgeType, videoId: string, turnBuilder: () => NudgeTurn) => {
       if (!videoId) return;
+      if (!isLatestVideoMessage(videoId)) return;
       const state = nudgeStateRef.current;
       const { sentKey, pendingKey } = SESSION_NUDGE_CONFIG[type];
 
@@ -245,7 +250,11 @@ export function useVideoNudges({
         return;
       }
 
-      runNudgeTurn(turnBuilder());
+      if (!canRunNudge()) {
+        state[pendingKey] = true;
+        return;
+      }
+      void runNudgeTurn(turnBuilder());
       state.sentNudgeByVideoId.add(videoId);
       if (type === "mute") {
         state.muteNudgeByVideoId.add(videoId);
@@ -256,7 +265,7 @@ export function useVideoNudges({
       state[sentKey] = true;
       state[pendingKey] = false;
     },
-    [runNudgeTurn]
+    [canRunNudge, isLatestVideoMessage, runNudgeTurn]
   );
 
   const handleMutedChange = useCallback(
@@ -294,36 +303,56 @@ export function useVideoNudges({
 
   const handleReachedMidpoint = useCallback(
     (videoId: string) => {
+      if (!isLatestVideoMessage(videoId)) return;
       const state = nudgeStateRef.current;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.sentNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildMidpointTurn(videoId));
+      if (!canRunNudge()) return;
+      void runNudgeTurn(buildMidpointTurn(videoId));
       state.sentNudgeByVideoId.add(videoId);
     },
-    [runNudgeTurn]
+    [canRunNudge, isLatestVideoMessage, runNudgeTurn]
   );
 
   const handleReachedNearEnd = useCallback(
     (videoId: string) => {
+      if (!isLatestVideoMessage(videoId)) return;
       const state = nudgeStateRef.current;
       if (state.scrubbedByVideoId.has(videoId)) return;
       if (state.muteNudgeByVideoId.has(videoId)) return;
       if (state.stopNudgeByVideoId.has(videoId)) return;
       if (state.finishedNudgeByVideoId.has(videoId)) return;
-      runNudgeTurn(buildFinishedTurn(videoId));
+      if (!canRunNudge()) return;
+      void runNudgeTurn(buildFinishedTurn(videoId));
       state.finishedNudgeByVideoId.add(videoId);
     },
-    [runNudgeTurn]
+    [canRunNudge, isLatestVideoMessage, runNudgeTurn]
   );
 
-  const handlePlayed10s = useCallback(
+  const handlePlayed5s = useCallback(
     (videoId: string) => {
       bingeVideoIdsRef.current.add(videoId);
       const count = bingeVideoIdsRef.current.size;
       if (count < 3) return;
+
+      const state = nudgeStateRef.current;
+      if (!isLatestVideoMessage(videoId)) {
+        if (!state.bingeNudgeSent) {
+          state.pendingBingeNudge = true;
+        }
+        return;
+      }
+
       handleSessionNudge("binge", videoId, () => buildBingeTurn(videoId, count));
     },
-    [handleSessionNudge]
+    [handleSessionNudge, isLatestVideoMessage]
+  );
+
+  const handlePlayed10s = useCallback(
+    (_videoId: string) => {
+      // kept for backwards compatibility with existing callback plumbing
+    },
+    []
   );
 
   const handleStoppedEarly = useCallback(
@@ -340,6 +369,7 @@ export function useVideoNudges({
     handleScrubBackward,
     handleReachedMidpoint,
     handleReachedNearEnd,
+    handlePlayed5s,
     handlePlayed10s,
     handleStoppedEarly,
   };

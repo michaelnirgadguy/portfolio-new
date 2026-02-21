@@ -11,6 +11,9 @@ import type { Message } from "@/types/message";
 import type { VideoItem } from "@/types/video";
 
 const LANDING_COMPLETE_KEY = "mimsyLandingCompleted";
+const HAS_TYPED_CHAT_MESSAGE_KEY = "mimsyHasTypedChatMessage";
+const FIRST_TIME_CHAT_PLACEHOLDER = "Try 'Show me something geeky'";
+const RETURNING_CHAT_PLACEHOLDER = "Ask Mimsy anything";
 const DIRECT_GREETING =
   "Hello! I see you're back. I assume you want to see Michael's videos, or are you just here for my charm?";
 const DIRECT_GREETING_CHIPS = ["Show me a cool video", "Tell me more about michael", "What is this site?"];
@@ -49,6 +52,7 @@ export function useChatController(initialVideos: VideoItem[]) {
   const [animateAct1Chips, setAnimateAct1Chips] = useState(false);
   const [hasShownAct1Chips, setHasShownAct1Chips] = useState(false);
   const [actionCount, setActionCount] = useState(0);
+  const [chatInputPlaceholder, setChatInputPlaceholder] = useState(FIRST_TIME_CHAT_PLACEHOLDER);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -219,6 +223,13 @@ export function useChatController(initialVideos: VideoItem[]) {
     const root = document.documentElement;
     root.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const hasTypedChatMessage = localStorage.getItem(HAS_TYPED_CHAT_MESSAGE_KEY) === "true";
+    setChatInputPlaceholder(hasTypedChatMessage ? RETURNING_CHAT_PLACEHOLDER : FIRST_TIME_CHAT_PLACEHOLDER);
+  }, []);
 
   useEffect(() => {
     const forceIntro = searchParams?.get("forceIntro")?.toLowerCase() === "true";
@@ -479,6 +490,11 @@ export function useChatController(initialVideos: VideoItem[]) {
     appendMessage(userMessage);
     setInput("");
 
+    if (typeof window !== "undefined") {
+      localStorage.setItem(HAS_TYPED_CHAT_MESSAGE_KEY, "true");
+    }
+    setChatInputPlaceholder(RETURNING_CHAT_PLACEHOLDER);
+
     setIsTyping(true);
     try {
       const response = await sendTurn({
@@ -543,6 +559,7 @@ export function useChatController(initialVideos: VideoItem[]) {
     scrollRef,
     videosById,
     hasReachedActionLimit,
+    chatInputPlaceholder,
     handleLandingSubmit,
     handleLandingChipClick,
     handleSubmit,

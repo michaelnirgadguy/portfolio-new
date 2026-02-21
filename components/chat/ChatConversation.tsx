@@ -19,6 +19,7 @@ type ChatConversationProps = {
   isRunningAct1: boolean;
   hasRunLanding: boolean;
   isActionLimitReached: boolean;
+  inputPlaceholder: string;
   activeChips: string[];
   animateAct1Chips: boolean;
   dots: number;
@@ -46,6 +47,7 @@ export default function ChatConversation({
   isRunningAct1,
   hasRunLanding,
   isActionLimitReached,
+  inputPlaceholder,
   activeChips,
   animateAct1Chips,
   dots,
@@ -175,7 +177,7 @@ export default function ChatConversation({
                 onChange={(event) => onInputChange(event.target.value)}
                 maxLength={280}
                 autoFocus
-                placeholder='Try "Show me a geeky video"'
+                placeholder={inputPlaceholder}
                 disabled={isInputDisabled}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"
               />

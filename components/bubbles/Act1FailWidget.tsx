@@ -60,8 +60,7 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
       </div>
 
       <div className="grid gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
-        {/* square player (fills width like before, uses more vertical space) */}
-        <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-black">
+        <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black sm:aspect-square">
           {showVideo ? (
             <video
               src="/vid/diffusion.mp4"
@@ -96,4 +95,3 @@ export default function Act1FailWidget({ script, lineDelayMs = DEFAULT_DELAY }: 
     </div>
   );
 }
-

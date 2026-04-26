@@ -84,7 +84,7 @@ export default function ChatLanding({
                 </div>
               </form>
 
-              <div className="chip-scroll-hint mx-auto flex w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto px-0.5 pt-1 pb-1 no-scrollbar">
+              <div className="chip-scroll-hint mx-auto flex w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto px-3 pt-1 pb-1 no-scrollbar sm:justify-center sm:px-0.5">
                 {LANDING_SUGGESTIONS.map((chip) => (
                   <button
                     key={chip}

@@ -69,12 +69,14 @@ export default function ChatConversation({
 }: ChatConversationProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const isInputDisabled = isTyping || isRunningAct1 || isActionLimitReached;
+  const isDesktop =
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 640px)").matches : false;
 
   useEffect(() => {
-    if (!isInputDisabled) {
+    if (isDesktop && !isInputDisabled) {
       inputRef.current?.focus();
     }
-  }, [isInputDisabled]);
+  }, [isDesktop, isInputDisabled]);
 
   function renderMessage(msg: Message) {
     if (msg.role === "system_log") {
@@ -176,7 +178,7 @@ export default function ChatConversation({
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}
                 maxLength={280}
-                autoFocus
+                autoFocus={isDesktop}
                 placeholder={inputPlaceholder}
                 disabled={isInputDisabled}
                 className="flex-1 bg-transparent px-2 py-1 outline-none placeholder:text-muted-foreground disabled:opacity-50"

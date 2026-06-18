@@ -98,6 +98,7 @@ export default function HeroPlayerBubble({
       <VideoPlayer
         url={video.url}
         title={video.title}
+        thumbnail={video.thumbnail}
         className="bg-black"
         autoplay
         onPlayingChange={handlePlayingChange}

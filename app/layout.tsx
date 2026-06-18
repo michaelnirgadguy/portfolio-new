@@ -1,7 +1,7 @@
 import "./globals.css";
 
 import { Suspense } from "react";
-import LiquidEtherBackground from "@/components/backgrounds/LiquidEtherBackground";
+import PerformanceAwareBackground from "@/components/backgrounds/PerformanceAwareBackground";
 
 export default function RootLayout({
   children,
@@ -12,7 +12,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-background text-foreground">
         <Suspense fallback={null}>
-          <LiquidEtherBackground deferUntilInteraction />
+          <PerformanceAwareBackground />
         </Suspense>
         {/* Let pages decide about headers / chrome */}
         <main className="relative z-10 min-h-screen">{children}</main>

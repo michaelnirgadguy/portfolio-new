@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Suspense,
+  lazy,
   useEffect,
   useMemo,
   useRef,
@@ -8,7 +10,8 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import LiquidEther from "@/components/backgrounds/LiquidEther";
+
+const LazyLiquidEther = lazy(() => import("@/components/backgrounds/LiquidEther"));
 
 type HslColor = {
   hue: number;
@@ -38,6 +41,30 @@ type LiquidDesignState = {
   isBounce: boolean;
   resolution: number;
   colors: [string, string, string];
+};
+
+type PerformanceState = {
+  hasProfile: boolean;
+  prefersReducedMotion: boolean;
+  isMobile: boolean;
+  isLowPower: boolean;
+  saveData: boolean;
+};
+
+type NavigatorWithPerformanceHints = Navigator & {
+  deviceMemory?: number;
+  connection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+};
+
+const defaultPerformanceState: PerformanceState = {
+  hasProfile: false,
+  prefersReducedMotion: false,
+  isMobile: false,
+  isLowPower: false,
+  saveData: false,
 };
 
 const defaultCssState: DesignCssState = {
@@ -101,8 +128,46 @@ function clampPanelPosition(x: number, y: number) {
   };
 }
 
-export default function LiquidEtherBackground() {
+function getPerformanceState(): PerformanceState {
+  const navigatorWithHints = window.navigator as NavigatorWithPerformanceHints;
+  const connection = navigatorWithHints.connection;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isMobile =
+    window.matchMedia("(max-width: 767px)").matches || window.matchMedia("(pointer: coarse)").matches;
+  const saveData = Boolean(connection?.saveData);
+  const slowConnection = /(^|-)2g$/.test(connection?.effectiveType ?? "");
+  const constrainedMemory =
+    typeof navigatorWithHints.deviceMemory === "number" && navigatorWithHints.deviceMemory <= 4;
+  const constrainedCpu =
+    typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+
+  return {
+    hasProfile: true,
+    prefersReducedMotion,
+    isMobile,
+    saveData,
+    isLowPower: saveData || slowConnection || constrainedMemory || constrainedCpu,
+  };
+}
+
+function addMediaQueryListener(query: MediaQueryList, listener: () => void) {
+  if (typeof query.addEventListener === "function") {
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
+  }
+
+  query.addListener(listener);
+  return () => query.removeListener(listener);
+}
+
+export default function LiquidEtherBackground({
+  deferUntilInteraction = false,
+}: {
+  deferUntilInteraction?: boolean;
+}) {
   const [isDesignMode, setIsDesignMode] = useState(false);
+  const [performanceState, setPerformanceState] = useState(defaultPerformanceState);
+  const [isEffectReady, setIsEffectReady] = useState(false);
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 64 });
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -137,6 +202,69 @@ export default function LiquidEtherBackground() {
       window.removeEventListener("popstate", syncDesignModeFromUrl);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mobileWidthQuery = window.matchMedia("(max-width: 767px)");
+    const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+    const syncPerformanceState = () => setPerformanceState(getPerformanceState());
+    const removeReducedMotionListener = addMediaQueryListener(reducedMotionQuery, syncPerformanceState);
+    const removeMobileWidthListener = addMediaQueryListener(mobileWidthQuery, syncPerformanceState);
+    const removeCoarsePointerListener = addMediaQueryListener(coarsePointerQuery, syncPerformanceState);
+
+    syncPerformanceState();
+
+    return () => {
+      removeReducedMotionListener();
+      removeMobileWidthListener();
+      removeCoarsePointerListener();
+    };
+  }, []);
+
+  const shouldDisableEffect =
+    !isDesignMode &&
+    performanceState.hasProfile &&
+    (performanceState.prefersReducedMotion || performanceState.isMobile || performanceState.saveData);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (isDesignMode) {
+      setIsEffectReady(true);
+      return;
+    }
+
+    if (shouldDisableEffect) {
+      setIsEffectReady(false);
+      return;
+    }
+
+    if (!deferUntilInteraction) {
+      setIsEffectReady(true);
+      return;
+    }
+
+    if (isEffectReady) return;
+
+    const markReady = () => setIsEffectReady(true);
+    const fallbackId = window.setTimeout(markReady, 1800);
+    const listenerOptions: AddEventListenerOptions = { once: true, passive: true };
+
+    window.addEventListener("pointerdown", markReady, listenerOptions);
+    window.addEventListener("keydown", markReady, { once: true });
+    window.addEventListener("wheel", markReady, listenerOptions);
+    window.addEventListener("touchstart", markReady, listenerOptions);
+
+    return () => {
+      window.clearTimeout(fallbackId);
+      window.removeEventListener("pointerdown", markReady);
+      window.removeEventListener("keydown", markReady);
+      window.removeEventListener("wheel", markReady);
+      window.removeEventListener("touchstart", markReady);
+    };
+  }, [deferUntilInteraction, isDesignMode, isEffectReady, shouldDisableEffect]);
 
   useEffect(() => {
     if (!isDesignMode || typeof window === "undefined") return;
@@ -202,6 +330,26 @@ export default function LiquidEtherBackground() {
       root.style.removeProperty("--background-veil-strong-alpha");
     };
   }, [cssState, isDesignMode]);
+
+  const runtimeLiquidState = useMemo(() => {
+    if (isDesignMode) return liquidState;
+
+    const maxResolution = performanceState.isLowPower ? 0.25 : 0.35;
+
+    return {
+      ...liquidState,
+      autoDemo: false,
+      mouseForce: Math.min(liquidState.mouseForce, performanceState.isLowPower ? 4 : 6),
+      cursorSize: Math.min(liquidState.cursorSize, performanceState.isLowPower ? 64 : 82),
+      viscous: Math.min(liquidState.viscous, performanceState.isLowPower ? 45 : 60),
+      autoIntensity: Math.min(liquidState.autoIntensity, performanceState.isLowPower ? 1 : 1.4),
+      isBounce: false,
+      resolution: Math.min(liquidState.resolution, maxResolution),
+    };
+  }, [isDesignMode, liquidState, performanceState.isLowPower]);
+
+  const shouldRenderLiquid =
+    isDesignMode || (performanceState.hasProfile && isEffectReady && !shouldDisableEffect);
 
   const onPanelDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
     dragOffsetRef.current = {
@@ -527,19 +675,33 @@ export default function LiquidEtherBackground() {
 
   return (
     <>
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <LiquidEther
-          mouseForce={liquidState.mouseForce}
-          cursorSize={liquidState.cursorSize}
-          isViscous={liquidState.isViscous}
-          viscous={liquidState.viscous}
-          colors={liquidState.colors}
-          autoDemo={liquidState.autoDemo}
-          autoSpeed={liquidState.autoSpeed}
-          autoIntensity={liquidState.autoIntensity}
-          isBounce={liquidState.isBounce}
-          resolution={liquidState.resolution}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+        <div
+          className="absolute inset-0 transition-opacity duration-500"
+          style={{
+            background:
+              "radial-gradient(circle at 18% 18%, rgba(131, 210, 236, 0.22), transparent 32%), radial-gradient(circle at 78% 24%, rgba(249, 190, 247, 0.2), transparent 30%), radial-gradient(circle at 54% 78%, rgba(236, 19, 218, 0.12), transparent 34%)",
+            opacity: shouldRenderLiquid ? 0.35 : 0.72,
+          }}
         />
+        {shouldRenderLiquid ? (
+          <div className="absolute inset-0">
+            <Suspense fallback={null}>
+              <LazyLiquidEther
+                mouseForce={runtimeLiquidState.mouseForce}
+                cursorSize={runtimeLiquidState.cursorSize}
+                isViscous={runtimeLiquidState.isViscous}
+                viscous={runtimeLiquidState.viscous}
+                colors={runtimeLiquidState.colors}
+                autoDemo={runtimeLiquidState.autoDemo}
+                autoSpeed={runtimeLiquidState.autoSpeed}
+                autoIntensity={runtimeLiquidState.autoIntensity}
+                isBounce={runtimeLiquidState.isBounce}
+                resolution={runtimeLiquidState.resolution}
+              />
+            </Suspense>
+          </div>
+        ) : null}
       </div>
       {panel}
     </>

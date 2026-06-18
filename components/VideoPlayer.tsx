@@ -1,11 +1,12 @@
 // /components/VideoPlayer.tsx
 "use client";
 
-import { useCallback, useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 type Props = {
   url: string; // Bunny iframe URL or YouTube URL
   title?: string;
+  thumbnail?: string | null;
   className?: string;
   autoplay?: boolean;
   playerId?: string;
@@ -45,6 +46,7 @@ function extractYouTubeId(url: string): string | null {
 export default function VideoPlayer({
   url,
   title,
+  thumbnail,
   className,
   autoplay,
   playerId,
@@ -64,6 +66,8 @@ export default function VideoPlayer({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bunnyPlayerRef = useRef<any | null>(null);
+  const [isActivated, setIsActivated] = useState(Boolean(autoplay));
+  const [isNearViewport, setIsNearViewport] = useState(Boolean(autoplay));
 
   // Internal refs for Bunny player state
   const durationRef = useRef<number | null>(null);
@@ -83,15 +87,56 @@ export default function VideoPlayer({
   const SCRUB_SUPPRESS_MS = 800;
 
   const isBunny = url.includes("iframe.mediadelivery.net");
+  const youTubeId = isBunny ? null : extractYouTubeId(url);
+
+  let src: string | null = null;
+  if (isBunny) {
+    src = url;
+  } else if (youTubeId) {
+    const params = new URLSearchParams();
+    if (autoplay) {
+      params.set("autoplay", "1");
+      params.set("mute", "1");
+    }
+    params.set("enablejsapi", "1");
+    params.set("playsinline", "1");
+    params.set("rel", "0");
+    const query = params.toString();
+    src = `https://www.youtube.com/embed/${youTubeId}${query ? `?${query}` : ""}`;
+  }
+
+  const posterSrc = thumbnail ?? (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/hqdefault.jpg` : null);
+  const shouldRenderIframe = Boolean(src && isActivated && isNearViewport);
 
   const emitGlobalPlay = useCallback(() => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
       new CustomEvent("mimsy:video:play", {
         detail: { playerId: resolvedPlayerId },
-      })
+      }),
     );
   }, [resolvedPlayerId]);
+
+  const emitGlobalPlayingChange = useCallback(
+    (isPlaying: boolean) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent("mimsy:video:playing-change", {
+          detail: { playerId: resolvedPlayerId, isPlaying },
+        }),
+      );
+    },
+    [resolvedPlayerId],
+  );
+
+  const setPlayingState = useCallback(
+    (isPlaying: boolean) => {
+      isPlayingRef.current = isPlaying;
+      onPlayingChange?.(isPlaying);
+      emitGlobalPlayingChange(isPlaying);
+    },
+    [emitGlobalPlayingChange, onPlayingChange],
+  );
 
   const emitDebugEvent = useCallback(
     (type: string, data?: Record<string, unknown>) => {
@@ -106,31 +151,11 @@ export default function VideoPlayer({
             url,
             ...data,
           },
-        })
+        }),
       );
     },
-    [isBunny, resolvedPlayerId, title, url]
+    [isBunny, resolvedPlayerId, title, url],
   );
-
-  // Build src
-  let src: string | null = null;
-
-  if (isBunny) {
-    src = url;
-    // If you want autoplay for Bunny later, you can add query params here.
-    // if (autoplay) src += (url.includes("?") ? "&" : "?") + "autoplay=1&muted=1";
-  } else {
-    const id = extractYouTubeId(url);
-    if (!id) return null;
-    const params = new URLSearchParams();
-    if (autoplay) {
-      params.set("autoplay", "1");
-      params.set("mute", "1");
-    }
-    params.set("enablejsapi", "1");
-    const query = params.toString();
-    src = `https://www.youtube.com/embed/${id}${query ? `?${query}` : ""}`;
-  }
 
   // Reset internal refs when URL changes
   useEffect(() => {
@@ -147,11 +172,34 @@ export default function VideoPlayer({
     nearEndRef.current = false;
     autoPausedRef.current = false;
     scrubbedAtRef.current = null;
-    onPlayingChange?.(false);
-  }, [url, onPlayingChange]);
+    setIsActivated(Boolean(autoplay));
+    setPlayingState(false);
+  }, [autoplay, setPlayingState, url]);
 
-  // Load Bunny player.js and wire events
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const target = containerRef.current;
+    if (!target) return;
+    if (!("IntersectionObserver" in window)) {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsNearViewport(Boolean(entry?.isIntersecting));
+      },
+      { rootMargin: "900px 0px", threshold: 0 },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  // Load Bunny player.js and wire events only while the iframe is actually mounted.
+  useEffect(() => {
+    if (!shouldRenderIframe) return;
     if (!isBunny) return;
     if (typeof window === "undefined") return;
 
@@ -164,21 +212,20 @@ export default function VideoPlayer({
           return;
         }
         const existing = document.querySelector<HTMLScriptElement>(
-          'script[src="//assets.mediadelivery.net/playerjs/playerjs-latest.min.js"]'
+          'script[src="https://assets.mediadelivery.net/playerjs/playerjs-latest.min.js"], script[src="//assets.mediadelivery.net/playerjs/playerjs-latest.min.js"]',
         );
         if (existing) {
           existing.addEventListener("load", () => resolve(), { once: true });
           return;
         }
         const script = document.createElement("script");
-        script.src = "//assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
+        script.src = "https://assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
         script.async = true;
         script.onload = () => resolve();
         document.body.appendChild(script);
       });
 
     let player: any | null = null;
-
     let cancelled = false;
 
     ensureScript().then(() => {
@@ -192,11 +239,10 @@ export default function VideoPlayer({
       const handlePlayOrPlaying = () => {
         const wasPlaying = isPlayingRef.current;
         hasStartedRef.current = true;
-        isPlayingRef.current = true;
         endedRef.current = false;
         autoPausedRef.current = false;
         emitGlobalPlay();
-        onPlayingChange?.(true);
+        setPlayingState(true);
         const scrubbedAt = scrubbedAtRef.current;
         const suppressPlay =
           typeof scrubbedAt === "number" && Date.now() - scrubbedAt < SCRUB_SUPPRESS_MS;
@@ -206,8 +252,7 @@ export default function VideoPlayer({
       };
 
       const handlePause = () => {
-        isPlayingRef.current = false;
-        onPlayingChange?.(false);
+        setPlayingState(false);
 
         // "stopped early" = paused after playing started, before end
         if (autoPausedRef.current) {
@@ -227,9 +272,8 @@ export default function VideoPlayer({
       };
 
       const handleEnded = () => {
-        isPlayingRef.current = false;
         endedRef.current = true;
-        onPlayingChange?.(false);
+        setPlayingState(false);
         onEnded?.();
         emitDebugEvent("ended");
       };
@@ -238,7 +282,6 @@ export default function VideoPlayer({
         if (!data || typeof data.seconds !== "number") return;
         const seconds = data.seconds as number;
 
-        // Track duration if provided
         if (typeof data.duration === "number" && data.duration > 0) {
           durationRef.current = data.duration;
         }
@@ -274,14 +317,12 @@ export default function VideoPlayer({
           onPlayed5s?.();
         }
 
-        // Event: played at least 10s (fire once)
         if (!played10Ref.current && seconds >= 10) {
           played10Ref.current = true;
           onPlayed10s?.();
           emitDebugEvent("played-10s");
         }
 
-        // Event: reached midpoint (fire once)
         if (
           duration &&
           duration > 0 &&
@@ -300,7 +341,6 @@ export default function VideoPlayer({
           onReachedNearEnd?.();
         }
 
-        // Poll mute state (Bunny doesn't emit mute events)
         if (typeof player.getMuted === "function") {
           try {
             player.getMuted((muted: boolean) => {
@@ -319,14 +359,12 @@ export default function VideoPlayer({
         }
       };
 
-      // Attach listeners
       player.on("play", handlePlayOrPlaying);
       player.on("playing", handlePlayOrPlaying);
       player.on("pause", handlePause);
       player.on("ended", handleEnded);
       player.on("timeupdate", handleTimeUpdate);
 
-      // On ready, detect autoplay & initial mute
       player.on("ready", () => {
         if (typeof player.getPaused === "function") {
           try {
@@ -355,6 +393,7 @@ export default function VideoPlayer({
 
     return () => {
       cancelled = true;
+      setPlayingState(false);
       try {
         bunnyPlayerRef.current = null;
         if (player && typeof player.destroy === "function") {
@@ -365,9 +404,9 @@ export default function VideoPlayer({
       }
     };
   }, [
+    shouldRenderIframe,
     isBunny,
     url,
-    onPlayingChange,
     onPlayed5s,
     onPlayed10s,
     onReachedMidpoint,
@@ -378,9 +417,12 @@ export default function VideoPlayer({
     onScrubForward,
     onScrubBackward,
     emitGlobalPlay,
+    emitDebugEvent,
+    setPlayingState,
   ]);
 
   useEffect(() => {
+    if (!shouldRenderIframe) return;
     if (typeof window === "undefined") return;
 
     const handleGlobalPlay = (event: Event) => {
@@ -402,7 +444,7 @@ export default function VideoPlayer({
             func: "pauseVideo",
             args: "",
           }),
-          "*"
+          "*",
         );
       }
     };
@@ -411,9 +453,10 @@ export default function VideoPlayer({
     return () => {
       window.removeEventListener("mimsy:video:play", handleGlobalPlay);
     };
-  }, [isBunny, resolvedPlayerId]);
+  }, [isBunny, resolvedPlayerId, shouldRenderIframe]);
 
   useEffect(() => {
+    if (!shouldRenderIframe) return;
     if (isBunny) return;
     if (typeof window === "undefined") return;
 
@@ -438,14 +481,17 @@ export default function VideoPlayer({
       try {
         const data = JSON.parse(event.data);
         if (data?.event === "onStateChange" && data?.info === 1) {
+          hasStartedRef.current = true;
+          endedRef.current = false;
           emitGlobalPlay();
-          onPlayingChange?.(true);
+          setPlayingState(true);
         }
         if (data?.event === "onStateChange" && data?.info === 2) {
-          onPlayingChange?.(false);
+          setPlayingState(false);
         }
         if (data?.event === "onStateChange" && data?.info === 0) {
-          onPlayingChange?.(false);
+          endedRef.current = true;
+          setPlayingState(false);
           onEnded?.();
         }
       } catch {
@@ -456,10 +502,12 @@ export default function VideoPlayer({
     window.addEventListener("message", handleMessage);
     return () => {
       window.removeEventListener("message", handleMessage);
+      setPlayingState(false);
     };
-  }, [emitGlobalPlay, isBunny, onEnded, onPlayingChange, resolvedPlayerId]);
+  }, [emitGlobalPlay, isBunny, onEnded, resolvedPlayerId, setPlayingState, shouldRenderIframe]);
 
   useEffect(() => {
+    if (!shouldRenderIframe) return;
     if (typeof window === "undefined") return;
     const target = containerRef.current;
     if (!target) return;
@@ -485,31 +533,63 @@ export default function VideoPlayer({
               func: "pauseVideo",
               args: "",
             }),
-            "*"
+            "*",
           );
         }
       },
-      { threshold: [0, 0.2, 1] }
+      { threshold: [0, 0.2, 1] },
     );
 
     observer.observe(target);
     return () => {
       observer.disconnect();
     };
-  }, [isBunny]);
+  }, [isBunny, shouldRenderIframe]);
+
+  if (!src) return null;
 
   return (
     <div ref={containerRef} className={`w-full ${className ?? ""}`}>
-      <div className="aspect-video overflow-hidden rounded-xl shadow">
-        <iframe
-          ref={iframeRef}
-          src={src ?? undefined}
-          title={title ?? "Video player"}
-          className="w-full h-full"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
+      <div className="aspect-video overflow-hidden rounded-xl bg-black shadow">
+        {shouldRenderIframe ? (
+          <iframe
+            ref={iframeRef}
+            src={src}
+            title={title ?? "Video player"}
+            className="h-full w-full"
+            frameBorder="0"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setIsActivated(true);
+              setIsNearViewport(true);
+            }}
+            className="group relative flex h-full w-full items-center justify-center overflow-hidden bg-black text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--background))]"
+            aria-label={`Load video${title ? `: ${title}` : ""}`}
+          >
+            {posterSrc ? (
+              <img
+                src={posterSrc}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover opacity-85 transition duration-200 group-hover:scale-[1.01] group-hover:opacity-95"
+              />
+            ) : null}
+            <span className="absolute inset-0 bg-black/25" aria-hidden="true" />
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition duration-200 group-hover:scale-105">
+              <span
+                className="ml-1 h-0 w-0 border-y-[10px] border-l-[16px] border-y-transparent border-l-black"
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

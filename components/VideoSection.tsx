@@ -11,6 +11,7 @@ export default function VideoSection({ video }: Props) {
         <VideoPlayer
           url={video.url}
           title={video.title}
+          thumbnail={video.thumbnail}
           className="w-full rounded-lg"
         />
       </div>

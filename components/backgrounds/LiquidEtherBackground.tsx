@@ -675,30 +675,32 @@ export default function LiquidEtherBackground({
 
   return (
     <>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-500"
-        style={{
-          background:
-            "radial-gradient(circle at 18% 18%, rgba(131, 210, 236, 0.22), transparent 32%), radial-gradient(circle at 78% 24%, rgba(249, 190, 247, 0.2), transparent 30%), radial-gradient(circle at 54% 78%, rgba(236, 19, 218, 0.12), transparent 34%)",
-          opacity: shouldRenderLiquid ? 0.35 : 0.72,
-        }}
-      >
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+        <div
+          className="absolute inset-0 transition-opacity duration-500"
+          style={{
+            background:
+              "radial-gradient(circle at 18% 18%, rgba(131, 210, 236, 0.22), transparent 32%), radial-gradient(circle at 78% 24%, rgba(249, 190, 247, 0.2), transparent 30%), radial-gradient(circle at 54% 78%, rgba(236, 19, 218, 0.12), transparent 34%)",
+            opacity: shouldRenderLiquid ? 0.35 : 0.72,
+          }}
+        />
         {shouldRenderLiquid ? (
-          <Suspense fallback={null}>
-            <LazyLiquidEther
-              mouseForce={runtimeLiquidState.mouseForce}
-              cursorSize={runtimeLiquidState.cursorSize}
-              isViscous={runtimeLiquidState.isViscous}
-              viscous={runtimeLiquidState.viscous}
-              colors={runtimeLiquidState.colors}
-              autoDemo={runtimeLiquidState.autoDemo}
-              autoSpeed={runtimeLiquidState.autoSpeed}
-              autoIntensity={runtimeLiquidState.autoIntensity}
-              isBounce={runtimeLiquidState.isBounce}
-              resolution={runtimeLiquidState.resolution}
-            />
-          </Suspense>
+          <div className="absolute inset-0">
+            <Suspense fallback={null}>
+              <LazyLiquidEther
+                mouseForce={runtimeLiquidState.mouseForce}
+                cursorSize={runtimeLiquidState.cursorSize}
+                isViscous={runtimeLiquidState.isViscous}
+                viscous={runtimeLiquidState.viscous}
+                colors={runtimeLiquidState.colors}
+                autoDemo={runtimeLiquidState.autoDemo}
+                autoSpeed={runtimeLiquidState.autoSpeed}
+                autoIntensity={runtimeLiquidState.autoIntensity}
+                isBounce={runtimeLiquidState.isBounce}
+                resolution={runtimeLiquidState.resolution}
+              />
+            </Suspense>
+          </div>
         ) : null}
       </div>
       {panel}

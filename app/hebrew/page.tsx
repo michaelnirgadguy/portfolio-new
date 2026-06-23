@@ -16,7 +16,7 @@ const logos = [
   { name: "Intel Ignite", src: "https://he.wikipedia.org/wiki/Special:Redirect/file/Intel%20Ignite%20Logo.png", type: "logo" },
   { name: "Taboola", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Taboola%20logo.svg", type: "logo" },
   { name: "עיריית ירושלים", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Emblem%20of%20Jerusalem.svg", type: "logo" },
-  { name: "הדר לביא", src: "/hadar-lavi.svg", type: "person" },
+  { name: "הדר לביא", src: "/hadar-lavi.png", type: "person" },
   { name: "BeerBazaar", src: "https://beerbazaar.co.il/cdn/shop/t/32/assets/footer-logo.png?v=152788136598769969031770881302", type: "logo" },
   { name: "רשות החדשנות", src: "https://innovationisrael.org.il/en/wp-content/uploads/sites/3/2024/07/%D7%A8%D7%A9%D7%95%D7%AA-%D7%94%D7%97%D7%93%D7%A9%D7%A0%D7%95%D7%AA.png", type: "logo" },
   { name: "Melio", src: "https://he.wikipedia.org/wiki/Special:Redirect/file/Melio%20logo.svg", type: "logo" },

@@ -6,14 +6,128 @@ export const metadata: Metadata = {
 };
 
 const logos = [
-  { name: 'כאן 11', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Kan11Logo.svg', type: 'logo' },
-  { name: 'הקרן החדשה לישראל', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%9C%D7%95%D7%92%D7%95%20%D7%94%D7%A7%D7%A8%D7%9F%20%D7%94%D7%97%D7%93%D7%A9%D7%94%20%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C.png', type: 'logo' },
-  { name: 'שלי יחימוביץ׳', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%A9%D7%9C%D7%99%20%D7%99%D7%97%D7%99%D7%9E%D7%95%D7%91%D7%99%D7%A5%20%D7%AA%D7%9E%D7%95%D7%A0%D7%AA%20%D7%91%D7%97%D7%99%D7%A8%D7%95%D7%AA%202019.jpg', type: 'person' },
-  { name: 'דרכנו', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%9C%D7%95%D7%92%D7%95%20%D7%AA%D7%A0%D7%95%D7%A2%D7%AA%20%D7%93%D7%A8%D7%9B%D7%A0%D7%95.png', type: 'logo' },
-  { name: 'Wolt', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Wolt-logo-2019.png', type: 'logo' },
-  { name: 'Payoneer', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Payoneer%20logo.svg', type: 'logo' },
-  { name: 'כתר פלסטיק', src: 'https://en.wikipedia.org/wiki/Special:Redirect/file/Keter%20Plastics%20logo.svg', type: 'logo' },
-  { name: 'Intel Ignite', src: 'https://he.wikipedia.org/wiki/Special:Redirect/file/Intel%20Ignite%20Logo.png', type: 'logo' },
-  { name: 'Taboola', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Taboola%20logo.svg', type: 'logo' },
-  { name: 'עיריית ירושלים', src: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Emblem%20of%20Jerusalem.svg', type: 'logo' },
-  { name: 'הדר לביא', src: 'data:image/png;base64,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...
+  { name: "כאן 11", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kan11Logo.svg", type: "logo" },
+  { name: "הקרן החדשה לישראל", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%9C%D7%95%D7%92%D7%95%20%D7%94%D7%A7%D7%A8%D7%9F%20%D7%94%D7%97%D7%93%D7%A9%D7%94%20%D7%9C%D7%99%D7%A9%D7%A8%D7%90%D7%9C.png", type: "logo" },
+  { name: "שלי יחימוביץ׳", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%A9%D7%9C%D7%99%20%D7%99%D7%97%D7%99%D7%9E%D7%95%D7%91%D7%99%D7%A5%20%D7%AA%D7%9E%D7%95%D7%A0%D7%AA%20%D7%91%D7%97%D7%99%D7%A8%D7%95%D7%AA%202019.jpg", type: "person" },
+  { name: "דרכנו", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/%D7%9C%D7%95%D7%92%D7%95%20%D7%AA%D7%A0%D7%95%D7%A2%D7%AA%20%D7%93%D7%A8%D7%9B%D7%A0%D7%95.png", type: "logo" },
+  { name: "Wolt", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Wolt-logo-2019.png", type: "logo" },
+  { name: "Payoneer", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Payoneer%20logo.svg", type: "logo" },
+  { name: "כתר פלסטיק", src: "https://en.wikipedia.org/wiki/Special:Redirect/file/Keter%20Plastics%20logo.svg", type: "logo" },
+  { name: "Intel Ignite", src: "https://he.wikipedia.org/wiki/Special:Redirect/file/Intel%20Ignite%20Logo.png", type: "logo" },
+  { name: "Taboola", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Taboola%20logo.svg", type: "logo" },
+  { name: "עיריית ירושלים", src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Emblem%20of%20Jerusalem.svg", type: "logo" },
+  { name: "הדר לביא", src: "/hadar-lavi.svg", type: "person" },
+  { name: "BeerBazaar", src: "https://beerbazaar.co.il/cdn/shop/t/32/assets/footer-logo.png?v=152788136598769969031770881302", type: "logo" },
+  { name: "רשות החדשנות", src: "https://innovationisrael.org.il/en/wp-content/uploads/sites/3/2024/07/%D7%A8%D7%A9%D7%95%D7%AA-%D7%94%D7%97%D7%93%D7%A9%D7%A0%D7%95%D7%AA.png", type: "logo" },
+  { name: "Melio", src: "https://he.wikipedia.org/wiki/Special:Redirect/file/Melio%20logo.svg", type: "logo" },
+] as const;
+
+const workItems = [
+  <><a href="https://www.instagram.com/reel/C3z3HVgI7Y_/?igsh=dXdkYW85aDkzdXgw" target="_blank" rel="noopener noreferrer">אחד</a> מתוך מאות סרטונים שעשינו ב״ליברל״ בתקופה שבה ניהלתי את המגזין הדיגיטלי.<br />פה יש <a href="https://www.instagram.com/lbrl_il/reels" target="_blank" rel="noopener noreferrer">עוד</a>. מ<a href="https://www.instagram.com/reel/C4-d5NHoUSa/?igsh=ajJ6M2RpNHdxdDA=" target="_blank" rel="noopener noreferrer">שטויות כאלה</a>, ועד דברים שנותנים <a href="https://www.instagram.com/reel/C0_5hsWoP-K/?igsh=MTQ3NHZsa2drdzNuYg==" target="_blank" rel="noopener noreferrer">בוקס בבטן</a>.</>,
+  <>סרטון ש<a href="https://drive.google.com/file/d/1YmTmfti-PMlMRQROapJNt2ee0ikv135g/view?usp=drive_link" target="_blank" rel="noopener noreferrer">מכניס אור ללב</a> שיצרתי עבור עיריית ירושלים.</>,
+  <>יותר קצר? יותר מצחיק? יותר AI? עדיין מגזר ציבורי? <a href="https://drive.google.com/file/d/19xN3MCDDy1fkfK_8M6TX0RCqTwsovXGb/view?usp=drive_link" target="_blank" rel="noopener noreferrer">בבקשה</a>.</>,
+  <>אני גם כותב תסריטים באנגלית <a href="https://drive.google.com/file/d/1MAs5uelNsqbGySJaaNphdGHRaOpoedGB/view?usp=drive_link" target="_blank" rel="noopener noreferrer">לחברות טק</a> — עם הסברים פשוטים <a href="https://drive.google.com/file/d/1DW0h2td__nPJXzlFHZpcwnTu4wne2F2V/view?usp=drive_link" target="_blank" rel="noopener noreferrer">לרעיונות מורכבים</a>.</>,
+  <>אין לכם זמן עכשיו, אבל אם אתם אוהבים מוזיקה ואת הכוכבים, בסוף היום <a href="https://youtu.be/dliU3jfUtBc" target="_blank" rel="noopener noreferrer">תרצו לראות את זה</a>.</>,
+];
+
+const styles = `
+  .hebrewPage{min-height:100vh;background:radial-gradient(circle at 8% 0%,rgba(31,79,133,.12),transparent 28rem),radial-gradient(circle at 100% 14%,rgba(176,120,66,.13),transparent 26rem),#f6f2ea;color:#171615;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.6;padding:22px 14px 38px;}
+  .shell{width:min(100%,880px);margin:0 auto;overflow:hidden;border:1px solid rgba(23,22,21,.11);border-radius:30px;background:rgba(255,255,255,.84);box-shadow:0 18px 55px rgba(28,22,16,.09);}
+  .hero{padding:40px clamp(22px,6vw,58px) 24px;}
+  .title{margin:0 0 10px;font-size:clamp(34px,6.2vw,58px);line-height:1.02;letter-spacing:-.04em;font-weight:820;}
+  .subtitle{max-width:600px;margin:0;font-size:clamp(17px,2.2vw,22px);line-height:1.48;color:#2d2925;font-weight:520;}
+  .clientTitle{margin:32px 0 10px;color:#746d64;font-size:14px;}
+  .marquee{position:relative;margin-inline:calc(clamp(22px,6vw,58px) * -1);border-block:1px solid rgba(23,22,21,.11);background:rgba(255,255,255,.52);overflow:hidden;}
+  .marquee:before,.marquee:after{content:"";position:absolute;top:0;bottom:0;width:70px;z-index:2;pointer-events:none;}
+  .marquee:before{right:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.92));}
+  .marquee:after{left:0;background:linear-gradient(270deg,transparent,rgba(255,255,255,.92));}
+  .track{width:max-content;display:flex;gap:10px;align-items:center;padding:12px 10px;animation:scrollLogos 58s linear infinite;}
+  .marquee:hover .track{animation-play-state:paused;}
+  @keyframes scrollLogos{from{transform:translateX(0)}to{transform:translateX(50%)}}
+  .logoItem{flex:0 0 auto;width:112px;height:52px;display:flex;align-items:center;justify-content:center;padding:10px 13px;border:1px solid rgba(23,22,21,.11);border-radius:15px;background:#fff;overflow:hidden;user-select:none;}
+  .logoItem img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:saturate(.96) contrast(.99);}
+  .logoItem.person{width:78px;height:52px;padding:0;border-radius:16px;background:#ece5d8;}
+  .logoItem.person img{width:100%;height:100%;object-fit:cover;max-width:none;max-height:none;filter:none;}
+  .content{padding:28px clamp(22px,6vw,58px) 42px;}
+  .quick{display:grid;gap:14px;margin-bottom:34px;padding-bottom:28px;border-bottom:1px solid rgba(23,22,21,.11);}
+  .quick p{margin:0;max-width:650px;font-size:clamp(16px,1.85vw,19px);}
+  .muted{color:#746d64;}
+  a{color:#174b7e;text-decoration-thickness:.075em;text-underline-offset:.22em;font-weight:720;}
+  a:hover{color:#8a4b21;}
+  .cvLinks{display:inline-flex;flex-wrap:wrap;gap:8px;}
+  .pill{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid rgba(23,22,21,.11);border-radius:999px;background:#fff;text-decoration:none;font-size:14px;font-weight:700;}
+  .sectionTitle{margin:0 0 14px;font-size:clamp(23px,3.2vw,34px);line-height:1.1;letter-spacing:-.03em;}
+  .workList{display:grid;gap:0;margin:0;padding:0;list-style:none;counter-reset:works;}
+  .workItem{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid rgba(23,22,21,.11);counter-increment:works;}
+  .workItem:before{content:counter(works,decimal-leading-zero);width:30px;height:30px;display:grid;place-items:center;border-radius:999px;border:1px solid rgba(23,22,21,.11);color:#746d64;font-size:11px;font-weight:760;direction:ltr;background:rgba(255,255,255,.55);margin-top:.08em;}
+  .workItem p{margin:0;font-size:clamp(16px,1.9vw,19px);line-height:1.62;}
+  .contact{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px 18px;align-items:center;margin-top:34px;padding:18px 20px;border-radius:22px;background:linear-gradient(135deg,#181716,#173d63);color:#fff;}
+  .contactTitle{margin:0;font-size:clamp(20px,2.8vw,27px);line-height:1.1;letter-spacing:-.02em;font-weight:780;}
+  .contactSubtitle{margin:5px 0 0;color:rgba(255,255,255,.68);font-size:14px;}
+  .contactLinks{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;direction:ltr;}
+  .contactLinks a{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:#fff;text-decoration:none;font-size:14px;}
+  @media (max-width:640px){.hebrewPage{padding:8px}.shell{border-radius:24px}.hero{padding-top:30px}.marquee:before,.marquee:after{width:42px}.logoItem{width:100px;height:48px}.logoItem.person{width:72px;height:48px}.contactLinks{justify-content:flex-start}}
+  @media (prefers-reduced-motion:reduce){.track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}}
+`;
+
+export default function HebrewPage() {
+  const logoItems = [...logos, ...logos];
+
+  return (
+    <main className="hebrewPage" dir="rtl">
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
+      <div className="shell">
+        <header className="hero">
+          <h1 className="title">מיכאל נירגד גיא</h1>
+          <p className="subtitle">איש קריאייטיב, מפיק ומנהל פרויקטים דיגיטליים, בן אדם.</p>
+
+          <p className="clientTitle">מבחר לקוחות שעבדתי איתם:</p>
+          <div className="marquee" aria-label="מבחר לקוחות שעבדתי איתם">
+            <div className="track">
+              {logoItems.map((logo, index) => (
+                <div className={`logoItem ${logo.type === "person" ? "person" : ""}`} aria-label={logo.name} title={logo.name} key={`${logo.name}-${index}`}>
+                  <img src={logo.src} alt={logo.name} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </header>
+
+        <section className="content">
+          <div className="quick">
+            <p><a href="https://mng-vid.com" target="_blank" rel="noopener noreferrer">זה האתר שלי</a>. <span className="muted">הוא באנגלית, ויש שם אוגר מוזר שעשוי מ-AI.</span></p>
+            <p>
+              יותר oldschool? יש גם קורות חיים:{" "}
+              <span className="cvLinks">
+                <a className="pill" href="https://drive.google.com/file/d/1ZdJ663iItwz6FIcQAgmpOts7dEZ2GBHK/view?usp=sharing" target="_blank" rel="noopener noreferrer">עברית</a>
+                <a className="pill" href="https://drive.google.com/file/d/1KLLrF0nmQUDln5zzW_6v3F3ixJ0X2mdR/view?usp=sharing" target="_blank" rel="noopener noreferrer">English</a>
+              </span>
+            </p>
+          </div>
+
+          <section aria-labelledby="work-title">
+            <h2 className="sectionTitle" id="work-title">כמה עבודות רלוונטיות</h2>
+            <ol className="workList">
+              {workItems.map((item, index) => (
+                <li className="workItem" key={index}>
+                  <p>{item}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="contact" aria-labelledby="contact-title">
+            <div>
+              <p className="contactTitle" id="contact-title">מוזמנים לדבר איתי</p>
+              <p className="contactSubtitle">במייל או בטלפון.</p>
+            </div>
+            <div className="contactLinks">
+              <a href="mailto:michael.nirgadguy@gmail.com">michael.nirgadguy@gmail.com</a>
+              <a href="tel:+972504441505">050-4441505</a>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+  );
+}

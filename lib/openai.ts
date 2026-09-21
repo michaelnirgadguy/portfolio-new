@@ -1,6 +1,22 @@
 // /lib/openai.ts
 import OpenAI from "openai";
 
-export const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+let client: OpenAI | null = null;
+
+export function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is not configured.");
+  }
+
+  if (!client) {
+    client = new OpenAI({ apiKey });
+  }
+
+  return client;
+}
+
+export function getOpenAIModel() {
+  return process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
+}

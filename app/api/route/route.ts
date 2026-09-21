@@ -2,7 +2,7 @@
 import { NextRequest } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { client } from "@/lib/openai";
+import { getOpenAIClient, getOpenAIModel } from "@/lib/openai";
 import { TOOLS } from "@/lib/llm/tools";
 import { getVideoCatalog } from "@/lib/videoCatalog";
 import { assistantReplySchema } from "@/lib/llm/assistantSchema";
@@ -189,7 +189,8 @@ ${watchedVideosBlock}
     }
 
     // Call the model using the running log + tools
-    let resp: Awaited<ReturnType<typeof client.responses.create>>;
+    const openai = getOpenAIClient();
+    let resp: Awaited<ReturnType<typeof openai.responses.create>>;
     const openAiController = new AbortController();
     const openAiTimeout = setTimeout(
       () => openAiController.abort(),
@@ -197,9 +198,9 @@ ${watchedVideosBlock}
     );
 
     try {
-      resp = await client.responses.create(
+      resp = await openai.responses.create(
         {
-          model: "gpt-4.1-mini",
+          model: getOpenAIModel(),
           tools: TOOLS,
           tool_choice: "auto",
           parallel_tool_calls: false,
@@ -315,12 +316,21 @@ ${watchedVideosBlock}
     });
   } catch (err: any) {
     console.error("❌ /api/route error:", err);
+    const missingKey =
+      err instanceof Error &&
+      err.message === "OPENAI_API_KEY is not configured.";
+
     return new Response(
       JSON.stringify({
-        error: "Internal Server Error",
-        details: String(err?.message ?? err),
+        error: missingKey
+          ? "Chat is not configured on the server."
+          : "Chat is temporarily unavailable.",
+        code: missingKey ? "openai_not_configured" : "openai_request_failed",
       }),
-      { status: 500, headers: { "content-type": "application/json" } }
+      {
+        status: missingKey ? 503 : 502,
+        headers: { "content-type": "application/json" },
+      }
     );
   }
 }

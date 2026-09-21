@@ -29,6 +29,20 @@ type AssistantPayload = {
   statusDetails?: unknown;
 };
 
+async function readChatResponse(res: Response) {
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const message =
+      typeof data?.error === "string"
+        ? data.error
+        : `Chat request failed (${res.status}).`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
 function normalizeAssistantPayload(data: any): AssistantPayload {
   const text = typeof data?.text === "string" ? data.text.trim() : "";
   const chips = Array.isArray(data?.chips)
@@ -73,7 +87,7 @@ export async function sendTurn(opts: {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ input: modelInputLog, seenVideoIds }),
   });
-  const data1 = await res1.json();
+  const data1 = await readChatResponse(res1);
   const output: any[] = Array.isArray(data1?.output) ? data1.output : [];
   const persistedAfterModelLog = [...persistedLog, ...output];
   const modelInputAfterLog = [...modelInputLog, ...output];
@@ -208,7 +222,7 @@ export async function sendTurn(opts: {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ input: modelLogWithToolOutputs, seenVideoIds }),
   });
-  const data2 = await res2.json();
+  const data2 = await readChatResponse(res2);
   const followPayload = normalizeAssistantPayload(data2);
   const followText = resolveAssistantText(followPayload);
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { client } from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const promptPath = path.join(process.cwd(), "lib/llm/prompts/act1.txt");
     const systemPrompt = await fs.readFile(promptPath, "utf-8");
 
-    const completion = await client.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },

@@ -1116,15 +1116,26 @@ export default function LiquidEther({
     container.style.position = container.style.position || "relative";
     container.style.overflow = container.style.overflow || "hidden";
 
-    const webgl = new WebGLManager({
-      $wrapper: container,
-      autoDemo,
-      autoSpeed,
-      autoIntensity,
-      takeoverDuration,
-      autoResumeDelay,
-      autoRampDuration,
-    });
+    let webgl: WebGLManager;
+
+    try {
+      webgl = new WebGLManager({
+        $wrapper: container,
+        autoDemo,
+        autoSpeed,
+        autoIntensity,
+        takeoverDuration,
+        autoResumeDelay,
+        autoRampDuration,
+      });
+    } catch (error) {
+      console.warn("Liquid background unavailable; using static fallback.", error);
+      Mouse.dispose();
+      Common.renderer?.dispose();
+      paletteTex.dispose();
+      return;
+    }
+
     webglRef.current = webgl;
 
     const applyOptionsFromProps = () => {
@@ -1196,6 +1207,7 @@ export default function LiquidEther({
       if (webglRef.current) {
         webglRef.current.dispose();
       }
+      paletteTex.dispose();
       webglRef.current = null;
     };
   }, [
